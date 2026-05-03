@@ -31,10 +31,12 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int? categoryId,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, minPrice, maxPrice, page, pageSize);
+            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, minPrice, maxPrice, fromDate, toDate, page, pageSize);
 
             return Ok(new
             {
@@ -214,6 +216,7 @@ namespace BaseCore.APIService.Controllers
         public decimal? SalePrice { get; set; }
         public string? Size { get; set; }
         public string? Color { get; set; }
+        public DateTime? ProductionDate { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsFeatured { get; set; }
     }
@@ -232,6 +235,7 @@ namespace BaseCore.APIService.Controllers
         public decimal? SalePrice { get; set; }
         public string? Size { get; set; }
         public string? Color { get; set; }
+        public DateTime? ProductionDate { get; set; }
         public bool? IsActive { get; set; }
         public bool? IsFeatured { get; set; }
     }

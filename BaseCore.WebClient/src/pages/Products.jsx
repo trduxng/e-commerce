@@ -34,6 +34,8 @@ const Products = () => {
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
@@ -53,7 +55,7 @@ const Products = () => {
 
     useEffect(() => {
         loadProducts();
-    }, [page, keyword, categoryId]);
+    }, [page, keyword, categoryId, fromDate, toDate]);
 
     const firstVariant = (product) => product?.productVariants?.[0] || {};
 
@@ -88,6 +90,8 @@ const Products = () => {
             const response = await productApi.search({
                 keyword,
                 categoryId: categoryId || undefined,
+                fromDate: fromDate || undefined,
+                toDate: toDate || undefined,
                 page,
                 pageSize,
             });
@@ -180,6 +184,7 @@ const Products = () => {
                 color: variant.color || '',
                 isActive: fullProduct.isActive !== false,
                 isFeatured: Boolean(fullProduct.isFeatured),
+                productionDate: fullProduct.productionDate ? new Date(fullProduct.productionDate).toISOString().split('T')[0] : '',
             });
         } else {
             setEditingProduct(null);
@@ -187,6 +192,7 @@ const Products = () => {
                 ...emptyForm,
                 categoryId: availableCategories[0]?.id ? String(availableCategories[0].id) : '',
                 sku: `SKU-${Date.now()}`,
+                productionDate: new Date().toISOString().split('T')[0],
             });
         }
 
@@ -202,6 +208,8 @@ const Products = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
+        
+        if (!window.confirm('Are you sure you want to save this product?')) return;
 
         const price = Number(formData.price);
         const stock = Number(formData.stock);
@@ -242,6 +250,7 @@ const Products = () => {
                 color: formData.color.trim(),
                 isActive: formData.isActive,
                 isFeatured: formData.isFeatured,
+                productionDate: formData.productionDate || null,
             };
 
             if (editingProduct) {
@@ -506,6 +515,15 @@ const Products = () => {
                                                 </div>
                                             </div>
                                             <div className="form-group">
+                                                <label>Production Date</label>
+                                                <input
+                                                    type="date"
+                                                    className="form-control"
+                                                    value={formData.productionDate || ''}
+                                                    onChange={(event) => setField('productionDate', event.target.value)}
+                                                />
+                                            </div>
+                                            <div className="form-group">
                                                 <label>Short Description</label>
                                                 <input
                                                     type="text"
@@ -654,6 +672,20 @@ const Products = () => {
                                     </button>
                                     <button type="submit" className="btn btn-primary">
                                         {editingProduct ? 'Update Product' : 'Create Product'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showModal && <div className="modal-backdrop fade show"></div>}
+        </div>
+    );
+};
+
+export default Products;
+              {editingProduct ? 'Update Product' : 'Create Product'}
                                     </button>
                                 </div>
                             </form>
