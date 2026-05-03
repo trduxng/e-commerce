@@ -1,0 +1,34 @@
+using Microsoft.EntityFrameworkCore;
+using BaseCore.Entities;
+
+namespace BaseCore.Repository.EFCore
+{
+    /// <summary>
+    /// Category Repository using Entity Framework Core
+    /// </summary>
+    public interface ICategoryRepositoryEF : IRepository<Category>
+    {
+        Task<Category?> GetByNameAsync(string name);
+    }
+
+    public class CategoryRepositoryEF : Repository<Category>, ICategoryRepositoryEF
+    {
+        public CategoryRepositoryEF(SQLServerDbContext context) : base(context)
+        {
+        }
+
+        public async Task<Category?> GetByNameAsync(string name)
+        {
+            return await _dbSet.FirstOrDefaultAsync(c => c.Name.ToLower() == name.ToLower());
+        }
+
+        public override async Task<IEnumerable<Category>> GetAllAsync()
+        {
+            return await _dbSet
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.SortOrder)
+                .ThenBy(c => c.Name)
+                .ToListAsync();
+        }
+    }
+}
