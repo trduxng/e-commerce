@@ -80,7 +80,14 @@ const Cart = () => {
                       </td>
                       <td className="align-middle">{formatCurrency(item.price * item.quantity)}</td>
                       <td className="align-middle">
-                        <button className="btn btn-sm btn-danger" type="button" onClick={() => removeFromCart(item.id)}>
+                        <button 
+                            className="btn btn-sm btn-danger" 
+                            type="button" 
+                            onClick={() => {
+                                removeFromCart(item.id);
+                                toast.info(`Removed ${item.name} from cart`);
+                            }}
+                        >
                           <i className="fa fa-times"></i>
                         </button>
                       </td>

@@ -198,6 +198,7 @@ function App() {
             <AuthProvider>
                 <CartProvider>
                     <AppRoutes />
+                    <ToastContainer position="bottom-right" autoClose={3000} />
                 </CartProvider>
             </AuthProvider>
         </Router>
@@ -205,3 +206,4 @@ function App() {
 }
 
 export default App;
+// export default App;

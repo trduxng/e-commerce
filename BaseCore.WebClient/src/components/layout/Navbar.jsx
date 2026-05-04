@@ -95,12 +95,7 @@ const Navbar = () => {
               </div>
 
               <div className="navbar-nav ml-auto py-0 d-none d-lg-block">
-                <Link to="/cart" className="btn px-0 ml-3">
-                  <i className="fas fa-shopping-cart text-primary"></i>
-                  <span className="badge text-secondary border border-secondary rounded-circle" style={{ paddingBottom: "2px" }}>
-                    {count}
-                  </span>
-                </Link>
+                <MiniCart />
               </div>
             </div>
           </nav>
@@ -111,3 +106,18 @@ const Navbar = () => {
 };
 
 export default Navbar;
+// ary"></i>
+//                   <span className="badge text-secondary border border-secondary rounded-circle" style={{ paddingBottom: "2px" }}>
+//                     {count}
+//                   </span>
+//                 </Link>
+//               </div>
+//             </div>
+//           </nav>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Navbar;

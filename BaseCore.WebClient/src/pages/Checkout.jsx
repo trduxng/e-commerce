@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { orderApi } from "../services/api";
+import { toast } from 'react-toastify';
 import { formatCurrency } from "../data/shopData";
 
 const Checkout = () => {
@@ -217,3 +218,8 @@ const Checkout = () => {
 };
 
 export default Checkout;
+
+//   );
+// };
+
+// export default Checkout;

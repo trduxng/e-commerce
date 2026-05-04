@@ -17,6 +17,7 @@ const emptyForm = {
     color: '',
     isActive: true,
     isFeatured: false,
+    productionDate: '',
 };
 
 const normalizeList = (data) => {
@@ -289,6 +290,10 @@ const Products = () => {
         return pages;
     };
 
+    const Slugify = (value) => {
+        return value.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    };
+
     return (
         <div className="content-wrapper">
             <div className="content-header">
@@ -306,17 +311,17 @@ const Products = () => {
                     <div className="card">
                         <div className="card-header">
                             <div className="row">
-                                <div className="col-md-8">
+                                <div className="col-md-10">
                                     <form onSubmit={handleSearch} className="form-inline">
                                         <input
                                             type="text"
-                                            className="form-control mr-2"
+                                            className="form-control mr-2 mb-2"
                                             placeholder="Search products"
                                             value={keyword}
                                             onChange={(event) => setKeyword(event.target.value)}
                                         />
                                         <select
-                                            className="form-control mr-2"
+                                            className="form-control mr-2 mb-2"
                                             value={categoryId}
                                             onChange={(event) => {
                                                 setCategoryId(event.target.value);
@@ -328,12 +333,28 @@ const Products = () => {
                                                 <option key={category.id} value={String(category.id)}>{category.name}</option>
                                             ))}
                                         </select>
-                                        <button type="submit" className="btn btn-primary">
+                                        <input
+                                            type="date"
+                                            className="form-control mr-2 mb-2"
+                                            value={fromDate}
+                                            onChange={(event) => setFromDate(event.target.value)}
+                                            placeholder="From Date"
+                                            title="From Production Date"
+                                        />
+                                        <input
+                                            type="date"
+                                            className="form-control mr-2 mb-2"
+                                            value={toDate}
+                                            onChange={(event) => setToDate(event.target.value)}
+                                            placeholder="To Date"
+                                            title="To Production Date"
+                                        />
+                                        <button type="submit" className="btn btn-primary mb-2">
                                             <i className="fas fa-search"></i> Search
                                         </button>
                                     </form>
                                 </div>
-                                <div className="col-md-4 text-right">
+                                <div className="col-md-2 text-right">
                                     {isAdmin() && (
                                         <button className="btn btn-success" type="button" onClick={() => openModal()}>
                                             <i className="fas fa-plus"></i> Add Product
@@ -672,20 +693,6 @@ const Products = () => {
                                     </button>
                                     <button type="submit" className="btn btn-primary">
                                         {editingProduct ? 'Update Product' : 'Create Product'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {showModal && <div className="modal-backdrop fade show"></div>}
-        </div>
-    );
-};
-
-export default Products;
-              {editingProduct ? 'Update Product' : 'Create Product'}
                                     </button>
                                 </div>
                             </form>

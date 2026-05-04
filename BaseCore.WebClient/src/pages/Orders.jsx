@@ -63,7 +63,7 @@ const Orders = () => {
                 <div className="container-fluid">
                     <div className="row mb-2">
                         <div className="col-sm-6">
-                            <h1 className="m-0">Orders</h1>
+                            <h1 className="m-0">Orders Management</h1>
                         </div>
                     </div>
                 </div>
@@ -73,7 +73,7 @@ const Orders = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">Purchase Orders</h3>
+                            <h3 className="card-title">Resolve Bills</h3>
                         </div>
                         <div className="card-body table-responsive p-0">
                             {error && <div className="alert alert-warning m-3">{error}</div>}
@@ -93,12 +93,13 @@ const Orders = () => {
                                             <th>Payment</th>
                                             <th>Status</th>
                                             <th>Date</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {orders.length === 0 ? (
                                             <tr>
-                                                <td colSpan="8" className="text-center py-4">No orders found</td>
+                                                <td colSpan="9" className="text-center py-4">No orders found</td>
                                             </tr>
                                         ) : (
                                             orders.map((order) => (
@@ -116,25 +117,24 @@ const Orders = () => {
                                                     <td>{formatCurrency(order.totalAmount)}</td>
                                                     <td>{order.paymentMethod}</td>
                                                     <td>
-                                                        <span className="badge badge-info">{order.orderStatus}</span>
+                                                        <span className={`badge ${getStatusBadgeClass(order.orderStatus)}`}>{order.orderStatus}</span>
                                                     </td>
                                                     <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : ''}</td>
+                                                    <td>
+                                                        <select 
+                                                            className="form-control form-control-sm"
+                                                            value={order.orderStatus}
+                                                            onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                                                        >
+                                                            <option value="pending">Pending</option>
+                                                            <option value="confirmed">Confirmed</option>
+                                                            <option value="shipping">Shipping</option>
+                                                            <option value="completed">Delivered</option>
+                                                            <option value="cancelled">Cancelled</option>
+                                                        </select>
+                                                    </td>
                                                 </tr>
                                             ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    );
-};
-
-export default Orders;
-                                   ))
                                         )}
                                     </tbody>
                                 </table>

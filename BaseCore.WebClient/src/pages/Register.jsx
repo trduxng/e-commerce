@@ -42,11 +42,13 @@ const Register = () => {
         });
 
         if (!result.success) {
+            toast.error(result.message || "Registration failed");
             setError(result.message);
             setLoading(false);
             return;
         }
 
+        toast.success("Account created successfully!");
         const loginResult = await login(formData.email, formData.password);
         setLoading(false);
 
