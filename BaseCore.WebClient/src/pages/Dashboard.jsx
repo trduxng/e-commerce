@@ -3,6 +3,14 @@ import { productApi, userApi, categoryApi, orderApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../data/shopData';
 
+const orderStatuses = [
+    { value: 'pending', label: 'Pending', badge: 'badge-warning' },
+    { value: 'confirmed', label: 'Confirmed', badge: 'badge-primary' },
+    { value: 'shipping', label: 'Shipping', badge: 'badge-info' },
+    { value: 'delivered', label: 'Delivered', badge: 'badge-success' },
+    { value: 'cancelled', label: 'Cancelled', badge: 'badge-secondary' },
+];
+
 const Dashboard = () => {
     const [stats, setStats] = useState({
         products: 0,
@@ -24,6 +32,7 @@ const Dashboard = () => {
         note: '',
     });
     const [savingOrder, setSavingOrder] = useState(false);
+    const [updatingStatusId, setUpdatingStatusId] = useState(null);
     const [loading, setLoading] = useState(true);
     const { isAdmin } = useAuth();
 
@@ -93,6 +102,7 @@ const Dashboard = () => {
     };
 
     const getOrderDetails = (order) => order.orderDetails || order.details || [];
+    const getStatusMeta = (status) => orderStatuses.find((item) => item.value === status) || orderStatuses[0];
 
     const canModifyOrder = (order) => order.orderStatus === 'pending';
 
@@ -155,6 +165,32 @@ const Dashboard = () => {
             if (editingOrder?.id === order.id) setEditingOrder(null);
         } catch (error) {
             setOrderError(error.response?.data?.message || 'Failed to delete order.');
+        }
+    };
+
+    const updateOrderStatus = async (order, status) => {
+        if (status === order.orderStatus) return;
+
+        setUpdatingStatusId(order.id);
+        setOrderError('');
+
+        try {
+            const response = await orderApi.updateStatus(order.id, status);
+            const updatedOrder = response.data;
+            setRecentOrders((current) => current.map((item) => (
+                Number(item.id) === Number(order.id)
+                    ? { ...item, ...updatedOrder, orderDetails: item.orderDetails }
+                    : item
+            )));
+            setMyOrders((current) => current.map((item) => (
+                Number(item.id) === Number(order.id)
+                    ? { ...item, ...updatedOrder, orderDetails: item.orderDetails }
+                    : item
+            )));
+        } catch (error) {
+            setOrderError(error.response?.data?.message || 'Failed to update order status.');
+        } finally {
+            setUpdatingStatusId(null);
         }
     };
 
@@ -295,7 +331,23 @@ const Dashboard = () => {
                                                             </td>
                                                             <td>{formatCurrency(order.totalAmount)}</td>
                                                             <td>
-                                                                <span className="badge badge-info">{order.orderStatus}</span>
+                                                                <div className="d-flex align-items-center">
+                                                                    <span className={`badge mr-2 ${getStatusMeta(order.orderStatus).badge}`}>
+                                                                        {getStatusMeta(order.orderStatus).label}
+                                                                    </span>
+                                                                    <select
+                                                                        className="custom-select custom-select-sm order-status-select"
+                                                                        value={order.orderStatus}
+                                                                        disabled={updatingStatusId === order.id}
+                                                                        onChange={(event) => updateOrderStatus(order, event.target.value)}
+                                                                    >
+                                                                        {orderStatuses.map((status) => (
+                                                                            <option key={status.value} value={status.value}>
+                                                                                {status.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
                                                             </td>
                                                             <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : ''}</td>
                                                         </tr>
@@ -353,7 +405,9 @@ const Dashboard = () => {
                                                         <td>{formatCurrency(order.totalAmount)}</td>
                                                         <td>{order.paymentMethod}</td>
                                                         <td>
-                                                            <span className="badge badge-info">{order.orderStatus}</span>
+                                                            <span className={`badge ${getStatusMeta(order.orderStatus).badge}`}>
+                                                                {getStatusMeta(order.orderStatus).label}
+                                                            </span>
                                                         </td>
                                                         <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : ''}</td>
                                                         <td>

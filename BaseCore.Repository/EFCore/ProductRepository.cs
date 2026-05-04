@@ -8,7 +8,7 @@ namespace BaseCore.Repository.EFCore
     /// </summary>
     public interface IProductRepositoryEF : IRepository<Product>
     {
-        Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, DateTime? fromDate, DateTime? toDate, int page, int pageSize);
+        Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, int page, int pageSize);
         Task<List<Product>> GetByCategoryAsync(int categoryId);
         Task<Product?> GetProductWithVariantsAsync(long id);
     }
@@ -19,7 +19,7 @@ namespace BaseCore.Repository.EFCore
         {
         }
 
-        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
+        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, int page, int pageSize)
         {
             var query = _dbSet
                 .Include(p => p.Category)
@@ -52,16 +52,6 @@ namespace BaseCore.Repository.EFCore
                 query = query.Where(p =>
                     (p.ProductVariants.Any() && p.ProductVariants.Min(v => v.SalePrice ?? v.Price) <= maxPrice.Value) ||
                     (!p.ProductVariants.Any() && p.BasePrice <= maxPrice.Value));
-            }
-
-            if (fromDate.HasValue)
-            {
-                query = query.Where(p => p.ProductionDate >= fromDate.Value);
-            }
-
-            if (toDate.HasValue)
-            {
-                query = query.Where(p => p.ProductionDate <= toDate.Value);
             }
 
             var totalCount = await query.CountAsync();

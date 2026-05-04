@@ -40,5 +40,8 @@ namespace BaseCore.Entities
         [NotMapped]
         [JsonIgnore]
         public Product? Product => ProductVariant?.Product;
+
+        [NotMapped]
+        public string? ProductImageUrl => ProductVariant?.ImageUrl ?? ProductVariant?.Product?.ImageUrl;
     }
 }

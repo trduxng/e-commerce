@@ -11,24 +11,37 @@ const Categories = () => {
         name: '',
         description: '',
     });
+    const [keyword, setKeyword] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
     const [error, setError] = useState('');
     const { isAdmin } = useAuth();
 
     useEffect(() => {
         loadCategories();
-    }, []);
+    }, [keyword, page]);
 
     const loadCategories = async () => {
         setLoading(true);
         try {
-            const response = await categoryApi.getAll();
-            if (!Array.isArray(response.data)) {
+            const response = await categoryApi.getAll({ keyword, page, pageSize });
+            const items = Array.isArray(response.data?.items)
+                ? response.data.items
+                : Array.isArray(response.data)
+                    ? response.data
+                    : [];
+
+            if (!Array.isArray(response.data?.items) && !Array.isArray(response.data)) {
                 setCategories([]);
                 setError('Categories API did not return a valid list. Check that ApiGateway and APIService are running.');
                 return;
             }
 
-            setCategories(response.data);
+            setCategories(items);
+            setTotalPages(Number(response.data?.totalPages) || 0);
+            setTotalCount(Number(response.data?.totalCount) || items.length);
         } catch (error) {
             console.error('Failed to load categories:', error);
             setCategories([]);
@@ -36,6 +49,11 @@ const Categories = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearchChange = (event) => {
+        setKeyword(event.target.value);
+        setPage(1);
     };
 
     const openModal = (category = null) => {
@@ -66,8 +84,6 @@ const Categories = () => {
         e.preventDefault();
         setError('');
 
-        if (!window.confirm(`Are you sure you want to ${editingCategory ? 'update' : 'create'} this category?`)) return;
-
         try {
             if (editingCategory) {
                 await categoryApi.update(editingCategory.id, {
@@ -96,6 +112,18 @@ const Categories = () => {
         }
     };
 
+    const renderPagination = () => {
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pages.push(
+                <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
+                    <button className="page-link" type="button" onClick={() => setPage(i)}>{i}</button>
+                </li>
+            );
+        }
+        return pages;
+    };
+
     return (
         <div className="content-wrapper">
             <div className="content-header">
@@ -112,11 +140,31 @@ const Categories = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-header">
-                            <div className="row">
-                                <div className="col-md-6">
-                                    <h3 className="card-title">All Categories</h3>
+                            <div className="row align-items-center">
+                                <div className="col-md-7">
+                                    <form className="form-inline" onSubmit={(event) => event.preventDefault()}>
+                                        <input
+                                            type="search"
+                                            className="form-control mr-2"
+                                            placeholder="Search categories"
+                                            value={keyword}
+                                            onChange={handleSearchChange}
+                                        />
+                                        {keyword && (
+                                            <button
+                                                className="btn btn-outline-secondary"
+                                                type="button"
+                                                onClick={() => {
+                                                    setKeyword('');
+                                                    setPage(1);
+                                                }}
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </form>
                                 </div>
-                                <div className="col-md-6 text-right">
+                                <div className="col-md-5 text-right">
                                     {isAdmin() && (
                                         <button className="btn btn-success" onClick={() => openModal()}>
                                             <i className="fas fa-plus"></i> Add Category
@@ -132,49 +180,70 @@ const Categories = () => {
                                     <div className="spinner-border text-primary"></div>
                                 </div>
                             ) : (
-                                <table className="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ width: '80px' }}>ID</th>
-                                            <th>Name</th>
-                                            <th>Description</th>
-                                            {isAdmin() && <th style={{ width: '150px' }}>Actions</th>}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {categories.length === 0 ? (
+                                <>
+                                    <table className="table table-bordered table-striped">
+                                        <thead>
                                             <tr>
-                                                <td colSpan={isAdmin() ? 4 : 3} className="text-center">
-                                                    No categories found
-                                                </td>
+                                                <th style={{ width: '80px' }}>ID</th>
+                                                <th>Name</th>
+                                                <th>Description</th>
+                                                {isAdmin() && <th style={{ width: '150px' }}>Actions</th>}
                                             </tr>
-                                        ) : (
-                                            categories.map(category => (
-                                                <tr key={category.id}>
-                                                    <td>{category.id}</td>
-                                                    <td>{category.name}</td>
-                                                    <td>{category.description}</td>
-                                                    {isAdmin() && (
-                                                        <td>
-                                                            <button
-                                                                className="btn btn-sm btn-info mr-1"
-                                                                onClick={() => openModal(category)}
-                                                            >
-                                                                <i className="fas fa-edit"></i>
-                                                            </button>
-                                                            <button
-                                                                className="btn btn-sm btn-danger"
-                                                                onClick={() => handleDelete(category.id)}
-                                                            >
-                                                                <i className="fas fa-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    )}
+                                        </thead>
+                                        <tbody>
+                                            {categories.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={isAdmin() ? 4 : 3} className="text-center">
+                                                        {keyword ? 'No categories match your search' : 'No categories found'}
+                                                    </td>
                                                 </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                                            ) : (
+                                                categories.map(category => (
+                                                    <tr key={category.id}>
+                                                        <td>{category.id}</td>
+                                                        <td>{category.name}</td>
+                                                        <td>{category.description}</td>
+                                                        {isAdmin() && (
+                                                            <td>
+                                                                <button
+                                                                    className="btn btn-sm btn-info mr-1"
+                                                                    onClick={() => openModal(category)}
+                                                                >
+                                                                    <i className="fas fa-edit"></i>
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-sm btn-danger"
+                                                                    onClick={() => handleDelete(category.id)}
+                                                                >
+                                                                    <i className="fas fa-trash"></i>
+                                                                </button>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <span>Total: {totalCount} categories</span>
+                                        <nav>
+                                            <ul className="pagination mb-0">
+                                                <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                                    <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>
+                                                        Previous
+                                                    </button>
+                                                </li>
+                                                {renderPagination()}
+                                                <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                    <button className="page-link" type="button" onClick={() => setPage(page + 1)}>
+                                                        Next
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

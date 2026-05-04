@@ -5,12 +5,14 @@ import Footer from "./layout/Footer";
 
 const ShopLayout = ({ children }) => {
   return (
-    <>
-      <Topbar />
-      <Navbar />
+    <div className="storefront">
+      <header className="storefront-shell">
+        <Topbar />
+        <Navbar />
+      </header>
       {children}
       <Footer />
-    </>
+    </div>
   );
 };
 

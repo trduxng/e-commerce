@@ -58,7 +58,6 @@ const ProductDetail = () => {
     }
 
     addToCart(product, quantity);
-    toast.success(`Added ${quantity} x ${product.name} to cart!`);
   };
 
   if (loading) {
@@ -139,7 +138,7 @@ const ProductDetail = () => {
                   </div>
                   <input
                     type="text"
-                    className="form-control bg-secondary border-0 text-center"
+                    className="form-control bg-light border-0 text-center text-dark"
                     value={quantity}
                     readOnly
                   />

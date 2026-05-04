@@ -63,7 +63,7 @@ const Cart = () => {
                           </div>
                           <input
                             type="text"
-                            className="form-control form-control-sm bg-secondary border-0 text-center"
+                            className="form-control form-control-sm bg-secondary border-0 text-dark text-center"
                             value={item.quantity}
                             readOnly
                           />
@@ -80,14 +80,7 @@ const Cart = () => {
                       </td>
                       <td className="align-middle">{formatCurrency(item.price * item.quantity)}</td>
                       <td className="align-middle">
-                        <button 
-                            className="btn btn-sm btn-danger" 
-                            type="button" 
-                            onClick={() => {
-                                removeFromCart(item.id);
-                                toast.info(`Removed ${item.name} from cart`);
-                            }}
-                        >
+                        <button className="btn btn-sm btn-danger" type="button" onClick={() => removeFromCart(item.id)}>
                           <i className="fa fa-times"></i>
                         </button>
                       </td>

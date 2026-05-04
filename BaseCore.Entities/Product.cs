@@ -41,8 +41,6 @@ namespace BaseCore.Entities
 
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-        public DateTime? ProductionDate { get; set; }
-
         public Category? Category { get; set; }
 
         public List<ProductVariant> ProductVariants { get; set; } = new();

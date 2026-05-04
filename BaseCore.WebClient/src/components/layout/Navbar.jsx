@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { categoryApi } from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Navbar = () => {
   const [categories, setCategories] = useState([]);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { count } = useCart();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -23,23 +26,24 @@ const Navbar = () => {
   }, []);
 
   return (
-    <div className="container-fluid bg-dark mb-30">
+    <div className="container-fluid storefront-nav">
       <div className="row px-xl-5">
         <div className="col-lg-3 d-none d-lg-block">
           <button
-            className="btn d-flex align-items-center justify-content-between bg-primary w-100"
-            data-toggle="collapse"
-            data-target="#navbar-vertical"
+            className="btn category-toggle d-flex align-items-center justify-content-between bg-primary w-100"
             type="button"
+            aria-controls="navbar-vertical"
+            aria-expanded={categoriesOpen}
+            onClick={() => setCategoriesOpen((current) => !current)}
             style={{ height: "65px", padding: "0 30px" }}
           >
             <h6 className="text-dark m-0">
               <i className="fa fa-bars mr-2"></i>Categories
             </h6>
-            <i className="fa fa-angle-down text-dark"></i>
+            <i className={`fa ${categoriesOpen ? "fa-angle-up" : "fa-angle-down"} text-dark`}></i>
           </button>
           <nav
-            className="collapse show navbar navbar-vertical navbar-light align-items-start p-0 bg-light"
+            className={`category-menu navbar navbar-vertical navbar-light align-items-start p-0 bg-light ${categoriesOpen ? "is-open" : "is-closed"}`}
             id="navbar-vertical"
           >
             <div className="navbar-nav w-100">
@@ -57,10 +61,10 @@ const Navbar = () => {
         </div>
 
         <div className="col-lg-9">
-          <nav className="navbar navbar-expand-lg bg-dark navbar-dark py-3 py-lg-0 px-0">
-            <Link to="/" className="text-decoration-none d-block d-lg-none">
-              <span className="h1 text-uppercase text-dark bg-light px-2">Base</span>
-              <span className="h1 text-uppercase text-light bg-primary px-2 ml-n1">Shop</span>
+          <nav className="navbar navbar-expand-lg navbar-dark py-3 py-lg-0 px-0">
+            <Link to="/" className="storefront-brand text-decoration-none d-flex d-lg-none">
+              <span className="brand-mark"><i className="fas fa-bag-shopping"></i></span>
+              <span>BaseShop</span>
             </Link>
 
             <button
@@ -86,6 +90,11 @@ const Navbar = () => {
                 <NavLink to="/cart" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
                   Cart
                 </NavLink>
+                {isAuthenticated && (
+                  <NavLink to="/my-orders" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
+                    My Orders
+                  </NavLink>
+                )}
                 <NavLink to="/checkout" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
                   Checkout
                 </NavLink>
@@ -95,7 +104,12 @@ const Navbar = () => {
               </div>
 
               <div className="navbar-nav ml-auto py-0 d-none d-lg-block">
-                <MiniCart />
+                <Link to="/cart" className="cart-button ml-3" aria-label="Shopping cart">
+                  <i className="fas fa-shopping-cart"></i>
+                  <span className="badge">
+                    {count}
+                  </span>
+                </Link>
               </div>
             </div>
           </nav>
@@ -106,18 +120,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-// ary"></i>
-//                   <span className="badge text-secondary border border-secondary rounded-circle" style={{ paddingBottom: "2px" }}>
-//                     {count}
-//                   </span>
-//                 </Link>
-//               </div>
-//             </div>
-//           </nav>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Navbar;

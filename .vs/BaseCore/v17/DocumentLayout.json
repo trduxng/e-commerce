@@ -1,0 +1,160 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{FDA5D057-E608-4A17-B58B-FABEADC300D9}|BaseCore.AuthService\\BaseCore.AuthService.csproj|d:\\code\\project_web_nam3_ky2\\basecore\\basecore.authservice\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{FDA5D057-E608-4A17-B58B-FABEADC300D9}|BaseCore.AuthService\\BaseCore.AuthService.csproj|solutionrelative:basecore.authservice\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B1C2D3E4-F5A6-7890-BCDE-F12345678901}|BaseCore.APIService\\BaseCore.APIService.csproj|d:\\code\\project_web_nam3_ky2\\basecore\\basecore.apiservice\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{B1C2D3E4-F5A6-7890-BCDE-F12345678901}|BaseCore.APIService\\BaseCore.APIService.csproj|solutionrelative:basecore.apiservice\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3934463F-480E-4BE1-8796-E79F458CAEE7}|BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj|d:\\code\\project_web_nam3_ky2\\basecore\\basecore.apigateway\\basecore.apigateway.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{3934463F-480E-4BE1-8796-E79F458CAEE7}|BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj|solutionrelative:basecore.apigateway\\basecore.apigateway.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3934463F-480E-4BE1-8796-E79F458CAEE7}|BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj|d:\\code\\project_web_nam3_ky2\\basecore\\basecore.apigateway\\ocelot.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{3934463F-480E-4BE1-8796-E79F458CAEE7}|BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj|solutionrelative:basecore.apigateway\\ocelot.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3934463F-480E-4BE1-8796-E79F458CAEE7}|BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj|d:\\code\\project_web_nam3_ky2\\basecore\\basecore.apigateway\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{3934463F-480E-4BE1-8796-E79F458CAEE7}|BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj|solutionrelative:basecore.apigateway\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 211,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 18,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{004be353-6879-467c-9d1e-9ac23cdf6d49}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:2:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{f4fc5ff1-28ef-4b04-ad02-6b298310ccc7}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:5:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BaseCore.ApiGateway",
+              "DocumentMoniker": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
+              "RelativeDocumentMoniker": "BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
+              "ToolTip": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
+              "RelativeToolTip": "BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-05-04T09:38:15.811Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ocelot.json",
+              "DocumentMoniker": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.ApiGateway\\ocelot.json",
+              "RelativeDocumentMoniker": "BaseCore.ApiGateway\\ocelot.json",
+              "ToolTip": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.ApiGateway\\ocelot.json",
+              "RelativeToolTip": "BaseCore.ApiGateway\\ocelot.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-27T04:41:39.753Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.ApiGateway\\appsettings.json",
+              "RelativeDocumentMoniker": "BaseCore.ApiGateway\\appsettings.json",
+              "ToolTip": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.ApiGateway\\appsettings.json",
+              "RelativeToolTip": "BaseCore.ApiGateway\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-27T04:41:37.233Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.APIService\\appsettings.json",
+              "RelativeDocumentMoniker": "BaseCore.APIService\\appsettings.json",
+              "ToolTip": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.APIService\\appsettings.json",
+              "RelativeToolTip": "BaseCore.APIService\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-27T04:41:32.214Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.AuthService\\appsettings.json",
+              "RelativeDocumentMoniker": "BaseCore.AuthService\\appsettings.json",
+              "ToolTip": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.AuthService\\appsettings.json",
+              "RelativeToolTip": "BaseCore.AuthService\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-27T04:41:25.892Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

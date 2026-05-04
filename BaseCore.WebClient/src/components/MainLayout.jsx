@@ -100,12 +100,6 @@ const MainLayout = ({ children }) => {
                                             <p>Users</p>
                                         </Link>
                                     </li>
-                                    <li className="nav-item">
-                                        <Link to="/roles" className={`nav-link ${isActive('/roles')}`}>
-                                            <i className="nav-icon fas fa-user-shield"></i>
-                                            <p>Roles & Functions</p>
-                                        </Link>
-                                    </li>
                                 </>
                             )}
                         </ul>

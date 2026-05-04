@@ -24,8 +24,27 @@ namespace BaseCore.APIService.Controllers
         /// Get all categories
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? keyword,
+            [FromQuery] int? page,
+            [FromQuery] int? pageSize)
         {
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword))
+            {
+                var safePage = Math.Max(1, page ?? 1);
+                var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
+                var (items, totalCount) = await _categoryRepository.SearchAsync(keyword, safePage, safePageSize);
+
+                return Ok(new
+                {
+                    items,
+                    totalCount,
+                    page = safePage,
+                    pageSize = safePageSize,
+                    totalPages = (int)Math.Ceiling((double)totalCount / safePageSize)
+                });
+            }
+
             var categories = await _categoryRepository.GetAllAsync();
             return Ok(categories);
         }

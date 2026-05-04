@@ -10,7 +10,6 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Users from './pages/Users';
-import Roles from './pages/Roles';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
 import Revenue from './pages/Revenue';
@@ -20,6 +19,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import ProductDetail from './pages/ProductDetail';
+import MyOrders from './pages/MyOrders';
 
 // Wrapper to redirect authenticated users away from login
 const PublicRoute = ({ children }) => {
@@ -71,6 +71,16 @@ function AppRoutes() {
                     <ShopLayout>
                         <Cart />
                     </ShopLayout>
+                }
+            />
+            <Route
+                path="/my-orders"
+                element={
+                    <ProtectedRoute>
+                        <ShopLayout>
+                            <MyOrders />
+                        </ShopLayout>
+                    </ProtectedRoute>
                 }
             />
             <Route
@@ -177,16 +187,6 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-            <Route
-                path="/roles"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
-                            <Roles />
-                        </MainLayout>
-                    </ProtectedRoute>
-                }
-            />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
@@ -198,7 +198,6 @@ function App() {
             <AuthProvider>
                 <CartProvider>
                     <AppRoutes />
-                    <ToastContainer position="bottom-right" autoClose={3000} />
                 </CartProvider>
             </AuthProvider>
         </Router>
@@ -206,4 +205,3 @@ function App() {
 }
 
 export default App;
-// export default App;

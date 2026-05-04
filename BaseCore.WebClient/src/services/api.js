@@ -50,13 +50,6 @@ export const userApi = {
     delete: (id) => api.delete(`/users/${id}`),
 };
 
-// Role API
-export const roleApi = {
-    getAll: () => api.get('/roles'),
-    getById: (id) => api.get(`/roles/${id}`),
-    getPermissions: (id) => api.get(`/roles/${id}/permissions`),
-};
-
 // Product API
 export const productApi = {
     getAll: (params) => api.get('/products', { params }),
@@ -69,7 +62,7 @@ export const productApi = {
 
 // Category API
 export const categoryApi = {
-    getAll: () => api.get('/categories'),
+    getAll: (params) => api.get('/categories', { params }),
     getById: (id) => api.get(`/categories/${id}`),
     create: (data) => api.post('/categories', data),
     update: (id, data) => api.put(`/categories/${id}`, data),
@@ -80,9 +73,10 @@ export const categoryApi = {
 export const orderApi = {
     create: (data) => api.post('/orders', data),
     getMyOrders: () => api.get('/orders'),
-    getAll: () => api.get('/orders/all'),
+    getAll: (params) => api.get('/orders/all', { params }),
     getById: (id) => api.get(`/orders/${id}`),
     update: (id, data) => api.put(`/orders/${id}`, data),
+    updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
     cancel: (id) => api.put(`/orders/${id}/cancel`),
     delete: (id) => api.delete(`/orders/${id}`),
 };

@@ -47,8 +47,29 @@ namespace BaseCore.APIService.Controllers
         /// </summary>
         [HttpGet("all")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllOrders()
+        public async Task<IActionResult> GetAllOrders(
+            [FromQuery] string? keyword,
+            [FromQuery] string? status,
+            [FromQuery] int? page,
+            [FromQuery] int? pageSize)
         {
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status))
+            {
+                var safePage = Math.Max(1, page ?? 1);
+                var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
+                var (items, totalCount, summary) = await _orderRepository.SearchAllWithDetailsAsync(keyword, status, safePage, safePageSize);
+
+                return Ok(new
+                {
+                    items,
+                    totalCount,
+                    page = safePage,
+                    pageSize = safePageSize,
+                    totalPages = (int)Math.Ceiling((double)totalCount / safePageSize),
+                    summary
+                });
+            }
+
             var orders = await _orderRepository.GetAllWithDetailsAsync();
             return Ok(orders);
         }
@@ -211,7 +232,7 @@ namespace BaseCore.APIService.Controllers
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return NotFound(new { message = "Order not found" });
 
-            order.Status = dto.Status;
+            order.OrderStatus = NormalizeStatus(dto.Status);
             order.UpdatedAt = DateTime.Now;
             await _orderRepository.UpdateAsync(order);
 
@@ -236,7 +257,7 @@ namespace BaseCore.APIService.Controllers
 
             await RestoreOrderStock(id);
 
-            order.Status = "Cancelled";
+            order.OrderStatus = "cancelled";
             order.CancelledReason = "Cancelled by customer";
             order.UpdatedAt = DateTime.Now;
             await _orderRepository.UpdateAsync(order);
@@ -299,6 +320,19 @@ namespace BaseCore.APIService.Controllers
                     await _productRepository.UpdateAsync(product);
                 }
             }
+        }
+
+        private static string NormalizeStatus(string? status)
+        {
+            return status?.ToLowerInvariant() switch
+            {
+                "completed" => "delivered",
+                "delivered" => "delivered",
+                "cancelled" => "cancelled",
+                "shipping" => "shipping",
+                "confirmed" => "confirmed",
+                _ => "pending"
+            };
         }
     }
 
