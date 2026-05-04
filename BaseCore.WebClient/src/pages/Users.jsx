@@ -86,6 +86,8 @@ const Users = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        
+        if (!window.confirm(`Are you sure you want to ${editingUser ? 'update' : 'create'} this user?`)) return;
 
         try {
             if (editingUser) {

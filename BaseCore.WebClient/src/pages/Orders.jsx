@@ -33,6 +33,28 @@ const Orders = () => {
         }
     };
 
+    const handleUpdateStatus = async (orderId, newStatus) => {
+        if (!window.confirm(`Change order status to ${newStatus}?`)) return;
+
+        try {
+            await orderApi.update(orderId, { status: newStatus });
+            loadOrders();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to update order status');
+        }
+    };
+
+    const getStatusBadgeClass = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'pending': return 'badge-warning';
+            case 'confirmed': return 'badge-primary';
+            case 'shipping': return 'badge-info';
+            case 'completed': case 'delivered': return 'badge-success';
+            case 'cancelled': return 'badge-danger';
+            default: return 'badge-secondary';
+        }
+    };
+
     const getOrderDetails = (order) => order.orderDetails || order.details || [];
 
     return (
@@ -99,6 +121,20 @@ const Orders = () => {
                                                     <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : ''}</td>
                                                 </tr>
                                             ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
+};
+
+export default Orders;
+                                   ))
                                         )}
                                     </tbody>
                                 </table>

@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Users from './pages/Users';
+import Roles from './pages/Roles';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
 import Revenue from './pages/Revenue';
@@ -172,6 +173,16 @@ function AppRoutes() {
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
                             <Users />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/roles"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Roles />
                         </MainLayout>
                     </ProtectedRoute>
                 }

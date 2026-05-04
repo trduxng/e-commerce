@@ -66,6 +66,8 @@ const Categories = () => {
         e.preventDefault();
         setError('');
 
+        if (!window.confirm(`Are you sure you want to ${editingCategory ? 'update' : 'create'} this category?`)) return;
+
         try {
             if (editingCategory) {
                 await categoryApi.update(editingCategory.id, {

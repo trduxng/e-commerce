@@ -50,6 +50,13 @@ export const userApi = {
     delete: (id) => api.delete(`/users/${id}`),
 };
 
+// Role API
+export const roleApi = {
+    getAll: () => api.get('/roles'),
+    getById: (id) => api.get(`/roles/${id}`),
+    getPermissions: (id) => api.get(`/roles/${id}/permissions`),
+};
+
 // Product API
 export const productApi = {
     getAll: (params) => api.get('/products', { params }),
