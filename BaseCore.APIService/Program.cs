@@ -103,9 +103,7 @@ var app = builder.Build();
 // Auto migrate database
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<SQLServerDbContext>();
-    db.Database.EnsureCreated();
-    SeedCatalogData(db);
+    DbInitializer.Initialize(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline

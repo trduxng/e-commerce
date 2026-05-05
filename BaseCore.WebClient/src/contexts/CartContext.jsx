@@ -31,12 +31,19 @@ export const CartProvider = ({ children }) => {
     setItems((currentItems) => {
       const existing = currentItems.find((item) => Number(item.id) === Number(product.id));
       if (existing) {
+        const newQuantity = existing.quantity + safeQuantity;
+        // Stock Validation
+        const finalQuantity = product.stock ? Math.min(newQuantity, product.stock) : newQuantity;
+        
         return currentItems.map((item) =>
           Number(item.id) === Number(product.id)
-            ? { ...item, quantity: item.quantity + safeQuantity }
+            ? { ...item, quantity: finalQuantity }
             : item
         );
       }
+
+      // Stock Validation for new item
+      const initialQuantity = product.stock ? Math.min(safeQuantity, product.stock) : safeQuantity;
 
       return [
         ...currentItems,
@@ -46,7 +53,7 @@ export const CartProvider = ({ children }) => {
           price: Number(product.price || 0),
           imageUrl: getProductImage(product),
           stock: product.stock,
-          quantity: safeQuantity,
+          quantity: initialQuantity,
         },
       ];
     });
@@ -55,10 +62,16 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = (id, quantity) => {
     const safeQuantity = Number(quantity);
     if (!Number.isFinite(safeQuantity) || safeQuantity < 1) return;
+    
     setItems((currentItems) =>
-      currentItems.map((item) =>
-        Number(item.id) === Number(id) ? { ...item, quantity: safeQuantity } : item
-      )
+      currentItems.map((item) => {
+        if (Number(item.id) === Number(id)) {
+           // Stock Validation
+           const finalQuantity = item.stock ? Math.min(safeQuantity, item.stock) : safeQuantity;
+           return { ...item, quantity: finalQuantity };
+        }
+        return item;
+      })
     );
   };
 

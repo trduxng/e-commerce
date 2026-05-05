@@ -21,7 +21,7 @@ const Login = () => {
         const result = await login(username, password);
 
         if (result.success) {
-            navigate(safeReturnUrl || (result.user?.role === 'Admin' ? '/dashboard' : '/'));
+            navigate(safeReturnUrl || (result.user?.role === 'Admin' ? '/admin/dashboard' : '/'));
         } else {
             setError(result.message);
         }
