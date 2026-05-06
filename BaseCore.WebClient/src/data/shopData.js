@@ -123,8 +123,22 @@ export const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
 
-export const getProductImage = (product) =>
-  product?.imageUrl || product?.image || product?.thumbnailUrl || "/img/product-1.jpg";
+export const resolveImageUrl = (url) => {
+  if (!url) return "/img/product-1.jpg";
+  try {
+    const cached = localStorage.getItem("img_" + url);
+    if (cached) return cached;
+  } catch (e) {}
+  return url;
+};
+
+export const getRawImageUrl = (product) => {
+  return product?.imageUrl || product?.image || product?.thumbnailUrl || "/img/product-1.jpg";
+};
+
+export const getProductImage = (product) => {
+  return resolveImageUrl(getRawImageUrl(product));
+};
 
 export const getProductCategoryName = (product, categories = sampleCategories) => {
   if (product?.category?.name) return product.category.name;

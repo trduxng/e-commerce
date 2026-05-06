@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getProductImage } from "../data/shopData";
+import { getRawImageUrl } from "../data/shopData";
 
 const CartContext = createContext(null);
 const STORAGE_KEY = "basecore_cart";
@@ -51,7 +51,7 @@ export const CartProvider = ({ children }) => {
           id: product.id,
           name: product.name,
           price: Number(product.price || 0),
-          imageUrl: getProductImage(product),
+          imageUrl: getRawImageUrl(product),
           stock: product.stock,
           quantity: initialQuantity,
         },

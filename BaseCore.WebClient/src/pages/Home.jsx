@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { categoryApi, productApi } from "../services/api";
+import { resolveImageUrl } from "../data/shopData";
 import { normalizeProductList } from "../data/shopData";
 
 const Home = () => {
@@ -119,7 +120,7 @@ const Home = () => {
               <Link className="text-decoration-none" to={`/shop?categoryId=${category.id}`}>
                 <div className="cat-item d-flex align-items-center mb-4">
                   <div className="overflow-hidden" style={{ width: "100px", height: "100px" }}>
-                    <img className="img-fluid" src={category.imageUrl || category.image || `/img/cat-${(index % 4) + 1}.jpg`} alt={category.name} />
+                    <img className="img-fluid" src={resolveImageUrl(category.imageUrl || category.image || `/img/cat-${(index % 4) + 1}.jpg`)} alt={category.name} />
                   </div>
                   <div className="flex-fill pl-3">
                     <h6>{category.name}</h6>

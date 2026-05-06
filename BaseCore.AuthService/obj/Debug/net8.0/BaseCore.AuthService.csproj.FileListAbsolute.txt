@@ -1380,10 +1380,10 @@ D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\stat
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\staticwebassets.development.json
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\BaseCore.A4C47D7E.Up2Date
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\BaseCore.AuthService.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\refint\BaseCore.AuthService.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\BaseCore.AuthService.pdb
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\BaseCore.AuthService.genruntimeconfig.cache
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\ref\BaseCore.AuthService.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

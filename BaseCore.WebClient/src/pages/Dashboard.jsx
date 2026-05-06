@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { productApi, userApi, categoryApi, orderApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../data/shopData';
@@ -225,9 +226,9 @@ const Dashboard = () => {
                                     <div className="icon">
                                         <i className="fas fa-box"></i>
                                     </div>
-                                    <a href="/products" className="small-box-footer">
+                                    <Link to="/admin/products" className="small-box-footer">
                                         More info <i className="fas fa-arrow-circle-right"></i>
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
                             <div className="col-lg-3 col-6">
@@ -239,9 +240,9 @@ const Dashboard = () => {
                                     <div className="icon">
                                         <i className="fas fa-tags"></i>
                                     </div>
-                                    <a href="/categories" className="small-box-footer">
+                                    <Link to="/admin/categories" className="small-box-footer">
                                         More info <i className="fas fa-arrow-circle-right"></i>
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
                             {isAdmin() && (
@@ -254,9 +255,9 @@ const Dashboard = () => {
                                         <div className="icon">
                                             <i className="fas fa-users"></i>
                                         </div>
-                                        <a href="/users" className="small-box-footer">
+                                        <Link to="/admin/users" className="small-box-footer">
                                             More info <i className="fas fa-arrow-circle-right"></i>
-                                        </a>
+                                        </Link>
                                     </div>
                                 </div>
                             )}
@@ -482,8 +483,8 @@ const Dashboard = () => {
                                                     onChange={(event) => setOrderField('paymentMethod', event.target.value)}
                                                 >
                                                     <option value="cod">Cash on Delivery</option>
-                                                    <option value="banktransfer">Bank Transfer</option>
-                                                    <option value="paypal">Paypal</option>
+                                                    <option value="bank_transfer">Bank Transfer</option>
+                                                    <option value="momo">MoMo Wallet</option>
                                                 </select>
                                             </div>
                                             <div className="col-12 form-group">

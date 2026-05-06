@@ -346,10 +346,10 @@ D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\stati
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\staticwebassets.development.json
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\BaseCore.603A33FC.Up2Date
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\BaseCore.ApiGateway.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\refint\BaseCore.ApiGateway.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\BaseCore.ApiGateway.pdb
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\BaseCore.ApiGateway.genruntimeconfig.cache
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\ref\BaseCore.ApiGateway.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.ApiGateway\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

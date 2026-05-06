@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { orderApi } from '../services/api';
-import { formatCurrency } from '../data/shopData';
+import { formatCurrency, resolveImageUrl } from '../data/shopData';
 import ConfirmModal from '../components/ConfirmModal';
 
 const orderStatuses = [
@@ -75,7 +75,7 @@ const Orders = () => {
 
     const getOrderDetails = (order) => order.orderDetails || order.details || [];
     const getStatusMeta = (status) => orderStatuses.find((item) => item.value === status) || orderStatuses[0];
-    const getDetailImage = (detail) => detail.productImageUrl || detail.productVariant?.imageUrl || '/img/product-1.jpg';
+    const getDetailImage = (detail) => resolveImageUrl(detail.productImageUrl || detail.productVariant?.imageUrl || '/img/product-1.jpg');
 
     const handleStatusChangeRequest = (order, status) => {
         if (status === order.orderStatus) return;

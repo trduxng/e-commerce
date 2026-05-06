@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -107,6 +108,9 @@ namespace BaseCore.APIService.Controllers
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
+                // Truyền User ID xuống SQL Server Session để các Trigger (như Trigger trừ kho) có thể lấy và ghi log chính xác người thao tác, tránh lỗi khóa ngoại FK_inv_transactions_users
+                await _dbContext.Database.ExecuteSqlRawAsync("EXEC sp_set_session_context @key=N'user_id', @value={0}", userLongId.ToString());
+
                 // Validate products and calculate total
                 decimal totalAmount = 0;
                 var orderDetails = new List<OrderDetail>();
@@ -136,10 +140,10 @@ namespace BaseCore.APIService.Controllers
                     orderDetails.Add(new OrderDetail
                     {
                         ProductVariantId = variant.Id,
-                        ProductNameSnapshot = product.Name,
-                        SizeSnapshot = variant.Size,
-                        ColorSnapshot = variant.Color,
-                        SkuSnapshot = variant.Sku,
+                        ProductNameSnapshot = product.Name ?? "Unknown Product",
+                        SizeSnapshot = string.IsNullOrEmpty(variant.Size) ? null : (variant.Size.Length > 20 ? variant.Size.Substring(0, 20) : variant.Size),
+                        ColorSnapshot = string.IsNullOrEmpty(variant.Color) ? null : (variant.Color.Length > 50 ? variant.Color.Substring(0, 50) : variant.Color),
+                        SkuSnapshot = string.IsNullOrEmpty(variant.Sku) ? "N/A" : variant.Sku,
                         Quantity = item.Quantity,
                         UnitPrice = unitPrice,
                         TotalPrice = unitPrice * item.Quantity
@@ -147,7 +151,16 @@ namespace BaseCore.APIService.Controllers
 
                     variant.StockQuantity -= item.Quantity;
                     product.SoldCount += item.Quantity;
-                    await _productRepository.UpdateAsync(product);
+                    // Bỏ dòng dưới đây vì DbContext đã tự động track thay đổi của product/variant khi ta GetProductWithVariantsAsync. 
+                    // Nếu gọi UpdateAsync, nó có thể đánh dấu toàn bộ object graph thành Modified gây lỗi "The INSERT statement conflicted with the FOREIGN KEY constraint" hoặc lỗi thiếu IsRequired.
+                    // await _productRepository.UpdateAsync(product);
+                }
+
+                var validPaymentMethods = new[] { "cod", "bank_transfer", "momo", "vnpay" };
+                var paymentMethod = (dto.PaymentMethod ?? "cod").ToLower().Replace(" ", "_");
+                if (!validPaymentMethods.Contains(paymentMethod))
+                {
+                    paymentMethod = "cod"; // Fallback to safe value
                 }
 
                 var order = new Order
@@ -165,7 +178,7 @@ namespace BaseCore.APIService.Controllers
                     DiscountAmount = Math.Max(0, dto.DiscountAmount),
                     TaxAmount = Math.Max(0, dto.TaxAmount),
                     TotalAmount = totalAmount + Math.Max(0, dto.ShippingFee) + Math.Max(0, dto.TaxAmount) - Math.Max(0, dto.DiscountAmount),
-                    PaymentMethod = dto.PaymentMethod ?? "cod",
+                    PaymentMethod = paymentMethod,
                     PaymentStatus = "pending",
                     OrderStatus = "pending",
                     CouponCode = dto.CouponCode,
@@ -188,7 +201,8 @@ namespace BaseCore.APIService.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "An error occurred while creating the order. Transaction rolled back.", error = ex.Message });
+                var errorMsg = ex.InnerException != null ? $"{ex.Message} -> {ex.InnerException.Message}" : ex.Message;
+                return StatusCode(500, new { message = "An error occurred while creating the order. Transaction rolled back.", error = errorMsg });
             }
         }
 

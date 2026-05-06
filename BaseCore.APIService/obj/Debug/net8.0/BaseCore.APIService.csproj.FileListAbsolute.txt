@@ -1440,10 +1440,10 @@ D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\stati
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\staticwebassets.development.json
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\BaseCore.C709CDC1.Up2Date
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\BaseCore.APIService.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\refint\BaseCore.APIService.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\BaseCore.APIService.pdb
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\BaseCore.APIService.genruntimeconfig.cache
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\ref\BaseCore.APIService.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.APIService\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

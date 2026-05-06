@@ -82,3 +82,16 @@ D:\FW\FW\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.dll
 D:\FW\FW\BaseCore\BaseCore.DTO\obj\Debug\net8.0\refint\BaseCore.DTO.dll
 D:\FW\FW\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.pdb
 D:\FW\FW\BaseCore\BaseCore.DTO\obj\Debug\net8.0\ref\BaseCore.DTO.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\bin\Debug\net8.0\BaseCore.DTO.deps.json
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\bin\Debug\net8.0\BaseCore.DTO.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\bin\Debug\net8.0\BaseCore.DTO.pdb
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.csproj.AssemblyReference.cache
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.GeneratedMSBuildEditorConfig.editorconfig
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.AssemblyInfoInputs.cache
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.AssemblyInfo.cs
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.csproj.CoreCompileInputs.cache
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.sourcelink.json
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\refint\BaseCore.DTO.dll
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.pdb
+D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.DTO\obj\Debug\net8.0\ref\BaseCore.DTO.dll

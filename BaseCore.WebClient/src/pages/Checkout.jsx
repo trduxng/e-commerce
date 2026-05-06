@@ -64,7 +64,7 @@ const Checkout = () => {
       const responseData = error.response?.data;
       const detail = typeof responseData === "string"
         ? responseData.slice(0, 240)
-        : responseData?.message;
+        : (responseData?.error ? `${responseData.message} - Lỗi gốc: ${responseData.error}` : responseData?.message);
       setMessage(detail || "Order could not be submitted. Please check the API or sign in and try again.");
     } finally {
       setSubmitting(false);
@@ -186,8 +186,8 @@ const Checkout = () => {
               <div className="bg-light p-30">
                 {[
                   ["cod", "Cash on Delivery"],
-                  ["banktransfer", "Bank Transfer"],
-                  ["paypal", "Paypal"],
+                  ["bank_transfer", "Bank Transfer"],
+                  ["momo", "MoMo Wallet"],
                 ].map(([value, label]) => (
                   <div key={value} className="form-group">
                     <div className="custom-control custom-radio">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { orderApi } from "../services/api";
-import { formatCurrency } from "../data/shopData";
+import { formatCurrency, resolveImageUrl } from "../data/shopData";
 
 const statusMeta = {
   pending: { label: "Pending", className: "badge-warning" },
@@ -37,7 +37,7 @@ const MyOrders = () => {
   };
 
   const getOrderDetails = (order) => order.orderDetails || order.details || [];
-  const getDetailImage = (detail) => detail.productImageUrl || detail.productVariant?.imageUrl || "/img/product-1.jpg";
+  const getDetailImage = (detail) => resolveImageUrl(detail.productImageUrl || detail.productVariant?.imageUrl || "/img/product-1.jpg");
   const getStatus = (status) => statusMeta[status] || statusMeta.pending;
   const canCancel = (order) => !["delivered", "cancelled"].includes(order.orderStatus);
 

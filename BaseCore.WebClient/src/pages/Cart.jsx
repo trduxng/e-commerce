@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
-import { formatCurrency } from "../data/shopData";
+import { formatCurrency, resolveImageUrl } from "../data/shopData";
 
 const Cart = () => {
   const { items, subtotal, shipping, total, updateQuantity, removeFromCart } = useCart();
@@ -46,7 +46,7 @@ const Cart = () => {
                   {items.map((item) => (
                     <tr key={item.id}>
                       <td className="align-middle text-left">
-                        <img src={item.imageUrl} alt={item.name} style={{ width: "50px" }} className="mr-2" />
+                        <img src={resolveImageUrl(item.imageUrl)} alt={item.name} style={{ width: "50px" }} className="mr-2" />
                         {item.name}
                       </td>
                       <td className="align-middle">{formatCurrency(item.price)}</td>
