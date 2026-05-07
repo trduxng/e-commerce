@@ -100,9 +100,7 @@ var app = builder.Build();
 // Auto migrate database and Seed
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<SQLServerDbContext>();
-    dbContext.Database.EnsureCreated();
-    SeedUsers(dbContext);
+    BaseCore.Repository.DbInitializer.Initialize(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline.

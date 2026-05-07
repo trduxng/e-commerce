@@ -8,7 +8,6 @@ import {
   formatCurrency,
   getProductCategoryName,
   getProductImage,
-  getProductStock,
   normalizeProductList,
 } from "../data/shopData";
 
@@ -23,7 +22,6 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [cartMessage, setCartMessage] = useState("");
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -52,15 +50,14 @@ const ProductDetail = () => {
     loadProduct();
   }, [id]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
 
-    const result = await addToCart(product, quantity);
-    setCartMessage(result.message || (result.success ? "Product added to cart." : "Cannot add this product."));
+    addToCart(product, quantity);
   };
 
   if (loading) {
@@ -83,10 +80,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  const stock = getProductStock(product);
-  const isOutOfStock = stock !== null && stock <= 0;
-  const canIncreaseQuantity = stock === null || quantity < stock;
 
   return (
     <>
@@ -129,13 +122,8 @@ const ProductDetail = () => {
                 <strong>Category:</strong> {getProductCategoryName(product, [])}
               </p>
               <p className="mb-4">
-                <strong>Stock:</strong> {stock ?? "Available"}
+                <strong>Stock:</strong> {product.stock ?? "Available"}
               </p>
-              {cartMessage && (
-                <div className={`alert ${cartMessage.includes("Cannot") || cartMessage.includes("out of stock") ? "alert-warning" : "alert-success"}`}>
-                  {cartMessage}
-                </div>
-              )}
 
               <div className="d-flex align-items-center mb-4 pt-2">
                 <div className="input-group quantity mr-3" style={{ width: "130px" }}>
@@ -158,20 +146,13 @@ const ProductDetail = () => {
                     <button
                       type="button"
                       className="btn btn-primary btn-plus"
-                      disabled={!canIncreaseQuantity}
-                      onClick={() => {
-                        if (!canIncreaseQuantity) {
-                          setCartMessage(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
-                          return;
-                        }
-                        setQuantity((value) => value + 1);
-                      }}
+                      onClick={() => setQuantity((value) => value + 1)}
                     >
                       <i className="fa fa-plus"></i>
                     </button>
                   </div>
                 </div>
-                <button type="button" className="btn btn-primary px-3" disabled={isOutOfStock} onClick={handleAddToCart}>
+                <button type="button" className="btn btn-primary px-3" onClick={handleAddToCart}>
                   <i className="fa fa-shopping-cart mr-1"></i> Add To Cart
                 </button>
               </div>

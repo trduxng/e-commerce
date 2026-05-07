@@ -103,10 +103,7 @@ var app = builder.Build();
 // Auto migrate database
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<SQLServerDbContext>();
-    db.Database.EnsureCreated();
-    EnsureCartTables(db);
-    SeedCatalogData(db);
+    DbInitializer.Initialize(scope.ServiceProvider);
 }
 
 // Configure the HTTP request pipeline
@@ -170,81 +167,6 @@ static void SeedCatalogData(SQLServerDbContext db)
     }
 
     db.SaveChanges();
-}
-
-static void EnsureCartTables(SQLServerDbContext db)
-{
-    db.Database.ExecuteSqlRaw(@"
-IF SCHEMA_ID(N'orders') IS NULL
-    EXEC(N'CREATE SCHEMA [orders]');
-
-IF OBJECT_ID(N'[orders].[carts]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [orders].[carts] (
-        [id] BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT [PK_carts] PRIMARY KEY,
-        [user_id] BIGINT NOT NULL,
-        [created_at] DATETIME2 NOT NULL,
-        [updated_at] DATETIME2 NOT NULL,
-        CONSTRAINT [FK_carts_users_user_id] FOREIGN KEY ([user_id]) REFERENCES [auth].[users]([id]) ON DELETE CASCADE
-    );
-END;
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_carts_user_id' AND [object_id] = OBJECT_ID(N'[orders].[carts]'))
-    CREATE UNIQUE INDEX [IX_carts_user_id] ON [orders].[carts]([user_id]);
-
-IF COL_LENGTH(N'[orders].[carts]', N'created_at') IS NULL
-    ALTER TABLE [orders].[carts] ADD [created_at] DATETIME2 NOT NULL CONSTRAINT [DF_carts_created_at] DEFAULT SYSDATETIME();
-
-IF COL_LENGTH(N'[orders].[carts]', N'updated_at') IS NULL
-    ALTER TABLE [orders].[carts] ADD [updated_at] DATETIME2 NOT NULL CONSTRAINT [DF_carts_updated_at] DEFAULT SYSDATETIME();
-
-IF OBJECT_ID(N'[orders].[cart_items]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [orders].[cart_items] (
-        [id] BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT [PK_cart_items] PRIMARY KEY,
-        [cart_id] BIGINT NOT NULL,
-        [product_variant_id] BIGINT NOT NULL,
-        [quantity] INT NOT NULL,
-        [price_snapshot] DECIMAL(15, 2) NOT NULL,
-        [product_name_snapshot] NVARCHAR(255) NULL,
-        [image_url_snapshot] NVARCHAR(1000) NULL,
-        [sku_snapshot] NVARCHAR(120) NULL,
-        [size_snapshot] NVARCHAR(20) NULL,
-        [color_snapshot] NVARCHAR(50) NULL,
-        [created_at] DATETIME2 NOT NULL,
-        [updated_at] DATETIME2 NOT NULL,
-        CONSTRAINT [FK_cart_items_carts_cart_id] FOREIGN KEY ([cart_id]) REFERENCES [orders].[carts]([id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_cart_items_product_variants_product_variant_id] FOREIGN KEY ([product_variant_id]) REFERENCES [catalog].[product_variants]([id]) ON DELETE NO ACTION
-    );
-END;
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_cart_items_cart_variant' AND [object_id] = OBJECT_ID(N'[orders].[cart_items]'))
-    CREATE UNIQUE INDEX [IX_cart_items_cart_variant] ON [orders].[cart_items]([cart_id], [product_variant_id]);
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'price_snapshot') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [price_snapshot] DECIMAL(15, 2) NOT NULL CONSTRAINT [DF_cart_items_price_snapshot] DEFAULT 0;
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'product_name_snapshot') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [product_name_snapshot] NVARCHAR(255) NULL;
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'image_url_snapshot') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [image_url_snapshot] NVARCHAR(1000) NULL;
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'sku_snapshot') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [sku_snapshot] NVARCHAR(120) NULL;
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'size_snapshot') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [size_snapshot] NVARCHAR(20) NULL;
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'color_snapshot') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [color_snapshot] NVARCHAR(50) NULL;
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'created_at') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [created_at] DATETIME2 NOT NULL CONSTRAINT [DF_cart_items_created_at] DEFAULT SYSDATETIME();
-
-IF COL_LENGTH(N'[orders].[cart_items]', N'updated_at') IS NULL
-    ALTER TABLE [orders].[cart_items] ADD [updated_at] DATETIME2 NOT NULL CONSTRAINT [DF_cart_items_updated_at] DEFAULT SYSDATETIME();
-");
 }
 
 static Product CreateProduct(

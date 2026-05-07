@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { orderApi } from '../services/api';
-import { formatCurrency } from '../data/shopData';
+import { formatCurrency, resolveImageUrl } from '../data/shopData';
+import ConfirmModal from '../components/ConfirmModal';
 
 const orderStatuses = [
     { value: 'pending', label: 'Pending', badge: 'badge-warning' },
@@ -16,15 +17,24 @@ const Orders = () => {
     const [error, setError] = useState('');
     const [keyword, setKeyword] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
+    // Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        order: null,
+        newStatus: null
+    });
+
     useEffect(() => {
         loadOrders();
-    }, [keyword, statusFilter, page]);
+    }, [keyword, statusFilter, fromDate, toDate, page]);
 
     const loadOrders = async () => {
         setLoading(true);
@@ -32,8 +42,10 @@ const Orders = () => {
 
         try {
             const response = await orderApi.getAll({
-                keyword,
-                status: statusFilter,
+                keyword: keyword || undefined,
+                status: statusFilter || undefined,
+                fromDate: fromDate || undefined,
+                toDate: toDate || undefined,
                 page,
                 pageSize,
             });
@@ -63,16 +75,25 @@ const Orders = () => {
 
     const getOrderDetails = (order) => order.orderDetails || order.details || [];
     const getStatusMeta = (status) => orderStatuses.find((item) => item.value === status) || orderStatuses[0];
-    const getDetailImage = (detail) => detail.productImageUrl || detail.productVariant?.imageUrl || '/img/product-1.jpg';
+    const getDetailImage = (detail) => resolveImageUrl(detail.productImageUrl || detail.productVariant?.imageUrl || '/img/product-1.jpg');
 
-    const updateStatus = async (order, status) => {
+    const handleStatusChangeRequest = (order, status) => {
         if (status === order.orderStatus) return;
+        setConfirmModal({
+            isOpen: true,
+            order,
+            newStatus: status
+        });
+    };
 
+    const executeStatusUpdate = async () => {
+        const { order, newStatus } = confirmModal;
+        setConfirmModal({ isOpen: false, order: null, newStatus: null });
         setUpdatingOrderId(order.id);
         setError('');
 
         try {
-            const response = await orderApi.updateStatus(order.id, status);
+            const response = await orderApi.updateStatus(order.id, newStatus);
             const updatedOrder = response.data;
             setOrders((current) => current.map((item) => (
                 Number(item.id) === Number(order.id)
@@ -100,11 +121,20 @@ const Orders = () => {
 
     return (
         <div className="content-wrapper">
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="Confirm Status Update"
+                message={`Are you sure you want to change order ${confirmModal.order?.orderCode} status to ${getStatusMeta(confirmModal.newStatus).label}?`}
+                onConfirm={executeStatusUpdate}
+                onCancel={() => setConfirmModal({ isOpen: false, order: null, newStatus: null })}
+                type={confirmModal.newStatus === 'cancelled' ? 'danger' : 'primary'}
+            />
+
             <div className="content-header">
                 <div className="container-fluid">
                     <div className="row mb-2">
                         <div className="col-sm-6">
-                            <h1 className="m-0">Orders</h1>
+                            <h1 className="m-0">Order Resolution</h1>
                         </div>
                     </div>
                 </div>
@@ -115,12 +145,12 @@ const Orders = () => {
                     <div className="card">
                         <div className="card-header">
                             <div className="row align-items-center">
-                                <div className="col-lg-8">
+                                <div className="col-lg-12">
                                     <form className="form-inline" onSubmit={(event) => event.preventDefault()}>
                                         <input
                                             type="search"
                                             className="form-control mr-2 mb-2 mb-sm-0"
-                                            placeholder="Search code, customer, phone, product"
+                                            placeholder="Search code, customer, phone..."
                                             value={keyword}
                                             onChange={(event) => {
                                                 setKeyword(event.target.value);
@@ -140,13 +170,35 @@ const Orders = () => {
                                                 <option key={status.value} value={status.value}>{status.label}</option>
                                             ))}
                                         </select>
-                                        {(keyword || statusFilter) && (
+                                        <input
+                                            type="date"
+                                            className="form-control mr-2 mb-2 mb-sm-0"
+                                            value={fromDate}
+                                            onChange={(e) => {
+                                                setFromDate(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            title="From Date"
+                                        />
+                                        <input
+                                            type="date"
+                                            className="form-control mr-2 mb-2 mb-sm-0"
+                                            value={toDate}
+                                            onChange={(e) => {
+                                                setToDate(e.target.value);
+                                                setPage(1);
+                                            }}
+                                            title="To Date"
+                                        />
+                                        {(keyword || statusFilter || fromDate || toDate) && (
                                             <button
-                                                className="btn btn-outline-secondary"
+                                                className="btn btn-outline-secondary mb-2 mb-sm-0"
                                                 type="button"
                                                 onClick={() => {
                                                     setKeyword('');
                                                     setStatusFilter('');
+                                                    setFromDate('');
+                                                    setToDate('');
                                                     setPage(1);
                                                 }}
                                             >
@@ -154,11 +206,6 @@ const Orders = () => {
                                             </button>
                                         )}
                                     </form>
-                                </div>
-                                <div className="col-lg-4 text-lg-right mt-2 mt-lg-0">
-                                    <span className="text-muted">
-                                        Showing {orders.length} of {totalCount} orders
-                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -204,8 +251,8 @@ const Orders = () => {
                                                                         <div className="font-weight-bold">{detail.productNameSnapshot}</div>
                                                                         <small className="text-muted">
                                                                             Qty {detail.quantity}
-                                                                            {detail.colorSnapshot ? ` - ${detail.colorSnapshot}` : ''}
-                                                                            {detail.sizeSnapshot ? ` - ${detail.sizeSnapshot}` : ''}
+                                                                            {detail.colorSnapshot ? ` â€¢ ${detail.colorSnapshot}` : ''}
+                                                                            {detail.sizeSnapshot ? ` â€¢ ${detail.sizeSnapshot}` : ''}
                                                                         </small>
                                                                     </div>
                                                                 </div>
@@ -222,7 +269,7 @@ const Orders = () => {
                                                                     className="custom-select custom-select-sm order-status-select"
                                                                     value={order.orderStatus}
                                                                     disabled={updatingOrderId === order.id}
-                                                                    onChange={(event) => updateStatus(order, event.target.value)}
+                                                                    onChange={(event) => handleStatusChangeRequest(order, event.target.value)}
                                                                 >
                                                                     {orderStatuses.map((status) => (
                                                                         <option key={status.value} value={status.value}>

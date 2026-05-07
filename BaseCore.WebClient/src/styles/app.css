@@ -903,71 +903,6 @@ img {
   border-top: 1px solid var(--app-border);
 }
 
-.order-detail-modal .modal-body {
-  background: #ffffff;
-}
-
-.order-detail-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.order-detail-summary > div,
-.order-detail-section,
-.order-detail-totals {
-  border: 1px solid var(--app-border);
-  border-radius: var(--app-radius);
-  background: #ffffff;
-}
-
-.order-detail-summary > div {
-  padding: 14px;
-}
-
-.order-detail-section {
-  margin-bottom: 16px;
-  padding: 16px;
-}
-
-.order-detail-section h6 {
-  margin-bottom: 12px;
-  color: var(--app-text);
-  font-weight: 700;
-}
-
-.order-detail-section .order-products {
-  padding: 0;
-}
-
-.order-detail-section .order-product-row:first-child {
-  padding-top: 0;
-}
-
-.order-detail-section .order-product-row:last-child {
-  padding-bottom: 0;
-}
-
-.order-detail-totals {
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-}
-
-.order-detail-totals > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.order-detail-total {
-  padding-top: 12px;
-  border-top: 1px solid var(--app-border);
-  color: var(--app-primary);
-  font-size: 1.08rem;
-}
-
 .my-orders-empty {
   border: 1px solid var(--app-border);
   background: #ffffff !important;
@@ -1291,21 +1226,9 @@ img {
     flex-direction: column;
   }
 
-  .order-card-footer {
-    gap: 12px;
-  }
-
-  .order-card-footer .btn {
-    width: 100%;
-  }
-
   .order-product-price {
     width: 100%;
     padding-left: 86px;
-  }
-
-  .order-detail-summary {
-    grid-template-columns: 1fr;
   }
 
   .admin-shell .content-header h1 {

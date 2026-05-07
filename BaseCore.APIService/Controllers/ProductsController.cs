@@ -60,10 +60,10 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
-        /// Create new product (Admin only)
+        /// Create new product (requires authentication)
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
             // Validate category exists
@@ -105,10 +105,10 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
-        /// Update product (Admin only)
+        /// Update product (requires authentication)
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> Update(long id, [FromBody] ProductUpdateDto dto)
         {
             var product = await _productRepository.GetProductWithVariantsAsync(id);
@@ -160,10 +160,10 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
-        /// Delete product (Admin only)
+        /// Delete product (requires authentication)
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> Delete(long id)
         {
             var product = await _productRepository.GetProductWithVariantsAsync(id);

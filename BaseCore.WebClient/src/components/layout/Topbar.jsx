@@ -1,16 +1,41 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 
 const Topbar = () => {
   const [keyword, setKeyword] = useState("");
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
   const { count } = useCart();
+  const timeoutRef = useRef(null);
+
+  // Sync keyword with URL when navigating to /shop directly
+  useEffect(() => {
+    if (location.pathname === "/shop") {
+      const searchParams = new URLSearchParams(location.search);
+      setKeyword(searchParams.get("keyword") || "");
+    }
+  }, [location.pathname, location.search]);
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setKeyword(value);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      const query = value.trim();
+      navigate(query ? `/shop?keyword=${encodeURIComponent(query)}` : "/shop");
+    }, 500); // 500ms debounce
+  };
 
   const handleSearch = (event) => {
     event.preventDefault();
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     const query = keyword.trim();
     navigate(query ? `/shop?keyword=${encodeURIComponent(query)}` : "/shop");
   };
@@ -28,7 +53,7 @@ const Topbar = () => {
             <Link className="text-body mr-3" to="/">Home</Link>
             <Link className="text-body mr-3" to="/shop">Shop</Link>
             <Link className="text-body mr-3" to="/contact">Contact</Link>
-            {isAuthenticated && isAdmin() && <Link className="text-body mr-3" to="/dashboard">Admin</Link>}
+            {isAuthenticated && <Link className="text-body mr-3" to="/admin/dashboard">Admin</Link>}
           </div>
         </div>
 
@@ -41,7 +66,7 @@ const Topbar = () => {
                   {user?.name || user?.username}
                 </span>
                 <Link className="btn btn-sm btn-light ml-2" to="/my-orders">My Orders</Link>
-                {isAdmin() && <Link className="btn btn-sm btn-light ml-2" to="/dashboard">Dashboard</Link>}
+                <Link className="btn btn-sm btn-light ml-2" to="/admin/dashboard">Dashboard</Link>
                 <button className="btn btn-sm btn-primary ml-2" type="button" onClick={handleLogout}>
                   Logout
                 </button>
@@ -101,7 +126,7 @@ const Topbar = () => {
                 className="form-control"
                 placeholder="Search for products"
                 value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
+                onChange={handleSearchChange}
               />
               <div className="input-group-append">
                 <button type="submit" className="btn" aria-label="Search products">

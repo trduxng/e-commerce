@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const isAdmin = () => {
-        return String(user?.role || '').toLowerCase() === 'admin';
+        return user?.role === 'Admin';
     };
 
     const value = {

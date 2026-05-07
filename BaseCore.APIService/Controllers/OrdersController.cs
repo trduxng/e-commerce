@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -18,15 +19,18 @@ namespace BaseCore.APIService.Controllers
         private readonly IOrderRepositoryEF _orderRepository;
         private readonly IOrderDetailRepositoryEF _orderDetailRepository;
         private readonly IProductRepositoryEF _productRepository;
+        private readonly BaseCore.Repository.SQLServerDbContext _dbContext;
 
         public OrdersController(
             IOrderRepositoryEF orderRepository,
             IOrderDetailRepositoryEF orderDetailRepository,
-            IProductRepositoryEF productRepository)
+            IProductRepositoryEF productRepository,
+            BaseCore.Repository.SQLServerDbContext dbContext)
         {
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
             _productRepository = productRepository;
+            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -50,14 +54,19 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetAllOrders(
             [FromQuery] string? keyword,
             [FromQuery] string? status,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
             [FromQuery] int? page,
             [FromQuery] int? pageSize)
         {
-            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status))
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status) || fromDate.HasValue || toDate.HasValue)
             {
                 var safePage = Math.Max(1, page ?? 1);
                 var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
-                var (items, totalCount, summary) = await _orderRepository.SearchAllWithDetailsAsync(keyword, status, safePage, safePageSize);
+                var searchResult = await _orderRepository.SearchAllWithDetailsAsync(keyword, status, fromDate, toDate, safePage, safePageSize);
+                var items = searchResult.Orders;
+                var totalCount = searchResult.TotalCount;
+                var summary = searchResult.Summary;
 
                 return Ok(new
                 {
@@ -99,81 +108,105 @@ namespace BaseCore.APIService.Controllers
             if (dto.Items.Count == 0)
                 return BadRequest(new { message = "Order must contain at least one item" });
 
-            // Validate products and calculate total
-            decimal totalAmount = 0;
-            var orderDetails = new List<OrderDetail>();
-
-            foreach (var item in dto.Items)
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
             {
-                if (item.Quantity <= 0)
-                    return BadRequest(new { message = "Quantity must be greater than zero" });
+                // Truyền User ID xuống SQL Server Session để các Trigger (như Trigger trừ kho) có thể lấy và ghi log chính xác người thao tác, tránh lỗi khóa ngoại FK_inv_transactions_users
+                await _dbContext.Database.ExecuteSqlRawAsync("EXEC sp_set_session_context @key=N'user_id', @value={0}", userLongId.ToString());
 
-                var product = await _productRepository.GetProductWithVariantsAsync(item.ProductId);
-                if (product == null)
-                    return BadRequest(new { message = $"Product {item.ProductId} not found" });
+                // Validate products and calculate total
+                decimal totalAmount = 0;
+                var orderDetails = new List<OrderDetail>();
 
-                var variant = product.ProductVariants
-                    .Where(v => v.IsActive)
-                    .OrderBy(v => v.Id)
-                    .FirstOrDefault();
-
-                if (variant == null)
-                    return BadRequest(new { message = $"Product {product.Name} has no active variant" });
-
-                if (variant.StockQuantity < item.Quantity)
-                    return BadRequest(new { message = $"Insufficient stock for {product.Name}" });
-
-                var unitPrice = variant.SalePrice ?? variant.Price;
-                totalAmount += unitPrice * item.Quantity;
-                orderDetails.Add(new OrderDetail
+                foreach (var item in dto.Items)
                 {
-                    ProductVariantId = variant.Id,
-                    ProductNameSnapshot = product.Name,
-                    SizeSnapshot = variant.Size,
-                    ColorSnapshot = variant.Color,
-                    SkuSnapshot = variant.Sku,
-                    Quantity = item.Quantity,
-                    UnitPrice = unitPrice,
-                    TotalPrice = unitPrice * item.Quantity
-                });
+                    if (item.Quantity <= 0)
+                        return BadRequest(new { message = "Quantity must be greater than zero" });
 
-                variant.StockQuantity -= item.Quantity;
-                product.SoldCount += item.Quantity;
-                await _productRepository.UpdateAsync(product);
+                    var product = await _productRepository.GetProductWithVariantsAsync(item.ProductId);
+                    if (product == null)
+                        return BadRequest(new { message = $"Product {item.ProductId} not found" });
+
+                    var variant = product.ProductVariants
+                        .Where(v => v.IsActive)
+                        .OrderBy(v => v.Id)
+                        .FirstOrDefault();
+
+                    if (variant == null)
+                        return BadRequest(new { message = $"Product {product.Name} has no active variant" });
+
+                    if (variant.StockQuantity < item.Quantity)
+                        return BadRequest(new { message = $"Insufficient stock for {product.Name}" });
+
+                    var unitPrice = variant.SalePrice ?? variant.Price;
+                    totalAmount += unitPrice * item.Quantity;
+                    orderDetails.Add(new OrderDetail
+                    {
+                        ProductVariantId = variant.Id,
+                        ProductNameSnapshot = product.Name ?? "Unknown Product",
+                        SizeSnapshot = string.IsNullOrEmpty(variant.Size) ? null : (variant.Size.Length > 20 ? variant.Size.Substring(0, 20) : variant.Size),
+                        ColorSnapshot = string.IsNullOrEmpty(variant.Color) ? null : (variant.Color.Length > 50 ? variant.Color.Substring(0, 50) : variant.Color),
+                        SkuSnapshot = string.IsNullOrEmpty(variant.Sku) ? "N/A" : variant.Sku,
+                        Quantity = item.Quantity,
+                        UnitPrice = unitPrice,
+                        TotalPrice = unitPrice * item.Quantity
+                    });
+
+                    variant.StockQuantity -= item.Quantity;
+                    product.SoldCount += item.Quantity;
+                    // Bỏ dòng dưới đây vì DbContext đã tự động track thay đổi của product/variant khi ta GetProductWithVariantsAsync.
+                    // Nếu gọi UpdateAsync, nó có thể đánh dấu toàn bộ object graph thành Modified gây lỗi "The INSERT statement conflicted with the FOREIGN KEY constraint" hoặc lỗi thiếu IsRequired.
+                    // await _productRepository.UpdateAsync(product);
+                }
+
+                var validPaymentMethods = new[] { "cod", "bank_transfer", "momo", "vnpay" };
+                var paymentMethod = (dto.PaymentMethod ?? "cod").ToLower().Replace(" ", "_");
+                if (!validPaymentMethods.Contains(paymentMethod))
+                {
+                    paymentMethod = "cod"; // Fallback to safe value
+                }
+
+                var order = new Order
+                {
+                    OrderCode = $"INV-{DateTime.Now:yyyyMMdd}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString().Substring(8)}",
+                    UserId = userLongId,
+                    GuestEmail = dto.Email,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    ReceiverName = dto.ReceiverName ?? "Customer",
+                    ReceiverPhone = dto.ReceiverPhone ?? "0000000000",
+                    ShippingAddressFull = dto.ShippingAddress ?? "",
+                    Subtotal = totalAmount,
+                    ShippingFee = Math.Max(0, dto.ShippingFee),
+                    DiscountAmount = Math.Max(0, dto.DiscountAmount),
+                    TaxAmount = Math.Max(0, dto.TaxAmount),
+                    TotalAmount = totalAmount + Math.Max(0, dto.ShippingFee) + Math.Max(0, dto.TaxAmount) - Math.Max(0, dto.DiscountAmount),
+                    PaymentMethod = paymentMethod,
+                    PaymentStatus = "pending",
+                    OrderStatus = "pending",
+                    CouponCode = dto.CouponCode,
+                    Note = dto.Note
+                };
+
+                await _orderRepository.AddAsync(order);
+
+                // Add order details
+                foreach (var detail in orderDetails)
+                {
+                    detail.OrderId = order.Id;
+                    await _orderDetailRepository.AddAsync(detail);
+                }
+
+                await transaction.CommitAsync();
+
+                return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order, details = orderDetails });
             }
-
-            var order = new Order
+            catch (Exception ex)
             {
-                OrderCode = $"ORD-{DateTime.Now:yyyy}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
-                UserId = userLongId,
-                GuestEmail = dto.Email,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
-                ReceiverName = dto.ReceiverName ?? "Customer",
-                ReceiverPhone = dto.ReceiverPhone ?? "0000000000",
-                ShippingAddressFull = dto.ShippingAddress ?? "",
-                Subtotal = totalAmount,
-                ShippingFee = Math.Max(0, dto.ShippingFee),
-                DiscountAmount = Math.Max(0, dto.DiscountAmount),
-                TaxAmount = Math.Max(0, dto.TaxAmount),
-                TotalAmount = totalAmount + Math.Max(0, dto.ShippingFee) + Math.Max(0, dto.TaxAmount) - Math.Max(0, dto.DiscountAmount),
-                PaymentMethod = dto.PaymentMethod ?? "cod",
-                PaymentStatus = "pending",
-                OrderStatus = "pending",
-                CouponCode = dto.CouponCode,
-                Note = dto.Note
-            };
-
-            await _orderRepository.AddAsync(order);
-
-            // Add order details
-            foreach (var detail in orderDetails)
-            {
-                detail.OrderId = order.Id;
-                await _orderDetailRepository.AddAsync(detail);
+                await transaction.RollbackAsync();
+                var errorMsg = ex.InnerException != null ? $"{ex.Message} -> {ex.InnerException.Message}" : ex.Message;
+                return StatusCode(500, new { message = "An error occurred while creating the order. Transaction rolled back.", error = errorMsg });
             }
-
-            return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order, details = orderDetails });
         }
 
         /// <summary>

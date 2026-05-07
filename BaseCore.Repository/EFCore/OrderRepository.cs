@@ -11,6 +11,7 @@ namespace BaseCore.Repository.EFCore
         Task<List<Order>> GetByUserAsync(long userId);
         Task<List<Order>> GetAllWithDetailsAsync();
         Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(string? keyword, string? status, int page, int pageSize);
+        Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(string? keyword, string? status, DateTime? fromDate, DateTime? toDate, int page, int pageSize);
         Task<Order?> GetWithDetailsAsync(long orderId);
     }
 
@@ -51,9 +52,20 @@ namespace BaseCore.Repository.EFCore
                 .ToListAsync();
         }
 
+        public Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
+            string? keyword,
+            string? status,
+            int page,
+            int pageSize)
+        {
+            return SearchAllWithDetailsAsync(keyword, status, null, null, page, pageSize);
+        }
+
         public async Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
             string? keyword,
             string? status,
+            DateTime? fromDate,
+            DateTime? toDate,
             int page,
             int pageSize)
         {
@@ -66,6 +78,17 @@ namespace BaseCore.Repository.EFCore
                 .ThenInclude(od => od.ProductVariant)
                 .ThenInclude(pv => pv.Product)
                 .AsQueryable();
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt >= fromDate.Value.Date);
+            }
+
+            if (toDate.HasValue)
+            {
+                var endDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(o => o.CreatedAt <= endDate);
+            }
 
             if (!string.IsNullOrWhiteSpace(status))
             {

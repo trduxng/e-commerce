@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { formatCurrency, getProductImage, getProductStock } from "../data/shopData";
+import { formatCurrency, getProductImage } from "../data/shopData";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -10,18 +10,15 @@ const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const rating = Number(product.rating || 4);
-  const stock = getProductStock(product);
-  const [message, setMessage] = useState("");
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
 
-    const result = await addToCart(product);
-    setMessage(result.message || (result.success ? "Product added to cart." : "Cannot add this product."));
+    addToCart(product);
   };
 
   const renderStars = () =>
@@ -38,8 +35,7 @@ const ProductCard = ({ product }) => {
           <button
             type="button"
             className="btn btn-outline-dark btn-square"
-            title={stock === 0 ? "Out of stock" : "Add to cart"}
-            disabled={stock === 0}
+            title="Add to cart"
             onClick={handleAddToCart}
           >
             <i className="fa fa-shopping-cart"></i>
@@ -65,16 +61,6 @@ const ProductCard = ({ product }) => {
           {renderStars()}
           <small>({product.reviewCount || 24})</small>
         </div>
-        {stock !== null && (
-          <small className={stock > 0 ? "text-muted" : "text-danger"}>
-            {stock > 0 ? `${stock} in stock` : "Out of stock"}
-          </small>
-        )}
-        {message && (
-          <div className={`cart-inline-message ${message.includes("Cannot") || message.includes("out of stock") ? "text-danger" : "text-success"}`}>
-            {message}
-          </div>
-        )}
       </div>
     </div>
   );
