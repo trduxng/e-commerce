@@ -23,7 +23,7 @@ import ProductDetail from './pages/ProductDetail';
 import MyOrders from './pages/MyOrders';
 
 const queryClient = new QueryClient();
-const adminPaths = ['/admin/dashboard', '/admin/products', '/admin/categories', '/admin/orders', '/admin/revenue', '/admin/users'];
+const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users'];
 const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
 // Wrapper to redirect authenticated users away from login
@@ -46,7 +46,7 @@ const PublicRoute = ({ children }) => {
     if (isAuthenticated) {
         const targetUrl = safeReturnUrl && (isAdmin() || !isAdminPath(safeReturnUrl))
             ? safeReturnUrl
-            : (isAdmin() ? '/admin/dashboard' : '/');
+            : (isAdmin() ? '/dashboard' : '/');
         return <Navigate to={targetUrl} replace />;
     }
 
@@ -136,7 +136,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/dashboard"
+                path="/dashboard"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -146,7 +146,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/products"
+                path="/products"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -156,7 +156,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/categories"
+                path="/categories"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -166,7 +166,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/orders"
+                path="/orders"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -176,7 +176,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/revenue"
+                path="/revenue"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -186,7 +186,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/users"
+                path="/users"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
-import { orderApi } from "../services/api";
+import { cartApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, subtotal, shipping, total, clearCart } = useCart();
+  const { items, subtotal, shipping, total, reloadCart } = useCart();
   const { user } = useAuth();
   const [billingData, setBillingData] = useState({
     firstName: user?.name || "",
@@ -50,21 +50,18 @@ const Checkout = () => {
       paymentMethod,
       note: billingData.note,
       shippingFee: shipping,
-      items: items.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-      })),
     };
 
     try {
-      await orderApi.create(payload);
-      clearCart();
-      navigate("/shop");
+      const response = await cartApi.checkout(payload);
+      const orderId = response.data?.order?.id || response.data?.id;
+      await reloadCart();
+      navigate(orderId ? `/my-orders?orderId=${orderId}&success=1` : "/my-orders?success=1");
     } catch (error) {
       const responseData = error.response?.data;
       const detail = typeof responseData === "string"
         ? responseData.slice(0, 240)
-        : (responseData?.error ? `${responseData.message} - Lỗi gốc: ${responseData.error}` : responseData?.message);
+        : responseData?.message;
       setMessage(detail || "Order could not be submitted. Please check the API or sign in and try again.");
     } finally {
       setSubmitting(false);
@@ -186,8 +183,8 @@ const Checkout = () => {
               <div className="bg-light p-30">
                 {[
                   ["cod", "Cash on Delivery"],
-                  ["bank_transfer", "Bank Transfer"],
-                  ["momo", "MoMo Wallet"],
+                  ["banktransfer", "Bank Transfer"],
+                  ["paypal", "Paypal"],
                 ].map(([value, label]) => (
                   <div key={value} className="form-group">
                     <div className="custom-control custom-radio">

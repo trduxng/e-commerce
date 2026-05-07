@@ -123,21 +123,24 @@ export const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
 
-export const resolveImageUrl = (url) => {
-  if (!url) return "/img/product-1.jpg";
-  try {
-    const cached = localStorage.getItem("img_" + url);
-    if (cached) return cached;
-  } catch (e) {}
-  return url;
-};
+export const getProductImage = (product) =>
+  product?.imageUrl || product?.image || product?.thumbnailUrl || "/img/product-1.jpg";
 
-export const getRawImageUrl = (product) => {
-  return product?.imageUrl || product?.image || product?.thumbnailUrl || "/img/product-1.jpg";
-};
+export const getProductStock = (product) => {
+  if (product?.stock !== null && product?.stock !== undefined && product?.stock !== "") {
+    const directStock = Number(product.stock);
+    if (Number.isFinite(directStock)) return Math.max(0, directStock);
+  }
 
-export const getProductImage = (product) => {
-  return resolveImageUrl(getRawImageUrl(product));
+  const variants = product?.productVariants || product?.variants || [];
+  if (Array.isArray(variants) && variants.length > 0) {
+    return variants.reduce((sum, variant) => {
+      const stock = Number(variant?.stockQuantity ?? variant?.stock);
+      return sum + (Number.isFinite(stock) ? Math.max(0, stock) : 0);
+    }, 0);
+  }
+
+  return null;
 };
 
 export const getProductCategoryName = (product, categories = sampleCategories) => {

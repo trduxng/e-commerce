@@ -52,13 +52,13 @@ namespace BaseCore.Repository.EFCore
                 .ToListAsync();
         }
 
-        public Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
+        public async Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
             string? keyword,
             string? status,
             int page,
             int pageSize)
         {
-            return SearchAllWithDetailsAsync(keyword, status, null, null, page, pageSize);
+            return await SearchAllWithDetailsAsync(keyword, status, null, null, page, pageSize);
         }
 
         public async Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(

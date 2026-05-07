@@ -1,7 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Footer = () => {
+  const { isAuthenticated, isAdmin } = useAuth();
+
   return (
     <div className="container-fluid storefront-footer pt-5">
       <div className="row px-xl-5 pt-5">
@@ -36,9 +39,14 @@ const Footer = () => {
               <h5 className="text-uppercase mb-4">My Account</h5>
               <div className="d-flex flex-column justify-content-start">
                 <Link className="text-secondary mb-2" to="/login"><i className="fa fa-angle-right mr-2"></i>Sign In</Link>
-                <Link className="text-secondary mb-2" to="/dashboard"><i className="fa fa-angle-right mr-2"></i>Dashboard</Link>
-                <Link className="text-secondary mb-2" to="/products"><i className="fa fa-angle-right mr-2"></i>Manage Products</Link>
-                <Link className="text-secondary" to="/categories"><i className="fa fa-angle-right mr-2"></i>Manage Categories</Link>
+                {isAuthenticated && <Link className="text-secondary mb-2" to="/my-orders"><i className="fa fa-angle-right mr-2"></i>My Orders</Link>}
+                {isAdmin() && (
+                  <>
+                    <Link className="text-secondary mb-2" to="/dashboard"><i className="fa fa-angle-right mr-2"></i>Dashboard</Link>
+                    <Link className="text-secondary mb-2" to="/products"><i className="fa fa-angle-right mr-2"></i>Manage Products</Link>
+                    <Link className="text-secondary" to="/categories"><i className="fa fa-angle-right mr-2"></i>Manage Categories</Link>
+                  </>
+                )}
               </div>
             </div>
 
