@@ -107,3 +107,16 @@ D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.Common\obj\Debug\net8.0\refint\BaseCore.Common.dll
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.pdb
 D:\Code\Project_Web_nam3_ky2\BaseCore\BaseCore.Common\obj\Debug\net8.0\ref\BaseCore.Common.dll
+D:\lambtweb\e-commerce\BaseCore.Common\bin\Debug\net8.0\BaseCore.Common.deps.json
+D:\lambtweb\e-commerce\BaseCore.Common\bin\Debug\net8.0\BaseCore.Common.dll
+D:\lambtweb\e-commerce\BaseCore.Common\bin\Debug\net8.0\BaseCore.Common.pdb
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.csproj.AssemblyReference.cache
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.GeneratedMSBuildEditorConfig.editorconfig
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.AssemblyInfoInputs.cache
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.AssemblyInfo.cs
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.csproj.CoreCompileInputs.cache
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.sourcelink.json
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.dll
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\refint\BaseCore.Common.dll
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.pdb
+D:\lambtweb\e-commerce\BaseCore.Common\obj\Debug\net8.0\ref\BaseCore.Common.dll

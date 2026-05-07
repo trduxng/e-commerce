@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj": {}
+    "D:\\lambtweb\\e-commerce\\BaseCore.Services\\BaseCore.Services.csproj": {}
   },
   "projects": {
-    "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj": {
+    "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj",
+        "projectUniqueName": "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj",
         "projectName": "BaseCore.Common",
-        "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj",
-        "packagesPath": "C:\\Users\\Tran Dung\\.nuget\\packages\\",
-        "outputPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\obj\\",
+        "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\lambtweb\\e-commerce\\BaseCore.Common\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Microsoft_Visual_Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Tran Dung\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -103,24 +103,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj": {
+    "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj",
+        "projectUniqueName": "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj",
         "projectName": "BaseCore.Entities",
-        "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj",
-        "packagesPath": "C:\\Users\\Tran Dung\\.nuget\\packages\\",
-        "outputPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\obj\\",
+        "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Microsoft_Visual_Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Tran Dung\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -135,8 +135,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj": {
-                "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj"
+              "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj": {
+                "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj"
               }
             }
           }
@@ -151,7 +151,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -178,24 +178,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj": {
+    "D:\\lambtweb\\e-commerce\\BaseCore.Repository\\BaseCore.Repository.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj",
+        "projectUniqueName": "D:\\lambtweb\\e-commerce\\BaseCore.Repository\\BaseCore.Repository.csproj",
         "projectName": "BaseCore.Repository",
-        "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj",
-        "packagesPath": "C:\\Users\\Tran Dung\\.nuget\\packages\\",
-        "outputPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Repository\\obj\\",
+        "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Repository\\BaseCore.Repository.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\lambtweb\\e-commerce\\BaseCore.Repository\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Microsoft_Visual_Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Tran Dung\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -210,8 +210,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj": {
-                "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj"
+              "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj": {
+                "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj"
               }
             }
           }
@@ -226,7 +226,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -263,24 +263,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj": {
+    "D:\\lambtweb\\e-commerce\\BaseCore.Services\\BaseCore.Services.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj",
+        "projectUniqueName": "D:\\lambtweb\\e-commerce\\BaseCore.Services\\BaseCore.Services.csproj",
         "projectName": "BaseCore.Services",
-        "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj",
-        "packagesPath": "C:\\Users\\Tran Dung\\.nuget\\packages\\",
-        "outputPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Services\\obj\\",
+        "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Services\\BaseCore.Services.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\lambtweb\\e-commerce\\BaseCore.Services\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Microsoft_Visual_Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Tran Dung\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -295,14 +295,14 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj": {
-                "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj"
+              "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj": {
+                "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Common\\BaseCore.Common.csproj"
               },
-              "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj": {
-                "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj"
+              "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj": {
+                "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Entities\\BaseCore.Entities.csproj"
               },
-              "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj": {
-                "projectPath": "D:\\Code\\Project_Web_nam3_ky2\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj"
+              "D:\\lambtweb\\e-commerce\\BaseCore.Repository\\BaseCore.Repository.csproj": {
+                "projectPath": "D:\\lambtweb\\e-commerce\\BaseCore.Repository\\BaseCore.Repository.csproj"
               }
             }
           }
@@ -317,7 +317,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -352,7 +352,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
