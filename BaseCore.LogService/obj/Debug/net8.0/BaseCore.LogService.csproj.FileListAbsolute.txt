@@ -1,5 +1,0 @@
-D:\FW\FW\BaseCore\BaseCore.LogService\obj\Debug\net8.0\BaseCore.LogService.csproj.AssemblyReference.cache
-D:\FW\FW\BaseCore\BaseCore.LogService\obj\Debug\net8.0\BaseCore.LogService.GeneratedMSBuildEditorConfig.editorconfig
-D:\FW\FW\BaseCore\BaseCore.LogService\obj\Debug\net8.0\BaseCore.LogService.AssemblyInfoInputs.cache
-D:\FW\FW\BaseCore\BaseCore.LogService\obj\Debug\net8.0\BaseCore.LogService.AssemblyInfo.cs
-D:\FW\FW\BaseCore\BaseCore.LogService\obj\Debug\net8.0\BaseCore.LogService.csproj.CoreCompileInputs.cache
