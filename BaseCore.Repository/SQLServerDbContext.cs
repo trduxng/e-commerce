@@ -98,7 +98,7 @@ namespace BaseCore.Repository
             // Schema: catalog
             modelBuilder.Entity<Category>(entity =>
             {
-                entity.ToTable("product_types", "catalog");
+                entity.ToTable("product_types", "catalog", table => table.UseSqlOutputClause(false));
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
@@ -137,7 +137,7 @@ namespace BaseCore.Repository
 
             modelBuilder.Entity<Product>(entity =>
             {
-                entity.ToTable("products", "catalog");
+                entity.ToTable("products", "catalog", table => table.UseSqlOutputClause(false));
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
@@ -166,7 +166,7 @@ namespace BaseCore.Repository
 
             modelBuilder.Entity<ProductVariant>(entity =>
             {
-                entity.ToTable("product_variants", "catalog");
+                entity.ToTable("product_variants", "catalog", table => table.UseSqlOutputClause(false));
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.ProductId).HasColumnName("product_id");
@@ -208,27 +208,41 @@ namespace BaseCore.Repository
             // Schema: orders
             modelBuilder.Entity<Cart>(entity =>
             {
-                entity.ToTable("carts", "orders");
+                entity.ToTable("carts", "orders", table => table.UseSqlOutputClause(false));
+                entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.UserId).HasColumnName("user_id");
                 entity.Property(e => e.SessionToken).HasColumnName("session_token");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("GETDATE()");
                 entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("GETDATE()");
+                entity.HasIndex(e => e.UserId).IsUnique();
             });
 
             modelBuilder.Entity<CartItem>(entity =>
             {
-                entity.ToTable("cart_items", "orders");
+                entity.ToTable("cart_items", "orders", table => table.UseSqlOutputClause(false));
+                entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.CartId).HasColumnName("cart_id");
                 entity.Property(e => e.ProductVariantId).HasColumnName("product_variant_id");
                 entity.Property(e => e.Quantity).HasColumnName("quantity");
                 entity.Property(e => e.PriceSnapshot).HasColumnName("price_snapshot").HasPrecision(15, 2);
+                entity.HasIndex(e => new { e.CartId, e.ProductVariantId }).IsUnique();
+
+                entity.HasOne<Cart>()
+                      .WithMany(e => e.Items)
+                      .HasForeignKey(e => e.CartId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.ProductVariant)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProductVariantId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Order>(entity =>
             {
-                entity.ToTable("bills", "orders");
+                entity.ToTable("bills", "orders", table => table.UseSqlOutputClause(false));
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.OrderCode).HasColumnName("order_code").HasMaxLength(30).IsRequired();

@@ -63,39 +63,39 @@ const MainLayout = ({ children }) => {
                     <nav className="mt-2">
                         <ul className="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
                             <li className="nav-item">
-                                <Link to="/admin/dashboard" className={`nav-link ${isActive('/admin/dashboard')}`}>
+                                <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>
                                     <i className="nav-icon fas fa-tachometer-alt"></i>
                                     <p>Dashboard</p>
+                                </Link>
+                            </li>
+                            <li className="nav-item">
+                                <Link to="/products" className={`nav-link ${isActive('/products')}`}>
+                                    <i className="nav-icon fas fa-box"></i>
+                                    <p>Products</p>
+                                </Link>
+                            </li>
+                            <li className="nav-item">
+                                <Link to="/categories" className={`nav-link ${isActive('/categories')}`}>
+                                    <i className="nav-icon fas fa-tags"></i>
+                                    <p>Categories</p>
                                 </Link>
                             </li>
                             {isAdmin() && (
                                 <>
                                     <li className="nav-item">
-                                        <Link to="/admin/products" className={`nav-link ${isActive('/admin/products')}`}>
-                                            <i className="nav-icon fas fa-box"></i>
-                                            <p>Products</p>
-                                        </Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link to="/admin/categories" className={`nav-link ${isActive('/admin/categories')}`}>
-                                            <i className="nav-icon fas fa-tags"></i>
-                                            <p>Categories</p>
-                                        </Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link to="/admin/orders" className={`nav-link ${isActive('/admin/orders')}`}>
+                                        <Link to="/orders" className={`nav-link ${isActive('/orders')}`}>
                                             <i className="nav-icon fas fa-shopping-cart"></i>
                                             <p>Orders</p>
                                         </Link>
                                     </li>
                                     <li className="nav-item">
-                                        <Link to="/admin/revenue" className={`nav-link ${isActive('/admin/revenue')}`}>
+                                        <Link to="/revenue" className={`nav-link ${isActive('/revenue')}`}>
                                             <i className="nav-icon fas fa-coins"></i>
                                             <p>Revenue</p>
                                         </Link>
                                     </li>
                                     <li className="nav-item">
-                                        <Link to="/admin/users" className={`nav-link ${isActive('/admin/users')}`}>
+                                        <Link to="/users" className={`nav-link ${isActive('/users')}`}>
                                             <i className="nav-icon fas fa-users"></i>
                                             <p>Users</p>
                                         </Link>

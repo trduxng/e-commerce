@@ -69,6 +69,16 @@ export const categoryApi = {
     delete: (id) => api.delete(`/categories/${id}`),
 };
 
+// Cart API
+export const cartApi = {
+    get: () => api.get('/cart'),
+    addItem: (data) => api.post('/cart/items', data),
+    updateItem: (productId, quantity) => api.put(`/cart/items/${productId}`, { quantity }),
+    removeItem: (productId) => api.delete(`/cart/items/${productId}`),
+    clear: () => api.delete('/cart'),
+    checkout: (data) => api.post('/cart/checkout', data),
+};
+
 // Order API
 export const orderApi = {
     create: (data) => api.post('/orders', data),

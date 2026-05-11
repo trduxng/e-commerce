@@ -2,11 +2,35 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
-import { formatCurrency, resolveImageUrl } from "../data/shopData";
+import { formatCurrency } from "../data/shopData";
 
 const Cart = () => {
   const { items, subtotal, shipping, total, updateQuantity, removeFromCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const [message, setMessage] = React.useState("");
+  const [quantityDrafts, setQuantityDrafts] = React.useState({});
+
+  const changeQuantity = async (item, quantity) => {
+    const result = await updateQuantity(item.productVariantId ?? item.cartItemId ?? item.id, quantity);
+    setQuantityDrafts((drafts) => {
+      const nextDrafts = { ...drafts };
+      delete nextDrafts[item.productVariantId ?? item.cartItemId ?? item.id];
+      return nextDrafts;
+    });
+    setMessage(result?.message || "");
+  };
+
+  const commitQuantityInput = (item, value) => {
+    const nextQuantity = Math.max(1, Math.floor(Number(value) || 1));
+    changeQuantity(item, nextQuantity);
+  };
+
+  const getItemKey = (item) => item.productVariantId ?? item.cartItemId ?? item.id;
+
+  const removeItem = async (item) => {
+    const result = await removeFromCart(item.productVariantId ?? item.cartItemId ?? item.id);
+    setMessage(result?.message || "");
+  };
 
   return (
     <>
@@ -25,6 +49,14 @@ const Cart = () => {
       <div className="container-fluid">
         <div className="row px-xl-5">
           <div className="col-lg-8 table-responsive mb-5">
+            {message && (
+              <div className="alert alert-warning alert-dismissible">
+                <button type="button" className="close" onClick={() => setMessage("")}>
+                  &times;
+                </button>
+                {message}
+              </div>
+            )}
             {items.length === 0 ? (
               <div className="bg-light p-5 text-center">
                 <h4>Your cart is empty</h4>
@@ -44,43 +76,67 @@ const Cart = () => {
                 </thead>
                 <tbody className="align-middle">
                   {items.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={getItemKey(item)}>
                       <td className="align-middle text-left">
-                        <img src={resolveImageUrl(item.imageUrl)} alt={item.name} style={{ width: "50px" }} className="mr-2" />
+                        <img src={item.imageUrl} alt={item.name} style={{ width: "50px" }} className="mr-2" />
                         {item.name}
+                        {(item.size || item.color) && (
+                          <small className="text-muted d-block ml-5">
+                            {[item.size && `Size: ${item.size}`, item.color && `Color: ${item.color}`].filter(Boolean).join(" | ")}
+                          </small>
+                        )}
                       </td>
                       <td className="align-middle">{formatCurrency(item.price)}</td>
                       <td className="align-middle">
-                        <div className="input-group quantity mx-auto" style={{ width: "110px" }}>
-                          <div className="input-group-btn">
+                        <div className="input-group quantity mx-auto" style={{ width: "130px" }}>
+                          <div className="input-group-prepend">
                             <button
                               type="button"
                               className="btn btn-sm btn-primary btn-minus"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => changeQuantity(item, Math.max(1, Number(item.quantity || 1) - 1))}
                             >
                               <i className="fa fa-minus"></i>
                             </button>
                           </div>
                           <input
                             type="text"
-                            className="form-control form-control-sm bg-secondary border-0 text-dark text-center"
-                            value={item.quantity}
-                            readOnly
+                            inputMode="numeric"
+                            className="form-control form-control-sm bg-white text-dark text-center"
+                            value={quantityDrafts[getItemKey(item)] ?? item.quantity}
+                            onChange={(event) => {
+                              if (/^\d*$/.test(event.target.value)) {
+                                setQuantityDrafts((drafts) => ({
+                                  ...drafts,
+                                  [getItemKey(item)]: event.target.value,
+                                }));
+                              }
+                            }}
+                            onBlur={(event) => commitQuantityInput(item, event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.currentTarget.blur();
+                              }
+                            }}
+                            aria-label="Quantity"
                           />
-                          <div className="input-group-btn">
+                          <div className="input-group-append">
                             <button
                               type="button"
                               className="btn btn-sm btn-primary btn-plus"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              disabled={item.stock !== null && item.stock !== undefined && item.quantity >= Number(item.stock)}
+                              onClick={() => changeQuantity(item, Number(item.quantity || 1) + 1)}
                             >
                               <i className="fa fa-plus"></i>
                             </button>
                           </div>
                         </div>
+                        {item.stock !== null && item.stock !== undefined && (
+                          <small className="text-muted d-block mt-1">Stock: {item.stock}</small>
+                        )}
                       </td>
                       <td className="align-middle">{formatCurrency(item.price * item.quantity)}</td>
                       <td className="align-middle">
-                        <button className="btn btn-sm btn-danger" type="button" onClick={() => removeFromCart(item.id)}>
+                        <button className="btn btn-sm btn-danger" type="button" onClick={() => removeItem(item)}>
                           <i className="fa fa-times"></i>
                         </button>
                       </td>

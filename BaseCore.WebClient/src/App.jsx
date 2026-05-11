@@ -3,8 +3,6 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-
-const queryClient = new QueryClient();
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import ShopLayout from './components/ShopLayout';
@@ -24,6 +22,10 @@ import Contact from './pages/Contact';
 import ProductDetail from './pages/ProductDetail';
 import MyOrders from './pages/MyOrders';
 
+const queryClient = new QueryClient();
+const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users'];
+const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
+
 // Wrapper to redirect authenticated users away from login
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading, isAdmin } = useAuth();
@@ -42,7 +44,10 @@ const PublicRoute = ({ children }) => {
     }
 
     if (isAuthenticated) {
-        return <Navigate to={safeReturnUrl || (isAdmin() ? '/admin/dashboard' : '/')} replace />;
+        const targetUrl = safeReturnUrl && (isAdmin() || !isAdminPath(safeReturnUrl))
+            ? safeReturnUrl
+            : (isAdmin() ? '/dashboard' : '/');
+        return <Navigate to={targetUrl} replace />;
     }
 
     return children;
@@ -131,7 +136,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/dashboard"
+                path="/dashboard"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -141,7 +146,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/products"
+                path="/products"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -151,7 +156,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/categories"
+                path="/categories"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -161,7 +166,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/orders"
+                path="/orders"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -171,7 +176,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/revenue"
+                path="/revenue"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
@@ -181,7 +186,7 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/admin/users"
+                path="/users"
                 element={
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>

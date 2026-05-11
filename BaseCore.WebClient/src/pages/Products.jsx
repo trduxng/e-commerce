@@ -45,7 +45,6 @@ const Products = () => {
     const [categoryError, setCategoryError] = useState('');
     const [newCategoryName, setNewCategoryName] = useState('');
     const [savingCategory, setSavingCategory] = useState(false);
-    const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
     const { isAdmin } = useAuth();
 
     useEffect(() => {
@@ -153,7 +152,6 @@ const Products = () => {
 
     const openModal = async (product = null) => {
         setError('');
-        setImagePreviewUrl(null);
         const availableCategories = categories.length > 0 ? categories : await loadCategories();
 
         if (product) {
@@ -199,7 +197,6 @@ const Products = () => {
         setShowModal(false);
         setEditingProduct(null);
         setError('');
-        setImagePreviewUrl(null);
     };
 
     const handleSubmit = async (event) => {
@@ -232,19 +229,19 @@ const Products = () => {
 
         try {
             const data = {
-                name: formData.name?.trim() || '',
+                name: formData.name.trim(),
                 categoryId: Number(formData.categoryId),
-                shortDescription: formData.shortDescription?.trim() || '',
-                description: formData.description?.trim() || '',
-                imageUrl: formData.imageUrl?.trim() || '',
+                shortDescription: formData.shortDescription.trim(),
+                description: formData.description.trim(),
+                imageUrl: formData.imageUrl.trim(),
                 price,
                 salePrice,
                 stock,
-                sku: formData.sku?.trim() || '',
-                size: formData.size?.trim() || '',
-                color: formData.color?.trim() || '',
-                isActive: Boolean(formData.isActive),
-                isFeatured: Boolean(formData.isFeatured),
+                sku: formData.sku.trim(),
+                size: formData.size.trim(),
+                color: formData.color.trim(),
+                isActive: formData.isActive,
+                isFeatured: formData.isFeatured,
             };
 
             if (editingProduct) {
@@ -256,8 +253,7 @@ const Products = () => {
             closeModal();
             loadProducts();
         } catch (error) {
-            console.error('Submit product error:', error);
-            setError(error.response?.data?.message || error.message || 'Operation failed');
+            setError(error.response?.data?.message || 'Operation failed');
         }
     };
 
@@ -282,30 +278,6 @@ const Products = () => {
             );
         }
         return pages;
-    };
-
-    const handleImageSelect = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Tạo Data URL tạm để hiển thị hình ảnh trên Modal mà không bị vỡ.
-        setImagePreviewUrl(URL.createObjectURL(file));
-
-        // Fix lỗi "Operation failed": Database giới hạn ImageUrl 1000 ký tự.
-        // Do chưa có API upload thật, ta giả lập đường dẫn tĩnh dựa trên tên file.
-        const fakeUrl = `/img/${file.name}`;
-        setField('imageUrl', fakeUrl);
-
-        // Lưu bản Base64 vào bộ nhớ đệm LocalStorage để khi hiển thị list ngoài quản trị sẽ hiện được ảnh giả lập.
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                localStorage.setItem('img_' + fakeUrl, e.target.result);
-            } catch (err) {
-                console.warn('LocalStorage đầy hoặc không thể lưu ảnh tạm:', err);
-            }
-        };
-        reader.readAsDataURL(file);
     };
 
     return (
@@ -552,34 +524,14 @@ const Products = () => {
                                                 />
                                             </div>
                                             <div className="form-group">
-                                                <label>Product Image</label>
-                                                <div>
-                                                    <input
-                                                        type="file"
-                                                        id="productImageInput"
-                                                        accept="image/*, .webp, image/webp"
-                                                        style={{ display: 'none' }}
-                                                        onChange={handleImageSelect}
-                                                    />
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            value={formData.imageUrl?.startsWith('data:image') ? 'Base64 Encoded Image' : formData.imageUrl}
-                                                            onChange={(event) => setField('imageUrl', event.target.value)}
-                                                            placeholder="/img/product-1.jpg or choose file"
-                                                        />
-                                                        <div className="input-group-append">
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-outline-secondary"
-                                                                onClick={() => document.getElementById('productImageInput').click()}
-                                                            >
-                                                                <i className="fas fa-image"></i> Browse...
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <label>Image URL</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={formData.imageUrl}
+                                                    onChange={(event) => setField('imageUrl', event.target.value)}
+                                                    placeholder="/img/product-1.jpg or https://..."
+                                                />
                                             </div>
                                         </div>
 
@@ -682,7 +634,7 @@ const Products = () => {
                                                 <div className="font-weight-bold mb-2">Preview</div>
                                                 <div className="d-flex align-items-center">
                                                     <img
-                                                        src={imagePreviewUrl || formData.imageUrl || '/img/product-1.jpg'}
+                                                        src={formData.imageUrl || '/img/product-1.jpg'}
                                                         alt="Preview"
                                                         style={{ width: '72px', height: '72px', objectFit: 'cover' }}
                                                         className="mr-3"

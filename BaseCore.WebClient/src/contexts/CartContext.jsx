@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getRawImageUrl } from "../data/shopData";
+import { cartApi } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
-const STORAGE_KEY = "basecore_cart";
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -12,80 +12,127 @@ export const useCart = () => {
   return context;
 };
 
+const normalizeItems = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+};
+
+const getErrorMessage = (error, fallback) => {
+  const responseData = error?.response?.data;
+  if (typeof responseData === "string") return responseData;
+  return responseData?.message || fallback;
+};
+
 export const CartProvider = ({ children }) => {
-  const [items, setItems] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
+  const { user, loading: authLoading } = useAuth();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const applyCartResponse = (data) => {
+    setItems(normalizeItems(data));
+  };
+
+  const reloadCart = async () => {
+    if (authLoading) return;
+    if (!user) {
+      setItems([]);
+      return;
     }
-  });
+
+    setLoading(true);
+    try {
+      const response = await cartApi.get();
+      applyCartResponse(response.data);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    reloadCart();
+  }, [authLoading, user?.userId, user?.id, user?.username, user?.email]);
 
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = async (product, quantity = 1, productVariantId = null) => {
+    if (!user) {
+      return { success: false, message: "Please sign in before adding products to cart." };
+    }
+
     const safeQuantity = Math.max(1, Number(quantity) || 1);
-    setItems((currentItems) => {
-      const existing = currentItems.find((item) => Number(item.id) === Number(product.id));
-      if (existing) {
-        const newQuantity = existing.quantity + safeQuantity;
-        // Stock Validation
-        const finalQuantity = product.stock ? Math.min(newQuantity, product.stock) : newQuantity;
-        
-        return currentItems.map((item) =>
-          Number(item.id) === Number(product.id)
-            ? { ...item, quantity: finalQuantity }
-            : item
-        );
-      }
+    const variantId = productVariantId ?? product.productVariantId ?? product.selectedVariantId ?? null;
 
-      // Stock Validation for new item
-      const initialQuantity = product.stock ? Math.min(safeQuantity, product.stock) : safeQuantity;
-
-      return [
-        ...currentItems,
-        {
-          id: product.id,
-          name: product.name,
-          price: Number(product.price || 0),
-          imageUrl: getRawImageUrl(product),
-          stock: product.stock,
-          quantity: initialQuantity,
-        },
-      ];
-    });
+    try {
+      const response = await cartApi.addItem({
+        productId: product.id,
+        productVariantId: variantId,
+        quantity: safeQuantity,
+      });
+      applyCartResponse(response.data);
+      return { success: true, message: response.data?.message || "Product added to cart." };
+    } catch (error) {
+      return {
+        success: false,
+        message: getErrorMessage(error, "Cannot add this product."),
+      };
+    }
   };
 
-  const updateQuantity = (id, quantity) => {
+  const updateQuantity = async (id, quantity) => {
     const safeQuantity = Number(quantity);
-    if (!Number.isFinite(safeQuantity) || safeQuantity < 1) return;
-    
-    setItems((currentItems) =>
-      currentItems.map((item) => {
-        if (Number(item.id) === Number(id)) {
-           // Stock Validation
-           const finalQuantity = item.stock ? Math.min(safeQuantity, item.stock) : safeQuantity;
-           return { ...item, quantity: finalQuantity };
-        }
-        return item;
-      })
-    );
+    if (!Number.isFinite(safeQuantity) || safeQuantity < 1) {
+      return { success: false, message: "Quantity must be at least 1." };
+    }
+
+    try {
+      const response = await cartApi.updateItem(id, safeQuantity);
+      applyCartResponse(response.data);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: getErrorMessage(error, "Cannot update cart item."),
+      };
+    }
   };
 
-  const removeFromCart = (id) => {
-    setItems((currentItems) => currentItems.filter((item) => Number(item.id) !== Number(id)));
+  const removeFromCart = async (id) => {
+    try {
+      const response = await cartApi.removeItem(id);
+      applyCartResponse(response.data);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: getErrorMessage(error, "Cannot remove cart item."),
+      };
+    }
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = async () => {
+    if (!user) {
+      setItems([]);
+      return { success: true };
+    }
+
+    try {
+      const response = await cartApi.clear();
+      applyCartResponse(response.data);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: getErrorMessage(error, "Cannot clear cart."),
+      };
+    }
+  };
 
   const totals = useMemo(() => {
-    const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
     const shipping = subtotal > 0 ? 30000 : 0;
     return {
-      count: items.reduce((sum, item) => sum + item.quantity, 0),
+      count: items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
       subtotal,
       shipping,
       total: subtotal + shipping,
@@ -94,10 +141,12 @@ export const CartProvider = ({ children }) => {
 
   const value = {
     items,
+    loading,
     addToCart,
     updateQuantity,
     removeFromCart,
     clearCart,
+    reloadCart,
     ...totals,
   };
 

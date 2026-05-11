@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BaseCore.Entities
 {
@@ -25,25 +24,5 @@ namespace BaseCore.Entities
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsActive { get; set; } = true;
-    }
-
-    public class Cart
-    {
-        public long Id { get; set; }
-        public long? UserId { get; set; }
-        public string? SessionToken { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
-        public System.Collections.Generic.List<CartItem> Items { get; set; } = new();
-    }
-
-    public class CartItem
-    {
-        public long Id { get; set; }
-        public long CartId { get; set; }
-        public long ProductVariantId { get; set; }
-        public int Quantity { get; set; }
-        public decimal PriceSnapshot { get; set; }
-        public ProductVariant? ProductVariant { get; set; }
     }
 }
