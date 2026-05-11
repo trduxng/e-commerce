@@ -39,7 +39,7 @@ namespace BaseCore.APIService.Controllers
             if (dto.Quantity <= 0)
                 return BadRequest(new { message = "Quantity must be greater than zero" });
 
-            var productResult = await GetProductVariant(dto.ProductId);
+            var productResult = await GetProductVariant(dto.ProductId, dto.ProductVariantId);
             if (productResult == null)
                 return BadRequest(new { message = "Product not found or unavailable" });
 
@@ -85,8 +85,8 @@ namespace BaseCore.APIService.Controllers
             return Ok(BuildCartResponse(cart, "Product added to cart."));
         }
 
-        [HttpPut("items/{productId:long}")]
-        public async Task<IActionResult> UpdateItem(long productId, [FromBody] UpdateCartItemDto dto)
+        [HttpPut("items/{itemKey:long}")]
+        public async Task<IActionResult> UpdateItem(long itemKey, [FromBody] UpdateCartItemDto dto)
         {
             if (!TryGetCurrentUserId(out var userId))
                 return Unauthorized();
@@ -94,18 +94,17 @@ namespace BaseCore.APIService.Controllers
             if (dto.Quantity <= 0)
                 return BadRequest(new { message = "Quantity must be at least 1." });
 
-            var productResult = await GetProductVariant(productId);
-            if (productResult == null)
-                return BadRequest(new { message = "Product not found or unavailable" });
-
-            var (_, variant) = productResult.Value;
-            if (dto.Quantity > variant.StockQuantity)
-                return BadRequest(new { message = $"Cannot add more than {variant.StockQuantity} item{(variant.StockQuantity == 1 ? "" : "s")} in stock." });
-
             var cart = await GetOrCreateCart(userId);
-            var existing = cart.Items.FirstOrDefault(item => item.ProductVariantId == variant.Id);
+            var existing = FindCartItem(cart, itemKey);
             if (existing == null)
                 return NotFound(new { message = "Cart item not found" });
+
+            var variant = existing.ProductVariant;
+            if (variant?.Product == null || !variant.IsActive || !variant.Product.IsActive || variant.Product.DeletedAt != null)
+                return BadRequest(new { message = "Product not found or unavailable" });
+
+            if (dto.Quantity > variant.StockQuantity)
+                return BadRequest(new { message = $"Cannot add more than {variant.StockQuantity} item{(variant.StockQuantity == 1 ? "" : "s")} in stock." });
 
             existing.Quantity = dto.Quantity;
             existing.UpdatedAt = DateTime.Now;
@@ -116,19 +115,14 @@ namespace BaseCore.APIService.Controllers
             return Ok(BuildCartResponse(cart));
         }
 
-        [HttpDelete("items/{productId:long}")]
-        public async Task<IActionResult> RemoveItem(long productId)
+        [HttpDelete("items/{itemKey:long}")]
+        public async Task<IActionResult> RemoveItem(long itemKey)
         {
             if (!TryGetCurrentUserId(out var userId))
                 return Unauthorized();
 
-            var productResult = await GetProductVariant(productId);
-            if (productResult == null)
-                return BadRequest(new { message = "Product not found or unavailable" });
-
-            var (_, variant) = productResult.Value;
             var cart = await GetOrCreateCart(userId);
-            var existing = cart.Items.FirstOrDefault(item => item.ProductVariantId == variant.Id);
+            var existing = FindCartItem(cart, itemKey);
             if (existing != null)
             {
                 _db.CartItems.Remove(existing);
@@ -272,8 +266,23 @@ namespace BaseCore.APIService.Controllers
                 .FirstOrDefaultAsync(cart => cart.UserId == userId);
         }
 
-        private async Task<(Product Product, ProductVariant Variant)?> GetProductVariant(long productId)
+        private async Task<(Product Product, ProductVariant Variant)?> GetProductVariant(long productId, long? productVariantId = null)
         {
+            if (productVariantId.HasValue)
+            {
+                var selectedVariant = await _db.ProductVariants
+                    .Include(variant => variant.Product)
+                    .FirstOrDefaultAsync(variant =>
+                        variant.Id == productVariantId.Value &&
+                        variant.ProductId == productId &&
+                        variant.IsActive &&
+                        variant.Product != null &&
+                        variant.Product.IsActive &&
+                        variant.Product.DeletedAt == null);
+
+                return selectedVariant?.Product != null ? (selectedVariant.Product, selectedVariant) : null;
+            }
+
             var product = await _db.Products
                 .Include(product => product.ProductVariants)
                 .FirstOrDefaultAsync(product => product.Id == productId && product.DeletedAt == null && product.IsActive);
@@ -284,6 +293,13 @@ namespace BaseCore.APIService.Controllers
                 .FirstOrDefault();
 
             return product != null && variant != null ? (product, variant) : null;
+        }
+
+        private static CartItem? FindCartItem(Cart cart, long itemKey)
+        {
+            return cart.Items.FirstOrDefault(item => item.ProductVariantId == itemKey)
+                ?? cart.Items.FirstOrDefault(item => item.Id == itemKey)
+                ?? cart.Items.FirstOrDefault(item => item.ProductVariant?.ProductId == itemKey);
         }
 
         private bool TryGetCurrentUserId(out long userId)
@@ -310,6 +326,9 @@ namespace BaseCore.APIService.Controllers
                         name = item.ProductNameSnapshot ?? product.Name,
                         price,
                         imageUrl = item.ImageUrlSnapshot ?? variant.ImageUrl ?? product.ImageUrl ?? "/img/product-1.jpg",
+                        sku = item.SkuSnapshot ?? variant.Sku,
+                        size = item.SizeSnapshot ?? variant.Size,
+                        color = item.ColorSnapshot ?? variant.Color,
                         stock = Math.Max(0, variant.StockQuantity),
                         quantity = item.Quantity,
                         lineTotal = price * item.Quantity
@@ -335,6 +354,7 @@ namespace BaseCore.APIService.Controllers
     public class AddCartItemDto
     {
         public long ProductId { get; set; }
+        public long? ProductVariantId { get; set; }
         public int Quantity { get; set; } = 1;
     }
 

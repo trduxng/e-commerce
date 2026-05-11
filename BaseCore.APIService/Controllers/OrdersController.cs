@@ -4,6 +4,9 @@ using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 using System.Security.Claims;
 
+using Microsoft.EntityFrameworkCore;
+
+
 namespace BaseCore.APIService.Controllers
 {
     /// <summary>
@@ -22,7 +25,9 @@ namespace BaseCore.APIService.Controllers
         public OrdersController(
             IOrderRepositoryEF orderRepository,
             IOrderDetailRepositoryEF orderDetailRepository,
+
             IProductRepositoryEF productRepository)
+
         {
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
@@ -50,19 +55,16 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetAllOrders(
             [FromQuery] string? keyword,
             [FromQuery] string? status,
-            [FromQuery] DateTime? fromDate,
-            [FromQuery] DateTime? toDate,
+
             [FromQuery] int? page,
             [FromQuery] int? pageSize)
         {
-            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status) || fromDate.HasValue || toDate.HasValue)
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status))
             {
                 var safePage = Math.Max(1, page ?? 1);
                 var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
-                var searchResult = await _orderRepository.SearchAllWithDetailsAsync(keyword, status, fromDate, toDate, safePage, safePageSize);
-                var items = searchResult.Orders;
-                var totalCount = searchResult.TotalCount;
-                var summary = searchResult.Summary;
+                var (items, totalCount, summary) = await _orderRepository.SearchAllWithDetailsAsync(keyword, status, safePage, safePageSize);
+
 
                 return Ok(new
                 {
@@ -103,6 +105,7 @@ namespace BaseCore.APIService.Controllers
 
             if (dto.Items.Count == 0)
                 return BadRequest(new { message = "Order must contain at least one item" });
+
 
             // Validate products and calculate total
             decimal totalAmount = 0;
@@ -179,6 +182,7 @@ namespace BaseCore.APIService.Controllers
             }
 
             return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order, details = orderDetails });
+
         }
 
         /// <summary>

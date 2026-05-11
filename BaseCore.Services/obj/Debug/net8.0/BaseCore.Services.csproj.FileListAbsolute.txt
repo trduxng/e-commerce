@@ -198,3 +198,6 @@ D:\lambtweb\e-commerce\BaseCore.Services\obj\Debug\net8.0\BaseCore.Services.dll
 D:\lambtweb\e-commerce\BaseCore.Services\obj\Debug\net8.0\refint\BaseCore.Services.dll
 D:\lambtweb\e-commerce\BaseCore.Services\obj\Debug\net8.0\BaseCore.Services.pdb
 D:\lambtweb\e-commerce\BaseCore.Services\obj\Debug\net8.0\ref\BaseCore.Services.dll
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.Services.deps.json
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.Services.dll
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.Services.pdb

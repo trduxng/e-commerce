@@ -165,3 +165,6 @@ D:\lambtweb\e-commerce\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.csproj.CoreC
 D:\lambtweb\e-commerce\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.sourcelink.json
 D:\lambtweb\e-commerce\BaseCore.Libs\obj\Debug\net8.0\BaseCore.063C3EEA.Up2Date
 D:\lambtweb\e-commerce\BaseCore.Libs\obj\Debug\net8.0\ref\BaseCore.Libs.dll
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.Libs.deps.json
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.Libs.dll
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.Libs.pdb

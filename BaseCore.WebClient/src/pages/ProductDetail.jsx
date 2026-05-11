@@ -20,7 +20,8 @@ const ProductDetail = () => {
   const location = useLocation();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState("1");
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cartMessage, setCartMessage] = useState("");
@@ -31,7 +32,11 @@ const ProductDetail = () => {
       try {
         const response = await productApi.getById(id);
         const loadedProduct = response.data;
+        const variants = getActiveVariants(loadedProduct);
+        const defaultVariant = variants.find((variant) => getVariantStock(variant) > 0) || variants[0] || null;
         setProduct(loadedProduct);
+        setSelectedVariantId(defaultVariant?.id ?? null);
+        setQuantity("1");
         setError("");
 
         const relatedResponse = await productApi.search({
@@ -59,7 +64,14 @@ const ProductDetail = () => {
       return;
     }
 
-    const result = await addToCart(product, quantity);
+    const safeQuantity = getSafeQuantity(quantity);
+    if (stock !== null && safeQuantity > stock) {
+      setQuantity(String(Math.max(1, stock)));
+      setCartMessage(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
+      return;
+    }
+
+    const result = await addToCart(product, safeQuantity, selectedVariant?.id);
     setCartMessage(result.message || (result.success ? "Product added to cart." : "Cannot add this product."));
   };
 
@@ -84,9 +96,56 @@ const ProductDetail = () => {
     );
   }
 
-  const stock = getProductStock(product);
+  const variants = getActiveVariants(product);
+  const selectedVariant = variants.find((variant) => Number(variant.id) === Number(selectedVariantId)) || variants[0] || null;
+  const sizeOptions = getUniqueVariantValues(variants, "size");
+  const colorOptions = getUniqueVariantValues(variants, "color");
+  const selectedSize = normalizeVariantValue(selectedVariant?.size);
+  const selectedColor = normalizeVariantValue(selectedVariant?.color);
+  const stock = selectedVariant ? getVariantStock(selectedVariant) : getProductStock(product);
+  const selectedPrice = getVariantPrice(selectedVariant, product);
+  const productImage = selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product);
+  const safeQuantity = getSafeQuantity(quantity);
   const isOutOfStock = stock !== null && stock <= 0;
-  const canIncreaseQuantity = stock === null || quantity < stock;
+  const canIncreaseQuantity = stock === null || safeQuantity < stock;
+  const canAddToCart = !isOutOfStock && (variants.length === 0 || Boolean(selectedVariant));
+
+  const selectVariant = (field, value) => {
+    const nextVariant =
+      variants.find((variant) => {
+        const matchesField = normalizeVariantValue(variant?.[field]) === value;
+        const matchesSize = field === "size" || !selectedSize || normalizeVariantValue(variant?.size) === selectedSize;
+        const matchesColor = field === "color" || !selectedColor || normalizeVariantValue(variant?.color) === selectedColor;
+        return matchesField && matchesSize && matchesColor && getVariantStock(variant) > 0;
+      }) ||
+      variants.find((variant) => normalizeVariantValue(variant?.[field]) === value) ||
+      null;
+
+    setSelectedVariantId(nextVariant?.id ?? null);
+    setQuantity("1");
+    setCartMessage("");
+  };
+
+  const optionHasStock = (field, value) =>
+    variants.some((variant) => normalizeVariantValue(variant?.[field]) === value && getVariantStock(variant) > 0);
+
+  const setQuantitySafely = (nextValue) => {
+    const nextQuantity = getSafeQuantity(nextValue);
+    const cappedQuantity = stock === null ? nextQuantity : Math.min(nextQuantity, Math.max(1, stock));
+    setQuantity(String(cappedQuantity));
+  };
+
+  const handleQuantityInput = (event) => {
+    const nextValue = event.target.value;
+    if (/^\d*$/.test(nextValue)) {
+      setQuantity(nextValue);
+      setCartMessage("");
+    }
+  };
+
+  const handleQuantityBlur = () => {
+    setQuantitySafely(quantity);
+  };
 
   return (
     <>
@@ -106,7 +165,7 @@ const ProductDetail = () => {
         <div className="row px-xl-5">
           <div className="col-lg-5 mb-30">
             <div className="bg-light">
-              <img className="w-100 img-fluid" src={getProductImage(product)} alt={product.name} />
+              <img className="w-100 img-fluid" src={productImage} alt={product.name} />
             </div>
           </div>
 
@@ -123,7 +182,7 @@ const ProductDetail = () => {
                 </div>
                 <small className="pt-1">({product.reviewCount || 24} reviews)</small>
               </div>
-              <h3 className="font-weight-semi-bold mb-4">{formatCurrency(product.price)}</h3>
+              <h3 className="font-weight-semi-bold mb-4">{formatCurrency(selectedPrice)}</h3>
               <p className="mb-4">{product.description || "A quality product ready for everyday use."}</p>
               <p className="mb-2">
                 <strong>Category:</strong> {getProductCategoryName(product, [])}
@@ -131,30 +190,76 @@ const ProductDetail = () => {
               <p className="mb-4">
                 <strong>Stock:</strong> {stock ?? "Available"}
               </p>
+              {selectedVariant?.sku && (
+                <p className="mb-3">
+                  <strong>SKU:</strong> {selectedVariant.sku}
+                </p>
+              )}
+              {sizeOptions.length > 0 && (
+                <div className="d-flex align-items-center flex-wrap mb-3">
+                  <strong className="text-dark mr-3 mb-2">Size:</strong>
+                  {sizeOptions.map((size) => {
+                    const disabled = !optionHasStock("size", size);
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        className={`btn btn-sm mr-2 mb-2 ${selectedSize === size ? "btn-primary" : "btn-outline-dark"}`}
+                        disabled={disabled}
+                        onClick={() => selectVariant("size", size)}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {colorOptions.length > 0 && (
+                <div className="d-flex align-items-center flex-wrap mb-4">
+                  <strong className="text-dark mr-3 mb-2">Color:</strong>
+                  {colorOptions.map((color) => {
+                    const disabled = !optionHasStock("color", color);
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`btn btn-sm mr-2 mb-2 ${selectedColor === color ? "btn-primary" : "btn-outline-dark"}`}
+                        disabled={disabled}
+                        onClick={() => selectVariant("color", color)}
+                      >
+                        {color}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {cartMessage && (
                 <div className={`alert ${cartMessage.includes("Cannot") || cartMessage.includes("out of stock") ? "alert-warning" : "alert-success"}`}>
                   {cartMessage}
                 </div>
               )}
 
-              <div className="d-flex align-items-center mb-4 pt-2">
-                <div className="input-group quantity mr-3" style={{ width: "130px" }}>
-                  <div className="input-group-btn">
+              <div className="d-flex align-items-center flex-wrap mb-4 pt-2">
+                <div className="input-group quantity mr-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>
+                  <div className="input-group-prepend">
                     <button
                       type="button"
                       className="btn btn-primary btn-minus"
-                      onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                      onClick={() => setQuantitySafely(safeQuantity - 1)}
                     >
                       <i className="fa fa-minus"></i>
                     </button>
                   </div>
                   <input
                     type="text"
-                    className="form-control bg-light border-0 text-center text-dark"
+                    inputMode="numeric"
+                    className="form-control bg-white text-center text-dark"
                     value={quantity}
-                    readOnly
+                    onChange={handleQuantityInput}
+                    onBlur={handleQuantityBlur}
+                    aria-label="Quantity"
                   />
-                  <div className="input-group-btn">
+                  <div className="input-group-append">
                     <button
                       type="button"
                       className="btn btn-primary btn-plus"
@@ -164,14 +269,14 @@ const ProductDetail = () => {
                           setCartMessage(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
                           return;
                         }
-                        setQuantity((value) => value + 1);
+                        setQuantitySafely(safeQuantity + 1);
                       }}
                     >
                       <i className="fa fa-plus"></i>
                     </button>
                   </div>
                 </div>
-                <button type="button" className="btn btn-primary px-3" disabled={isOutOfStock} onClick={handleAddToCart}>
+                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}>
                   <i className="fa fa-shopping-cart mr-1"></i> Add To Cart
                 </button>
               </div>
@@ -196,6 +301,31 @@ const ProductDetail = () => {
       )}
     </>
   );
+};
+
+const getActiveVariants = (product) => {
+  const variants = product?.productVariants || product?.variants || [];
+  return Array.isArray(variants) ? variants.filter((variant) => variant?.isActive !== false) : [];
+};
+
+const normalizeVariantValue = (value) => String(value || "").trim();
+
+const getUniqueVariantValues = (variants, field) =>
+  Array.from(new Set(variants.map((variant) => normalizeVariantValue(variant?.[field])).filter(Boolean)));
+
+const getVariantStock = (variant) => {
+  const stock = Number(variant?.stockQuantity ?? variant?.stock);
+  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
+};
+
+const getVariantPrice = (variant, product) => {
+  if (!variant) return product?.price ?? product?.basePrice ?? 0;
+  return variant.salePrice ?? variant.price ?? product?.price ?? product?.basePrice ?? 0;
+};
+
+const getSafeQuantity = (value) => {
+  const quantity = Number(value);
+  return Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
 };
 
 export default ProductDetail;

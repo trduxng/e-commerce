@@ -108,3 +108,6 @@ D:\lambtweb\e-commerce\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.dll
 D:\lambtweb\e-commerce\BaseCore.DTO\obj\Debug\net8.0\refint\BaseCore.DTO.dll
 D:\lambtweb\e-commerce\BaseCore.DTO\obj\Debug\net8.0\BaseCore.DTO.pdb
 D:\lambtweb\e-commerce\BaseCore.DTO\obj\Debug\net8.0\ref\BaseCore.DTO.dll
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.DTO.deps.json
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.DTO.dll
+D:\lambtweb\e-commerce\artifacts\verify\Debug\net8.0\BaseCore.DTO.pdb

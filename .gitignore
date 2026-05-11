@@ -32,5 +32,16 @@ temp/
 seed_data.sql
 scan_summary.md
 file_list.txt
+# Node
+node_modules/
 
+# .NET build
+bin/
+obj/
+
+# Artifacts
+artifacts/
+
+# Logs
+*.log
 
