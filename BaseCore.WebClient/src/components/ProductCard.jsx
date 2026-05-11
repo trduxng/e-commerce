@@ -12,6 +12,8 @@ const ProductCard = ({ product }) => {
   const rating = Number(product.rating || 4);
   const stock = getProductStock(product);
   const [message, setMessage] = useState("");
+  const isOnSale = product.oldPrice && Number(product.oldPrice) > Number(product.price);
+  const categoryName = product.category?.name || product.categoryName || "BaseShop";
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -34,6 +36,10 @@ const ProductCard = ({ product }) => {
     <div className="product-item bg-light mb-4">
       <div className="product-img position-relative overflow-hidden">
         <img className="img-fluid w-100" src={getProductImage(product)} alt={product.name} />
+        <div className="product-badges">
+          {isOnSale && <span className="product-badge product-badge-sale">Sale</span>}
+          {stock === 0 && <span className="product-badge product-badge-muted">Sold out</span>}
+        </div>
         <div className="product-action">
           <button
             type="button"
@@ -49,11 +55,12 @@ const ProductCard = ({ product }) => {
           </Link>
         </div>
       </div>
-      <div className="text-center py-4 px-3">
-        <Link className="h6 text-decoration-none text-truncate d-block" to={`/product/${product.id}`}>
+      <div className="product-card-body py-4 px-3">
+        <div className="product-card-category">{categoryName}</div>
+        <Link className="h6 text-decoration-none d-block" to={`/product/${product.id}`}>
           {product.name}
         </Link>
-        <div className="d-flex align-items-center justify-content-center mt-2">
+        <div className="product-price-row d-flex align-items-center mt-2">
           <h5>{formatCurrency(product.price)}</h5>
           {product.oldPrice && (
             <h6 className="text-muted ml-2">
@@ -61,7 +68,7 @@ const ProductCard = ({ product }) => {
             </h6>
           )}
         </div>
-        <div className="d-flex align-items-center justify-content-center mb-1">
+        <div className="product-rating d-flex align-items-center mb-1">
           {renderStars()}
           <small>({product.reviewCount || 24})</small>
         </div>

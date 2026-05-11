@@ -55,16 +55,18 @@ export const CartProvider = ({ children }) => {
     reloadCart();
   }, [authLoading, user?.userId, user?.id, user?.username, user?.email]);
 
-  const addToCart = async (product, quantity = 1) => {
+  const addToCart = async (product, quantity = 1, productVariantId = null) => {
     if (!user) {
       return { success: false, message: "Please sign in before adding products to cart." };
     }
 
     const safeQuantity = Math.max(1, Number(quantity) || 1);
+    const variantId = productVariantId ?? product.productVariantId ?? product.selectedVariantId ?? null;
 
     try {
       const response = await cartApi.addItem({
         productId: product.id,
+        productVariantId: variantId,
         quantity: safeQuantity,
       });
       applyCartResponse(response.data);

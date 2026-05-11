@@ -1,13 +1,43 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { cartApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
 
+const shippingOptions = [
+  {
+    id: "standard",
+    title: "Standard Delivery",
+    description: "Receive in 2-4 business days",
+    fee: 30000,
+    icon: "fa-truck-fast",
+  },
+  {
+    id: "express",
+    title: "Express Delivery",
+    description: "Receive in 1-2 business days",
+    fee: 55000,
+    icon: "fa-bolt",
+  },
+  {
+    id: "pickup",
+    title: "Store Pickup",
+    description: "Pick up at BaseShop counter",
+    fee: 0,
+    icon: "fa-store",
+  },
+];
+
+const paymentOptions = [
+  ["cod", "Cash on Delivery", "Pay when the package arrives", "fa-money-bill-wave"],
+  ["banktransfer", "Bank Transfer", "Transfer after order confirmation", "fa-building-columns"],
+  ["paypal", "Paypal", "Pay securely with Paypal", "fa-wallet"],
+];
+
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, subtotal, shipping, total, reloadCart } = useCart();
+  const { items, subtotal, reloadCart } = useCart();
   const { user } = useAuth();
   const [billingData, setBillingData] = useState({
     firstName: user?.name || "",
@@ -23,12 +53,41 @@ const Checkout = () => {
     note: "",
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [shippingMethod, setShippingMethod] = useState("standard");
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherMessage, setVoucherMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+
+  const selectedShipping = useMemo(
+    () => shippingOptions.find((option) => option.id === shippingMethod) || shippingOptions[0],
+    [shippingMethod]
+  );
+  const shippingFee = items.length > 0 ? selectedShipping.fee : 0;
+  const total = subtotal + shippingFee;
+  const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const receiverName = `${billingData.firstName} ${billingData.lastName}`.trim();
+  const addressPreview = [
+    billingData.address1,
+    billingData.address2,
+    billingData.city,
+    billingData.state,
+    billingData.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setBillingData((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleVoucher = () => {
+    setVoucherMessage(
+      voucherCode.trim()
+        ? "Voucher code saved. Discount validation can be connected to the API."
+        : "Enter a voucher code first."
+    );
   };
 
   const handleSubmit = async (event) => {
@@ -41,15 +100,13 @@ const Checkout = () => {
     setSubmitting(true);
     setMessage("");
     const payload = {
-      receiverName: `${billingData.firstName} ${billingData.lastName}`.trim(),
+      receiverName,
       email: billingData.email,
       receiverPhone: billingData.phone,
-      shippingAddress: [billingData.address1, billingData.address2, billingData.city, billingData.state, billingData.country]
-        .filter(Boolean)
-        .join(", "),
+      shippingAddress: addressPreview,
       paymentMethod,
       note: billingData.note,
-      shippingFee: shipping,
+      shippingFee,
     };
 
     try {
@@ -68,6 +125,9 @@ const Checkout = () => {
     }
   };
 
+  const getItemKey = (item, index) =>
+    item.productVariantId ?? item.cartItemId ?? item.id ?? `${item.name}-${index}`;
+
   return (
     <>
       <div className="container-fluid">
@@ -82,14 +142,28 @@ const Checkout = () => {
         </div>
       </div>
 
-      <form className="container-fluid" onSubmit={handleSubmit}>
+      <form className="container-fluid checkout-page" onSubmit={handleSubmit}>
         <div className="row px-xl-5">
           <div className="col-lg-8">
-            <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pr-3">Billing Address</span>
-            </h5>
-            <div className="bg-light p-30 mb-5">
+            <div className="checkout-panel checkout-address-panel">
+              <div className="checkout-panel-header">
+                <div>
+                  <span className="checkout-step">Delivery</span>
+                  <h4>Delivery Address</h4>
+                </div>
+                <i className="fa fa-location-dot"></i>
+              </div>
+
               {message && <div className="alert alert-warning">{message}</div>}
+
+              <div className="checkout-address-preview">
+                <div>
+                  <strong>{receiverName || "Receiver name"}</strong>
+                  <span>{billingData.phone || "Phone number"}</span>
+                </div>
+                <p>{addressPreview || "Enter your delivery address below."}</p>
+              </div>
+
               <div className="row">
                 {[
                   ["firstName", "First Name", "Nguyen", "text"],
@@ -138,74 +212,168 @@ const Checkout = () => {
                 </div>
               </div>
             </div>
+
+            <div className="checkout-panel">
+              <div className="checkout-panel-header">
+                <div>
+                  <span className="checkout-step">Order</span>
+                  <h4>Products Ordered</h4>
+                </div>
+                <span className="checkout-count">{itemCount} items</span>
+              </div>
+
+              {items.length === 0 ? (
+                <div className="checkout-empty">
+                  <h5>Your cart is empty</h5>
+                  <p>Add products before checkout.</p>
+                  <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
+                </div>
+              ) : (
+                <div className="checkout-items">
+                  {items.map((item, index) => (
+                    <div key={getItemKey(item, index)} className="checkout-item">
+                      <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
+                      <div className="checkout-item-info">
+                        <h6>{item.name}</h6>
+                        {(item.size || item.color) && (
+                          <small>
+                            {[item.size && `Size: ${item.size}`, item.color && `Color: ${item.color}`]
+                              .filter(Boolean)
+                              .join(" | ")}
+                          </small>
+                        )}
+                      </div>
+                      <div className="checkout-item-price">{formatCurrency(item.price)}</div>
+                      <div className="checkout-item-qty">x{item.quantity}</div>
+                      <div className="checkout-item-total">{formatCurrency(item.price * item.quantity)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="checkout-panel">
+              <div className="checkout-panel-header">
+                <div>
+                  <span className="checkout-step">Shipping</span>
+                  <h4>Shipping Option</h4>
+                </div>
+              </div>
+
+              <div className="checkout-option-grid">
+                {shippingOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`checkout-option ${shippingMethod === option.id ? "is-selected" : ""}`}
+                    onClick={() => setShippingMethod(option.id)}
+                  >
+                    <i className={`fa ${option.icon}`}></i>
+                    <span>
+                      <strong>{option.title}</strong>
+                      <small>{option.description}</small>
+                    </span>
+                    <b>{formatCurrency(option.fee)}</b>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="checkout-panel">
+              <div className="checkout-panel-header">
+                <div>
+                  <span className="checkout-step">Payment</span>
+                  <h4>Payment Method</h4>
+                </div>
+              </div>
+
+              <div className="checkout-option-grid payment-grid">
+                {paymentOptions.map(([value, label, description, icon]) => (
+                  <label
+                    key={value}
+                    className={`checkout-option ${paymentMethod === value ? "is-selected" : ""}`}
+                    htmlFor={`payment-${value}`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      id={`payment-${value}`}
+                      value={value}
+                      checked={paymentMethod === value}
+                      onChange={(event) => setPaymentMethod(event.target.value)}
+                    />
+                    <i className={`fa ${icon}`}></i>
+                    <span>
+                      <strong>{label}</strong>
+                      <small>{description}</small>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="col-lg-4">
-            <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pr-3">Order Total</span>
-            </h5>
-            <div className="bg-light p-30 mb-5">
-              <div className="border-bottom">
-                <h6 className="mb-3">Products</h6>
-                {items.length === 0 ? (
-                  <p>No items in cart.</p>
-                ) : (
-                  items.map((item) => (
-                    <div key={item.id} className="d-flex justify-content-between">
-                      <p>{item.name} x {item.quantity}</p>
-                      <p>{formatCurrency(item.price * item.quantity)}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="border-bottom pt-3 pb-2">
-                <div className="d-flex justify-content-between mb-3">
-                  <h6>Subtotal</h6>
-                  <h6>{formatCurrency(subtotal)}</h6>
+            <aside className="checkout-summary">
+              <div className="checkout-voucher">
+                <div className="checkout-summary-title">
+                  <i className="fa fa-ticket"></i>
+                  Voucher
                 </div>
-                <div className="d-flex justify-content-between">
-                  <h6 className="font-weight-medium">Shipping</h6>
-                  <h6 className="font-weight-medium">{formatCurrency(shipping)}</h6>
-                </div>
-              </div>
-              <div className="pt-2">
-                <div className="d-flex justify-content-between mt-2">
-                  <h5>Total</h5>
-                  <h5>{formatCurrency(total)}</h5>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <h5 className="section-title position-relative text-uppercase mb-3">
-                <span className="bg-secondary pr-3">Payment</span>
-              </h5>
-              <div className="bg-light p-30">
-                {[
-                  ["cod", "Cash on Delivery"],
-                  ["banktransfer", "Bank Transfer"],
-                  ["paypal", "Paypal"],
-                ].map(([value, label]) => (
-                  <div key={value} className="form-group">
-                    <div className="custom-control custom-radio">
-                      <input
-                        type="radio"
-                        className="custom-control-input"
-                        name="payment"
-                        id={value}
-                        value={value}
-                        checked={paymentMethod === value}
-                        onChange={(event) => setPaymentMethod(event.target.value)}
-                      />
-                      <label className="custom-control-label" htmlFor={value}>{label}</label>
-                    </div>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter voucher code"
+                    value={voucherCode}
+                    onChange={(event) => setVoucherCode(event.target.value)}
+                  />
+                  <div className="input-group-append">
+                    <button className="btn btn-outline-primary" type="button" onClick={handleVoucher}>
+                      Apply
+                    </button>
                   </div>
-                ))}
-                <button className="btn btn-block btn-primary font-weight-bold py-3" type="submit" disabled={submitting || items.length === 0}>
+                </div>
+                {voucherMessage && <small>{voucherMessage}</small>}
+              </div>
+
+              <div className="checkout-summary-card">
+                <div className="checkout-summary-title">
+                  <i className="fa fa-receipt"></i>
+                  Order Summary
+                </div>
+
+                <div className="checkout-summary-row">
+                  <span>Merchandise subtotal</span>
+                  <strong>{formatCurrency(subtotal)}</strong>
+                </div>
+                <div className="checkout-summary-row">
+                  <span>Shipping fee</span>
+                  <strong>{formatCurrency(shippingFee)}</strong>
+                </div>
+                <div className="checkout-summary-row">
+                  <span>Payment method</span>
+                  <strong>{paymentOptions.find(([value]) => value === paymentMethod)?.[1]}</strong>
+                </div>
+
+                <div className="checkout-summary-total">
+                  <span>Total payment</span>
+                  <strong>{formatCurrency(total)}</strong>
+                </div>
+
+                <button
+                  className="btn btn-block btn-primary checkout-submit"
+                  type="submit"
+                  disabled={submitting || items.length === 0}
+                >
                   {submitting ? "Placing Order..." : "Place Order"}
                 </button>
+
+                <p className="checkout-policy">
+                  By placing your order, you agree to BaseShop processing this order and contacting you for delivery.
+                </p>
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </form>
