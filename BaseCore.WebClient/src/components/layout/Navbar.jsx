@@ -38,7 +38,7 @@ const Navbar = () => {
             style={{ height: "65px", padding: "0 30px" }}
           >
             <h6 className="text-dark m-0">
-              <i className="fa fa-bars mr-2"></i>Categories
+              <i className="fa fa-bars me-2"></i>Categories
             </h6>
             <i className={`fa ${categoriesOpen ? "fa-angle-up" : "fa-angle-down"} text-dark`}></i>
           </button>
@@ -70,8 +70,8 @@ const Navbar = () => {
             <button
               type="button"
               className="navbar-toggler"
-              data-toggle="collapse"
-              data-target="#navbarCollapse"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarCollapse"
               aria-controls="navbarCollapse"
               aria-expanded="false"
               aria-label="Toggle navigation"
@@ -80,7 +80,7 @@ const Navbar = () => {
             </button>
 
             <div className="collapse navbar-collapse justify-content-between" id="navbarCollapse">
-              <div className="navbar-nav mr-auto py-0">
+              <div className="navbar-nav me-auto py-0">
                 <NavLink to="/" end className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
                   Home
                 </NavLink>
@@ -103,8 +103,8 @@ const Navbar = () => {
                 </NavLink>
               </div>
 
-              <div className="navbar-nav ml-auto py-0 d-none d-lg-block">
-                <Link to="/cart" className="cart-button ml-3" aria-label="Shopping cart">
+              <div className="navbar-nav ms-auto py-0 d-none d-lg-block">
+                <Link to="/cart" className="cart-button ms-3" aria-label="Shopping cart">
                   <i className="fas fa-shopping-cart"></i>
                   <span className="badge">
                     {count}

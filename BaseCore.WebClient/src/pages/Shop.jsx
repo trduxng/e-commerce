@@ -4,7 +4,13 @@ import ProductCard from "../components/ProductCard";
 import { categoryApi, productApi } from "../services/api";
 import {
   formatCurrency,
+  getProductOldPrice,
+  getProductPrice,
+  getProductRating,
+  normalizeCategoryList,
   normalizeProductList,
+  sampleCategories,
+  sampleProducts,
 } from "../data/shopData";
 
 const pageSize = 9;
@@ -86,20 +92,32 @@ const Shop = () => {
           }),
         ]);
 
-        const apiCategories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+        const apiCategories = normalizeCategoryList(categoriesResponse.data);
         const apiProducts = normalizeProductList(productsResponse.data);
 
-        setCategories(apiCategories);
-        setProducts(apiProducts);
+        setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
+        setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
         setTotalCount(Number(productsResponse.data?.totalCount ?? apiProducts.length));
         setTotalPages(Number(productsResponse.data?.totalPages ?? Math.ceil(apiProducts.length / pageSize)));
         setError("");
       } catch {
-        setCategories([]);
-        setProducts([]);
-        setTotalCount(0);
-        setTotalPages(0);
-        setError("Cannot load products from database. Please start ApiGateway and APIService.");
+        const filteredProducts = sampleProducts.filter((product) => {
+          const productName = String(product.name || "").toLowerCase();
+          const productDescription = String(product.description || "").toLowerCase();
+          const productPrice = getProductPrice(product);
+          const matchesKeyword = !keyword || productName.includes(keyword.toLowerCase()) || productDescription.includes(keyword.toLowerCase());
+          const matchesCategory = !categoryId || Number(product.categoryId) === Number(categoryId);
+          const matchesMin = !minPrice || productPrice >= Number(minPrice);
+          const matchesMax = !maxPrice || productPrice <= Number(maxPrice);
+          return matchesKeyword && matchesCategory && matchesMin && matchesMax;
+        });
+        const startIndex = (page - 1) * pageSize;
+
+        setCategories(sampleCategories);
+        setProducts(filteredProducts.slice(startIndex, startIndex + pageSize));
+        setTotalCount(filteredProducts.length);
+        setTotalPages(Math.ceil(filteredProducts.length / pageSize));
+        setError("API is not available, so the catalog is showing demo products.");
       } finally {
         setLoading(false);
       }
@@ -110,8 +128,11 @@ const Shop = () => {
 
   const visibleProducts = useMemo(() => {
     return [...products].sort((first, second) => {
-      if (sort === "price-asc") return Number(first.price || 0) - Number(second.price || 0);
-      if (sort === "price-desc") return Number(second.price || 0) - Number(first.price || 0);
+      if (sort === "price-asc") return getProductPrice(first) - getProductPrice(second);
+      if (sort === "price-desc") return getProductPrice(second) - getProductPrice(first);
+      if (sort === "rating") return getProductRating(second) - getProductRating(first);
+      if (sort === "best-selling") return Number(second.soldCount || 0) - Number(first.soldCount || 0);
+      if (sort === "sale") return Number(Boolean(getProductOldPrice(second))) - Number(Boolean(getProductOldPrice(first)));
       if (sort === "name") return first.name.localeCompare(second.name);
       return Number(second.id || 0) - Number(first.id || 0);
     });
@@ -165,13 +186,13 @@ const Shop = () => {
       <div className="col-12">
         <div className="shop-pagination d-flex flex-column flex-md-row align-items-md-center justify-content-between">
           <span className="shop-page-summary">
-            Page {page} of {totalPages} • {totalCount} products
+            Page {page} of {totalPages} - {totalCount} products
           </span>
           <nav aria-label="Shop pagination">
             <ul className="pagination mb-0">
               <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
                 <button className="page-link" type="button" onClick={() => changePage(page - 1)}>
-                  <i className="fa fa-chevron-left mr-1"></i>
+                  <i className="fa fa-chevron-left me-1"></i>
                   Previous
                 </button>
               </li>
@@ -191,7 +212,7 @@ const Shop = () => {
               <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
                 <button className="page-link" type="button" onClick={() => changePage(page + 1)}>
                   Next
-                  <i className="fa fa-chevron-right ml-1"></i>
+                  <i className="fa fa-chevron-right ms-1"></i>
                 </button>
               </li>
             </ul>
@@ -218,37 +239,37 @@ const Shop = () => {
         <div className="row px-xl-5">
           <div className="col-lg-3 col-md-4">
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pr-3">Categories</span>
+              <span className="bg-secondary pe-3">Categories</span>
             </h5>
             <div className="shop-filter-panel bg-light p-4 mb-30">
-              <div className="custom-control custom-radio d-flex align-items-center justify-content-between mb-3">
+              <div className="shop-filter-option">
                 <input
                   type="radio"
-                  className="custom-control-input"
+                  className="form-check-input shop-filter-radio"
                   id="category-all"
                   checked={!categoryId}
                   onChange={() => updateCategory("")}
                 />
-                <label className="custom-control-label" htmlFor="category-all">All Categories</label>
-                <span className="badge border font-weight-normal">{!categoryId ? totalCount : ""}</span>
+                <label className="shop-filter-option-label" htmlFor="category-all">All Categories</label>
+                <span className="badge border fw-normal">{!categoryId ? totalCount : ""}</span>
               </div>
               {categories.map((category) => (
-                <div key={category.id} className="custom-control custom-radio d-flex align-items-center justify-content-between mb-3">
+                <div key={category.id} className="shop-filter-option">
                   <input
                     type="radio"
-                    className="custom-control-input"
+                    className="form-check-input shop-filter-radio"
                     id={`category-${category.id}`}
                     checked={Number(categoryId) === Number(category.id)}
                     onChange={() => updateCategory(String(category.id))}
                   />
-                  <label className="custom-control-label" htmlFor={`category-${category.id}`}>{category.name}</label>
-                  <span className="badge border font-weight-normal">{Number(categoryId) === Number(category.id) ? totalCount : ""}</span>
+                  <label className="shop-filter-option-label" htmlFor={`category-${category.id}`}>{category.name}</label>
+                  <span className="badge border fw-normal">{Number(categoryId) === Number(category.id) ? totalCount : ""}</span>
                 </div>
               ))}
             </div>
 
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pr-3">Filter by price</span>
+              <span className="bg-secondary pe-3">Filter by price</span>
             </h5>
             <form className="shop-filter-panel bg-light p-4 mb-30" onSubmit={applyPriceFilter}>
               <div className="form-group">
@@ -264,9 +285,7 @@ const Shop = () => {
                     value={priceDraft.min}
                     onChange={(event) => setPriceDraft((current) => ({ ...current, min: event.target.value }))}
                   />
-                  <div className="input-group-append">
-                    <span className="input-group-text">VND</span>
-                  </div>
+                  <span className="input-group-text">VND</span>
                 </div>
               </div>
               <div className="form-group">
@@ -282,9 +301,7 @@ const Shop = () => {
                     value={priceDraft.max}
                     onChange={(event) => setPriceDraft((current) => ({ ...current, max: event.target.value }))}
                   />
-                  <div className="input-group-append">
-                    <span className="input-group-text">VND</span>
-                  </div>
+                  <span className="input-group-text">VND</span>
                 </div>
               </div>
               {priceError && <div className="text-danger small mb-3">{priceError}</div>}
@@ -297,7 +314,7 @@ const Shop = () => {
                 <button className="btn btn-primary flex-fill" type="submit" disabled={Boolean(priceError)}>
                   Apply
                 </button>
-                <button className="btn btn-outline-dark ml-2" type="button" onClick={clearPriceFilter}>
+                <button className="btn btn-outline-dark ms-2" type="button" onClick={clearPriceFilter}>
                   Clear
                 </button>
               </div>
@@ -313,11 +330,15 @@ const Shop = () => {
                     <small className="text-muted">
                       {loading ? "Loading products..." : `${totalCount} products available`}
                     </small>
+                    {error && <small className="shop-demo-note d-block">{error}</small>}
                   </div>
                   <div className="shop-sort d-flex align-items-center mt-3 mt-lg-0">
-                    <span className="text-muted mr-2">Sort by</span>
-                    <select className="custom-select custom-select-sm" value={sort} onChange={(event) => setSort(event.target.value)}>
+                    <span className="text-muted me-2">Sort by</span>
+                    <select className="form-select form-select-sm" value={sort} onChange={(event) => setSort(event.target.value)}>
                       <option value="latest">Latest</option>
+                      <option value="best-selling">Best selling</option>
+                      <option value="rating">Top rated</option>
+                      <option value="sale">On sale</option>
                       <option value="name">Name</option>
                       <option value="price-asc">Price low to high</option>
                       <option value="price-desc">Price high to low</option>
@@ -329,12 +350,8 @@ const Shop = () => {
               {loading ? (
                 <div className="col-12 text-center py-5">
                   <div className="spinner-border text-primary" role="status">
-                    <span className="sr-only">Loading...</span>
+                    <span className="visually-hidden">Loading...</span>
                   </div>
-                </div>
-              ) : error ? (
-                <div className="col-12">
-                  <div className="alert alert-warning">{error}</div>
                 </div>
               ) : visibleProducts.length === 0 ? (
                 <div className="col-12">

@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { formatCurrency } from "../data/shopData";
 
 const Cart = () => {
-  const { items, subtotal, shipping, total, updateQuantity, removeFromCart } = useCart();
+  const { items, loading, subtotal, shipping, total, updateQuantity, removeFromCart, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
   const [message, setMessage] = React.useState("");
   const [quantityDrafts, setQuantityDrafts] = React.useState({});
@@ -32,6 +32,12 @@ const Cart = () => {
     setMessage(result?.message || "");
   };
 
+  const clearAllItems = async () => {
+    const result = await clearCart();
+    setQuantityDrafts({});
+    setMessage(result?.message || "");
+  };
+
   return (
     <>
       <div className="container-fluid">
@@ -48,48 +54,59 @@ const Cart = () => {
 
       <div className="container-fluid">
         <div className="row px-xl-5">
-          <div className="col-lg-8 table-responsive mb-5">
+          <div className="col-lg-8 mb-5">
             {message && (
-              <div className="alert alert-warning alert-dismissible">
-                <button type="button" className="close" onClick={() => setMessage("")}>
-                  &times;
-                </button>
+              <div className="alert alert-warning alert-dismissible fade show">
+                <button type="button" className="btn-close" onClick={() => setMessage("")} aria-label="Close"></button>
                 {message}
               </div>
             )}
-            {items.length === 0 ? (
-              <div className="bg-light p-5 text-center">
+            {loading ? (
+              <div className="cart-empty-state bg-light p-5 text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="cart-empty-state bg-light p-5 text-center">
                 <h4>Your cart is empty</h4>
                 <p>Add products from the shop before checkout.</p>
                 <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
               </div>
             ) : (
-              <table className="table table-light table-borderless table-hover text-center mb-0">
-                <thead className="thead-dark">
-                  <tr>
-                    <th>Products</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Remove</th>
-                  </tr>
-                </thead>
-                <tbody className="align-middle">
+              <div className="cart-panel bg-light">
+                <div className="cart-panel-header">
+                  <div>
+                    <h4>Shopping Cart</h4>
+                    <span>{items.length} product lines</span>
+                  </div>
+                  <button className="btn btn-outline-dark" type="button" onClick={clearAllItems}>
+                    <i className="fa fa-trash me-1"></i>
+                    Clear
+                  </button>
+                </div>
+
+                <div className="cart-line-list">
                   {items.map((item) => (
-                    <tr key={getItemKey(item)}>
-                      <td className="align-middle text-left">
-                        <img src={item.imageUrl} alt={item.name} style={{ width: "50px" }} className="mr-2" />
-                        {item.name}
-                        {(item.size || item.color) && (
-                          <small className="text-muted d-block ml-5">
-                            {[item.size && `Size: ${item.size}`, item.color && `Color: ${item.color}`].filter(Boolean).join(" | ")}
+                    <article key={getItemKey(item)} className="cart-line-item">
+                      <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
+                      <div className="cart-line-info">
+                        <Link to={`/product/${item.productId || item.id}`}>{item.name}</Link>
+                        {(item.size || item.color || item.sku) && (
+                          <small>
+                            {[item.size && `Size: ${item.size}`, item.color && `Color: ${item.color}`, item.sku && `SKU: ${item.sku}`]
+                              .filter(Boolean)
+                              .join(" | ")}
                           </small>
                         )}
-                      </td>
-                      <td className="align-middle">{formatCurrency(item.price)}</td>
-                      <td className="align-middle">
-                        <div className="input-group quantity mx-auto" style={{ width: "130px" }}>
-                          <div className="input-group-prepend">
+                        {item.stock !== null && item.stock !== undefined && (
+                          <small>Stock: {item.stock}</small>
+                        )}
+                      </div>
+                      <div className="cart-line-price">{formatCurrency(item.price)}</div>
+                      <div className="cart-line-quantity">
+                        <div className="input-group quantity">
+                          <div>
                             <button
                               type="button"
                               className="btn btn-sm btn-primary btn-minus"
@@ -119,7 +136,7 @@ const Cart = () => {
                             }}
                             aria-label="Quantity"
                           />
-                          <div className="input-group-append">
+                          <div>
                             <button
                               type="button"
                               className="btn btn-sm btn-primary btn-plus"
@@ -130,20 +147,15 @@ const Cart = () => {
                             </button>
                           </div>
                         </div>
-                        {item.stock !== null && item.stock !== undefined && (
-                          <small className="text-muted d-block mt-1">Stock: {item.stock}</small>
-                        )}
-                      </td>
-                      <td className="align-middle">{formatCurrency(item.price * item.quantity)}</td>
-                      <td className="align-middle">
-                        <button className="btn btn-sm btn-danger" type="button" onClick={() => removeItem(item)}>
-                          <i className="fa fa-times"></i>
-                        </button>
-                      </td>
-                    </tr>
+                      </div>
+                      <div className="cart-line-total">{formatCurrency(item.lineTotal || item.price * item.quantity)}</div>
+                      <button className="btn btn-sm btn-outline-dark cart-line-remove" type="button" onClick={() => removeItem(item)}>
+                        <i className="fa fa-times"></i>
+                      </button>
+                    </article>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
             )}
           </div>
 
@@ -151,13 +163,11 @@ const Cart = () => {
             <form className="mb-30" onSubmit={(event) => event.preventDefault()}>
               <div className="input-group">
                 <input type="text" className="form-control border-0 p-4" placeholder="Coupon Code" />
-                <div className="input-group-append">
-                  <button className="btn btn-primary" type="submit">Apply Coupon</button>
-                </div>
+                <button className="btn btn-primary" type="submit">Apply Coupon</button>
               </div>
             </form>
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pr-3">Cart Summary</span>
+              <span className="bg-secondary pe-3">Cart Summary</span>
             </h5>
             <div className="bg-light p-30 mb-5">
               <div className="border-bottom pb-2">
@@ -166,8 +176,8 @@ const Cart = () => {
                   <h6>{formatCurrency(subtotal)}</h6>
                 </div>
                 <div className="d-flex justify-content-between">
-                  <h6 className="font-weight-medium">Shipping</h6>
-                  <h6 className="font-weight-medium">{formatCurrency(shipping)}</h6>
+                  <h6 className="fw-medium">Shipping</h6>
+                  <h6 className="fw-medium">{formatCurrency(shipping)}</h6>
                 </div>
               </div>
               <div className="pt-2">
@@ -177,7 +187,7 @@ const Cart = () => {
                 </div>
                 <Link
                   to={isAuthenticated ? "/checkout" : "/login?returnUrl=/checkout"}
-                  className={`btn btn-block btn-primary font-weight-bold my-3 py-3 ${items.length === 0 ? "disabled" : ""}`}
+                  className={`btn w-100 btn-primary fw-bold my-3 py-3 ${items.length === 0 ? "disabled" : ""}`}
                 >
                   {isAuthenticated ? "Proceed To Checkout" : "Login To Checkout"}
                 </Link>

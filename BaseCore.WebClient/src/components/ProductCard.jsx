@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { formatCurrency, getProductImage, getProductStock } from "../data/shopData";
+import {
+  formatCurrency,
+  getProductImage,
+  getProductOldPrice,
+  getProductPrice,
+  getProductRating,
+  getProductReviewCount,
+  getProductStock,
+} from "../data/shopData";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -9,10 +17,12 @@ const ProductCard = ({ product }) => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const rating = Number(product.rating || 4);
+  const rating = getProductRating(product);
   const stock = getProductStock(product);
   const [message, setMessage] = useState("");
-  const isOnSale = product.oldPrice && Number(product.oldPrice) > Number(product.price);
+  const price = getProductPrice(product);
+  const oldPrice = getProductOldPrice(product);
+  const isOnSale = oldPrice && oldPrice > price;
   const categoryName = product.category?.name || product.categoryName || "BaseShop";
 
   const handleAddToCart = async () => {
@@ -29,7 +39,7 @@ const ProductCard = ({ product }) => {
   const renderStars = () =>
     Array.from({ length: 5 }).map((_, index) => {
       const icon = index < Math.floor(rating) ? "fa-star" : index < rating ? "fa-star-half-alt" : "fa-star text-muted";
-      return <small key={index} className={`fa ${icon} text-primary mr-1`}></small>;
+      return <small key={index} className={`fa ${icon} text-primary me-1`}></small>;
     });
 
   return (
@@ -61,16 +71,16 @@ const ProductCard = ({ product }) => {
           {product.name}
         </Link>
         <div className="product-price-row d-flex align-items-center mt-2">
-          <h5>{formatCurrency(product.price)}</h5>
-          {product.oldPrice && (
-            <h6 className="text-muted ml-2">
-              <del>{formatCurrency(product.oldPrice)}</del>
+          <h5>{formatCurrency(price)}</h5>
+          {oldPrice && (
+            <h6 className="text-muted ms-2">
+              <del>{formatCurrency(oldPrice)}</del>
             </h6>
           )}
         </div>
         <div className="product-rating d-flex align-items-center mb-1">
           {renderStars()}
-          <small>({product.reviewCount || 24})</small>
+          <small>({getProductReviewCount(product)})</small>
         </div>
         {stock !== null && (
           <small className={stock > 0 ? "text-muted" : "text-danger"}>

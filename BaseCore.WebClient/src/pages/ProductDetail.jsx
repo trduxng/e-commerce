@@ -7,9 +7,15 @@ import { productApi } from "../services/api";
 import {
   formatCurrency,
   getProductCategoryName,
+  getProductGallery,
   getProductImage,
+  getProductOldPrice,
+  getProductPrice,
+  getProductRating,
+  getProductReviewCount,
   getProductStock,
   normalizeProductList,
+  sampleProducts,
 } from "../data/shopData";
 
 const ProductDetail = () => {
@@ -22,6 +28,7 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [quantity, setQuantity] = useState("1");
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [activeImage, setActiveImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cartMessage, setCartMessage] = useState("");
@@ -36,6 +43,7 @@ const ProductDetail = () => {
         const defaultVariant = variants.find((variant) => getVariantStock(variant) > 0) || variants[0] || null;
         setProduct(loadedProduct);
         setSelectedVariantId(defaultVariant?.id ?? null);
+        setActiveImage(defaultVariant?.imageUrl || defaultVariant?.image || getProductImage(loadedProduct));
         setQuantity("1");
         setError("");
 
@@ -46,9 +54,13 @@ const ProductDetail = () => {
         });
         setRelatedProducts(normalizeProductList(relatedResponse.data).filter((item) => Number(item.id) !== Number(id)).slice(0, 4));
       } catch {
-        setProduct(null);
-        setRelatedProducts([]);
-        setError("Cannot load this product from database. Please start ApiGateway and APIService.");
+        const demoProduct = sampleProducts.find((item) => Number(item.id) === Number(id)) || sampleProducts[0];
+        setProduct(demoProduct);
+        setRelatedProducts(sampleProducts.filter((item) => Number(item.id) !== Number(demoProduct.id)).slice(0, 4));
+        setSelectedVariantId(null);
+        setActiveImage(getProductImage(demoProduct));
+        setQuantity("1");
+        setError("API is not available, so this product is shown from demo data.");
       } finally {
         setLoading(false);
       }
@@ -75,11 +87,28 @@ const ProductDetail = () => {
     setCartMessage(result.message || (result.success ? "Product added to cart." : "Cannot add this product."));
   };
 
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      navigate(`/login?returnUrl=${returnUrl}`);
+      return;
+    }
+
+    const safeQuantity = getSafeQuantity(quantity);
+    const result = await addToCart(product, safeQuantity, selectedVariant?.id);
+    if (result.success) {
+      navigate("/checkout");
+      return;
+    }
+
+    setCartMessage(result.message || "Cannot add this product.");
+  };
+
   if (loading) {
     return (
       <div className="container-fluid py-5 text-center">
         <div className="spinner-border text-primary" role="status">
-          <span className="sr-only">Loading...</span>
+          <span className="visually-hidden">Loading...</span>
         </div>
       </div>
     );
@@ -104,7 +133,12 @@ const ProductDetail = () => {
   const selectedColor = normalizeVariantValue(selectedVariant?.color);
   const stock = selectedVariant ? getVariantStock(selectedVariant) : getProductStock(product);
   const selectedPrice = getVariantPrice(selectedVariant, product);
-  const productImage = selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product);
+  const oldPrice = selectedVariant?.salePrice && selectedVariant?.price > selectedVariant?.salePrice
+    ? selectedVariant.price
+    : getProductOldPrice(product);
+  const productImage = activeImage || selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product);
+  const galleryImages = getProductGallery(product);
+  const rating = getProductRating(product);
   const safeQuantity = getSafeQuantity(quantity);
   const isOutOfStock = stock !== null && stock <= 0;
   const canIncreaseQuantity = stock === null || safeQuantity < stock;
@@ -122,6 +156,7 @@ const ProductDetail = () => {
       null;
 
     setSelectedVariantId(nextVariant?.id ?? null);
+    setActiveImage(nextVariant?.imageUrl || nextVariant?.image || getProductImage(product));
     setQuantity("1");
     setCartMessage("");
   };
@@ -169,25 +204,44 @@ const ProductDetail = () => {
       <div className="container-fluid pb-5">
         <div className="row px-xl-5">
           <div className="col-lg-5 mb-30">
-            <div className="bg-light">
-              <img className="w-100 img-fluid" src={productImage} alt={product.name} />
+            <div className="product-detail-media bg-light">
+              <img className="product-detail-main-image" src={productImage} alt={product.name} />
             </div>
+            {galleryImages.length > 1 && (
+              <div className="product-detail-thumbs">
+                {galleryImages.map((image) => (
+                  <button
+                    key={image}
+                    type="button"
+                    className={`product-detail-thumb ${productImage === image ? "is-active" : ""}`}
+                    onClick={() => setActiveImage(image)}
+                  >
+                    <img src={image} alt={product.name} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="col-lg-7 h-auto mb-30">
-            <div className="h-100 bg-light p-30">
+            <div className="product-detail-panel h-100 bg-light p-30">
+              {error && <div className="alert alert-info">{error}</div>}
               <h3>{product.name}</h3>
               <div className="d-flex mb-3">
-                <div className="text-primary mr-2">
-                  <small className="fas fa-star"></small>
-                  <small className="fas fa-star"></small>
-                  <small className="fas fa-star"></small>
-                  <small className="fas fa-star-half-alt"></small>
-                  <small className="far fa-star"></small>
+                <div className="text-primary me-2">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <small
+                      key={index}
+                      className={`fa ${index < Math.floor(rating) ? "fa-star" : index < rating ? "fa-star-half-alt" : "far fa-star"} me-1`}
+                    ></small>
+                  ))}
                 </div>
-                <small className="pt-1">({product.reviewCount || 24} reviews)</small>
+                <small className="pt-1">({getProductReviewCount(product)} reviews)</small>
               </div>
-              <h3 className="font-weight-semi-bold mb-4">{formatCurrency(selectedPrice)}</h3>
+              <div className="product-detail-price mb-4">
+                <h3>{formatCurrency(selectedPrice)}</h3>
+                {oldPrice && <del>{formatCurrency(oldPrice)}</del>}
+              </div>
               <p className="mb-4">{product.description || "A quality product ready for everyday use."}</p>
               <p className="mb-2">
                 <strong>Category:</strong> {getProductCategoryName(product, [])}
@@ -202,14 +256,14 @@ const ProductDetail = () => {
               )}
               {sizeOptions.length > 0 && (
                 <div className="d-flex align-items-center flex-wrap mb-3">
-                  <strong className="text-dark mr-3 mb-2">Size:</strong>
+                  <strong className="text-dark me-3 mb-2">Size:</strong>
                   {sizeOptions.map((size) => {
                     const disabled = !optionHasStock("size", size);
                     return (
                       <button
                         key={size}
                         type="button"
-                        className={`btn btn-sm mr-2 mb-2 ${selectedSize === size ? "btn-primary" : "btn-outline-dark"}`}
+                        className={`btn btn-sm me-2 mb-2 ${selectedSize === size ? "btn-primary" : "btn-outline-dark"}`}
                         disabled={disabled}
                         onClick={() => selectVariant("size", size)}
                       >
@@ -221,14 +275,14 @@ const ProductDetail = () => {
               )}
               {colorOptions.length > 0 && (
                 <div className="d-flex align-items-center flex-wrap mb-4">
-                  <strong className="text-dark mr-3 mb-2">Color:</strong>
+                  <strong className="text-dark me-3 mb-2">Color:</strong>
                   {colorOptions.map((color) => {
                     const disabled = !optionHasStock("color", color);
                     return (
                       <button
                         key={color}
                         type="button"
-                        className={`btn btn-sm mr-2 mb-2 ${selectedColor === color ? "btn-primary" : "btn-outline-dark"}`}
+                        className={`btn btn-sm me-2 mb-2 ${selectedColor === color ? "btn-primary" : "btn-outline-dark"}`}
                         disabled={disabled}
                         onClick={() => selectVariant("color", color)}
                       >
@@ -245,8 +299,8 @@ const ProductDetail = () => {
               )}
 
               <div className="d-flex align-items-center flex-wrap mb-4 pt-2">
-                <div className="input-group quantity mr-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>
-                  <div className="input-group-prepend">
+                <div className="input-group quantity me-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>
+                  <div>
                     <button
                       type="button"
                       className="btn btn-primary btn-minus"
@@ -264,7 +318,7 @@ const ProductDetail = () => {
                     onBlur={handleQuantityBlur}
                     aria-label="Quantity"
                   />
-                  <div className="input-group-append">
+                  <div>
                     <button
                       type="button"
                       className="btn btn-primary btn-plus"
@@ -282,7 +336,10 @@ const ProductDetail = () => {
                   </div>
                 </div>
                 <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}>
-                  <i className="fa fa-shopping-cart mr-1"></i> Add To Cart
+                  <i className="fa fa-shopping-cart me-1"></i> Add To Cart
+                </button>
+                <button type="button" className="btn btn-outline-primary px-3 ms-2 mb-2" disabled={!canAddToCart} onClick={handleBuyNow}>
+                  <i className="fa fa-bolt me-1"></i> Buy Now
                 </button>
               </div>
             </div>
@@ -293,7 +350,7 @@ const ProductDetail = () => {
       {relatedProducts.length > 0 && (
         <div className="container-fluid py-5">
           <h2 className="section-title position-relative text-uppercase mx-xl-5 mb-4">
-            <span className="bg-secondary pr-3">Related Products</span>
+            <span className="bg-secondary pe-3">Related Products</span>
           </h2>
           <div className="row px-xl-5">
             {relatedProducts.map((item) => (
@@ -324,8 +381,8 @@ const getVariantStock = (variant) => {
 };
 
 const getVariantPrice = (variant, product) => {
-  if (!variant) return product?.price ?? product?.basePrice ?? 0;
-  return variant.salePrice ?? variant.price ?? product?.price ?? product?.basePrice ?? 0;
+  if (!variant) return getProductPrice(product);
+  return variant.salePrice ?? variant.price ?? getProductPrice(product);
 };
 
 const getSafeQuantity = (value) => {

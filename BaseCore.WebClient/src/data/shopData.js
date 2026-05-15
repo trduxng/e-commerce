@@ -123,6 +123,37 @@ export const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
 
+export const getProductVariants = (product) => {
+  const variants = product?.productVariants || product?.variants || [];
+  return Array.isArray(variants) ? variants.filter((variant) => variant?.isActive !== false) : [];
+};
+
+export const getProductPrice = (product) => {
+  const directPrice = Number(product?.price ?? product?.salePrice ?? product?.basePrice);
+  if (Number.isFinite(directPrice) && directPrice > 0) return directPrice;
+
+  const variantPrices = getProductVariants(product)
+    .map((variant) => Number(variant?.salePrice ?? variant?.price))
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  return variantPrices.length > 0 ? Math.min(...variantPrices) : 0;
+};
+
+export const getProductOldPrice = (product) => {
+  const explicitOldPrice = Number(product?.oldPrice ?? product?.regularPrice);
+  if (Number.isFinite(explicitOldPrice) && explicitOldPrice > getProductPrice(product)) {
+    return explicitOldPrice;
+  }
+
+  const variant = getProductVariants(product).find((item) => {
+    const salePrice = Number(item?.salePrice);
+    const price = Number(item?.price);
+    return Number.isFinite(salePrice) && Number.isFinite(price) && salePrice > 0 && price > salePrice;
+  });
+
+  return variant ? Number(variant.price) : null;
+};
+
 export const getProductImage = (product) =>
   product?.imageUrl || product?.image || product?.thumbnailUrl || "/img/product-1.jpg";
 
@@ -132,7 +163,7 @@ export const getProductStock = (product) => {
     if (Number.isFinite(directStock)) return Math.max(0, directStock);
   }
 
-  const variants = product?.productVariants || product?.variants || [];
+  const variants = getProductVariants(product);
   if (Array.isArray(variants) && variants.length > 0) {
     return variants.reduce((sum, variant) => {
       const stock = Number(variant?.stockQuantity ?? variant?.stock);
@@ -154,4 +185,33 @@ export const normalizeProductList = (responseData) => {
   if (Array.isArray(responseData?.items)) return responseData.items;
   if (Array.isArray(responseData?.data)) return responseData.data;
   return [];
+};
+
+export const normalizeCategoryList = (responseData) => {
+  if (Array.isArray(responseData)) return responseData;
+  if (Array.isArray(responseData?.items)) return responseData.items;
+  if (Array.isArray(responseData?.data)) return responseData.data;
+  return [];
+};
+
+export const getProductGallery = (product) => {
+  const images = [
+    getProductImage(product),
+    ...getProductVariants(product).map((variant) => variant?.imageUrl || variant?.image).filter(Boolean),
+  ];
+
+  return Array.from(new Set(images.filter(Boolean)));
+};
+
+export const getProductRating = (product) => {
+  const rating = Number(product?.rating);
+  if (Number.isFinite(rating) && rating > 0) return Math.min(5, rating);
+  const idBasedRating = 4 + (Number(product?.id || 0) % 3) * 0.25;
+  return Math.min(5, idBasedRating);
+};
+
+export const getProductReviewCount = (product) => {
+  const reviewCount = Number(product?.reviewCount);
+  if (Number.isFinite(reviewCount) && reviewCount > 0) return reviewCount;
+  return 18 + (Number(product?.id || 0) % 7) * 6;
 };

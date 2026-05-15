@@ -46,10 +46,8 @@ const Login = () => {
                         <p className="login-box-msg">Sign in to start your session</p>
 
                         {error && (
-                            <div className="alert alert-danger alert-dismissible">
-                                <button type="button" className="close" onClick={() => setError('')}>
-                                    &times;
-                                </button>
+                            <div className="alert alert-danger alert-dismissible fade show">
+                                <button type="button" className="btn-close" onClick={() => setError('')} aria-label="Close"></button>
                                 {error}
                             </div>
                         )}
@@ -64,10 +62,8 @@ const Login = () => {
                                     onChange={(e) => setUsername(e.target.value)}
                                     required
                                 />
-                                <div className="input-group-append">
-                                    <div className="input-group-text">
-                                        <span className="fas fa-user"></span>
-                                    </div>
+                                <div className="input-group-text">
+                                    <span className="fas fa-user"></span>
                                 </div>
                             </div>
                             <div className="input-group mb-3">
@@ -79,10 +75,8 @@ const Login = () => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                 />
-                                <div className="input-group-append">
-                                    <div className="input-group-text">
-                                        <span className="fas fa-lock"></span>
-                                    </div>
+                                <div className="input-group-text">
+                                    <span className="fas fa-lock"></span>
                                 </div>
                             </div>
                             <div className="row">
@@ -95,7 +89,7 @@ const Login = () => {
                                 <div className="col-4">
                                     <button
                                         type="submit"
-                                        className="btn btn-primary btn-block"
+                                        className="btn btn-primary w-100"
                                         disabled={loading}
                                     >
                                         {loading ? (

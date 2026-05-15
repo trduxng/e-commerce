@@ -15,7 +15,7 @@ const MainLayout = ({ children }) => {
     const isActive = (path) => location.pathname === path ? 'active' : '';
 
     return (
-        <div className="wrapper">
+        <div className="wrapper admin-shell">
             {/* Navbar */}
             <nav className="main-header navbar navbar-expand navbar-white navbar-light">
                 <ul className="navbar-nav">

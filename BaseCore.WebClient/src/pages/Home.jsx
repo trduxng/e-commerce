@@ -2,7 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { categoryApi, productApi } from "../services/api";
-import { normalizeProductList } from "../data/shopData";
+import {
+  getProductPrice,
+  normalizeCategoryList,
+  normalizeProductList,
+  sampleCategories,
+  sampleProducts,
+} from "../data/shopData";
 
 const heroSlides = [
   {
@@ -44,38 +50,64 @@ const categoryImages = [
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const loadHomeData = async () => {
+      setLoading(true);
       try {
         const [categoriesResponse, productsResponse] = await Promise.all([
           categoryApi.getAll(),
-          productApi.getAll({ page: 1, pageSize: 8 }),
+          productApi.getAll({ page: 1, pageSize: 12 }),
         ]);
 
-        const apiCategories = Array.isArray(categoriesResponse.data)
-          ? categoriesResponse.data
-          : [];
+        const apiCategories = normalizeCategoryList(categoriesResponse.data);
 
         const apiProducts = normalizeProductList(productsResponse.data);
 
-        setCategories(apiCategories);
-        setProducts(apiProducts);
+        setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
+        setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
         setError("");
       } catch {
-        setCategories([]);
-        setProducts([]);
+        setCategories(sampleCategories);
+        setProducts(sampleProducts);
         setError(
-          "Cannot load products from database. Please start ApiGateway and APIService."
+          "API is not available, so the storefront is showing demo products."
         );
+      } finally {
+        setLoading(false);
       }
     };
 
     loadHomeData();
   }, []);
 
-  const featuredProducts = useMemo(() => products.slice(0, 8), [products]);
+  const featuredProducts = useMemo(() => {
+    const featured = products.filter((product) => product.isFeatured);
+    return (featured.length > 0 ? featured : products).slice(0, 8);
+  }, [products]);
+  const newProducts = useMemo(
+    () =>
+      [...products]
+        .sort((first, second) => {
+          const firstDate = new Date(first.createdAt || 0).getTime() || Number(first.id || 0);
+          const secondDate = new Date(second.createdAt || 0).getTime() || Number(second.id || 0);
+          return secondDate - firstDate;
+        })
+        .slice(0, 4),
+    [products]
+  );
+  const bestSellingProducts = useMemo(
+    () =>
+      [...products]
+        .sort((first, second) => {
+          const soldDiff = Number(second.soldCount || 0) - Number(first.soldCount || 0);
+          return soldDiff || getProductPrice(second) - getProductPrice(first);
+        })
+        .slice(0, 4),
+    [products]
+  );
   const topCategories = useMemo(() => categories.slice(0, 8), [categories]);
 
   return (
@@ -86,15 +118,18 @@ const Home = () => {
             <div
               id="header-carousel"
               className="carousel slide carousel-fade hero-carousel"
-              data-ride="carousel"
+              data-bs-ride="carousel"
             >
               <ol className="carousel-indicators">
                 {heroSlides.map((_, index) => (
-                  <li
+                  <button
                     key={index}
-                    data-target="#header-carousel"
-                    data-slide-to={index}
+                    type="button"
+                    data-bs-target="#header-carousel"
+                    data-bs-slide-to={index}
                     className={index === 0 ? "active" : ""}
+                    aria-current={index === 0 ? "true" : undefined}
+                    aria-label={`Slide ${index + 1}`}
                   />
                 ))}
               </ol>
@@ -115,7 +150,7 @@ const Home = () => {
 
                         <div className="home-actions">
                           <Link className="btn btn-primary btn-lg" to="/shop">
-                            <i className="fas fa-bag-shopping mr-2"></i>
+                            <i className="fas fa-bag-shopping me-2"></i>
                             Shop Now
                           </Link>
                           <Link className="btn btn-outline-light btn-lg" to="/shop">
@@ -187,7 +222,7 @@ const Home = () => {
         <div className="row px-xl-5">
           {error && (
             <div className="col-12">
-              <div className="alert alert-warning">{error}</div>
+              <div className="alert alert-info">{error}</div>
             </div>
           )}
 
@@ -218,7 +253,13 @@ const Home = () => {
         </div>
 
         <div className="row px-xl-5">
-          {featuredProducts.length === 0 && !error ? (
+          {loading ? (
+            <div className="col-12 text-center py-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : featuredProducts.length === 0 ? (
             <div className="col-12">
               <div className="empty-state">No products found in database.</div>
             </div>
@@ -229,6 +270,42 @@ const Home = () => {
               </div>
             ))
           )}
+        </div>
+      </section>
+
+      <section className="container-fluid section-block">
+        <div className="section-heading">
+          <span className="section-kicker">Just arrived</span>
+          <h2 className="section-title-modern">New Products</h2>
+          <p className="section-subtitle">
+            Fresh picks ready for quick browsing and checkout
+          </p>
+        </div>
+
+        <div className="row px-xl-5">
+          {newProducts.map((product) => (
+            <div key={product.id} className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="container-fluid section-block">
+        <div className="section-heading">
+          <span className="section-kicker">Customer favorites</span>
+          <h2 className="section-title-modern">Best Selling</h2>
+          <p className="section-subtitle">
+            Popular products with strong value and everyday appeal
+          </p>
+        </div>
+
+        <div className="row px-xl-5">
+          {bestSellingProducts.map((product) => (
+            <div key={product.id} className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+              <ProductCard product={product} />
+            </div>
+          ))}
         </div>
       </section>
 

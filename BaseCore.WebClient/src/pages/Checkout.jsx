@@ -192,7 +192,7 @@ const Checkout = () => {
 
                 <div className="col-md-6 form-group">
                   <label>Country</label>
-                  <select className="custom-select" name="country" value={billingData.country} onChange={handleInputChange}>
+                  <select className="form-select" name="country" value={billingData.country} onChange={handleInputChange}>
                     <option>Vietnam</option>
                     <option>United States</option>
                     <option>Japan</option>
@@ -328,11 +328,9 @@ const Checkout = () => {
                     value={voucherCode}
                     onChange={(event) => setVoucherCode(event.target.value)}
                   />
-                  <div className="input-group-append">
-                    <button className="btn btn-outline-primary" type="button" onClick={handleVoucher}>
-                      Apply
-                    </button>
-                  </div>
+                  <button className="btn btn-outline-primary" type="button" onClick={handleVoucher}>
+                    Apply
+                  </button>
                 </div>
                 {voucherMessage && <small>{voucherMessage}</small>}
               </div>
@@ -362,7 +360,7 @@ const Checkout = () => {
                 </div>
 
                 <button
-                  className="btn btn-block btn-primary checkout-submit"
+                  className="btn w-100 btn-primary checkout-submit"
                   type="submit"
                   disabled={submitting || items.length === 0}
                 >

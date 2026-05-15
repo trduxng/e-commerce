@@ -4,11 +4,11 @@ import { orderApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
 
 const statusMeta = {
-  pending: { label: "Pending", className: "badge-warning" },
-  confirmed: { label: "Confirmed", className: "badge-primary" },
-  shipping: { label: "Shipping", className: "badge-info" },
-  delivered: { label: "Delivered", className: "badge-success" },
-  cancelled: { label: "Cancelled", className: "badge-secondary" },
+  pending: { label: "Pending", className: "bg-warning text-dark" },
+  confirmed: { label: "Confirmed", className: "bg-primary" },
+  shipping: { label: "Shipping", className: "bg-info text-dark" },
+  delivered: { label: "Delivered", className: "bg-success" },
+  cancelled: { label: "Cancelled", className: "bg-secondary" },
 };
 
 const paymentLabels = {
@@ -166,16 +166,14 @@ const MyOrders = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <h2 className="section-title position-relative text-uppercase mb-4">
-              <span className="bg-secondary pr-3">My Orders</span>
+              <span className="bg-secondary pe-3">My Orders</span>
             </h2>
           </div>
 
           <div className="col-12">
             {successMessage && (
-              <div className="alert alert-success alert-dismissible">
-                <button type="button" className="close" onClick={() => setSuccessMessage("")}>
-                  &times;
-                </button>
+              <div className="alert alert-success alert-dismissible fade show">
+                <button type="button" className="btn-close" onClick={() => setSuccessMessage("")} aria-label="Close"></button>
                 {successMessage}
               </div>
             )}
@@ -183,7 +181,7 @@ const MyOrders = () => {
             {loading ? (
               <div className="bg-light p-5 text-center">
                 <div className="spinner-border text-primary" role="status">
-                  <span className="sr-only">Loading...</span>
+                  <span className="visually-hidden">Loading...</span>
                 </div>
               </div>
             ) : orders.length === 0 ? (
@@ -213,7 +211,7 @@ const MyOrders = () => {
                         <small className="text-muted d-block">Ship to</small>
                         <span>{order.receiverName} - {order.receiverPhone}</span>
                       </div>
-                      <div className="text-right">
+                      <div className="text-end">
                         <small className="text-muted d-block">Total</small>
                         <strong>{formatCurrency(order.totalAmount)}</strong>
                       </div>
@@ -253,15 +251,13 @@ const MyOrders = () => {
                     <h5 className="modal-title">Order {selectedOrder.orderCode}</h5>
                     <small className="text-muted">{formatDate(selectedOrder.createdAt)}</small>
                   </div>
-                  <button type="button" className="close" aria-label="Close" onClick={closeOrderDetail}>
-                    <span aria-hidden="true">&times;</span>
-                  </button>
+                  <button type="button" className="btn-close" aria-label="Close" onClick={closeOrderDetail}></button>
                 </div>
                 <div className="modal-body">
                   {detailLoading ? (
                     <div className="text-center py-5">
                       <div className="spinner-border text-primary" role="status">
-                        <span className="sr-only">Loading...</span>
+                        <span className="visually-hidden">Loading...</span>
                       </div>
                     </div>
                   ) : (

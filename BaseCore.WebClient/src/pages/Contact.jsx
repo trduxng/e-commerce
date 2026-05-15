@@ -36,7 +36,7 @@ const Contact = () => {
 
       <div className="container-fluid">
         <h2 className="section-title position-relative text-uppercase mx-xl-5 mb-4">
-          <span className="bg-secondary pr-3">Contact Us</span>
+          <span className="bg-secondary pe-3">Contact Us</span>
         </h2>
         <div className="row px-xl-5">
           <div className="col-lg-7 mb-5">
@@ -111,15 +111,15 @@ const Contact = () => {
             </div>
             <div className="bg-light p-30 mb-3">
               <p className="mb-2">
-                <i className="fa fa-map-marker-alt text-primary mr-3"></i>
+                <i className="fa fa-map-marker-alt text-primary me-3"></i>
                 Ho Chi Minh City, Vietnam
               </p>
               <p className="mb-2">
-                <i className="fa fa-envelope text-primary mr-3"></i>
+                <i className="fa fa-envelope text-primary me-3"></i>
                 support@baseshop.local
               </p>
               <p className="mb-2">
-                <i className="fa fa-phone-alt text-primary mr-3"></i>
+                <i className="fa fa-phone-alt text-primary me-3"></i>
                 +84 909 123 456
               </p>
             </div>

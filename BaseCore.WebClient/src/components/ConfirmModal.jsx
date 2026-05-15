@@ -9,11 +9,9 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText
                 <div className="modal-content">
                     <div className={`modal-header bg-${type} text-white`}>
                         <h5 className="modal-title">{title}</h5>
-                        <button type="button" className="close text-white" onClick={onCancel} aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" className="btn-close btn-close-white" onClick={onCancel} aria-label="Close"></button>
                     </div>
-                    <div className="modal-body text-left">
+                    <div className="modal-body text-start">
                         <p>{message}</p>
                     </div>
                     <div className="modal-footer">

@@ -72,25 +72,25 @@ const Register = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="input-group mb-3">
                                 <input className="form-control" name="name" placeholder="Full name" value={formData.name} onChange={handleChange} required />
-                                <div className="input-group-append"><div className="input-group-text"><span className="fas fa-user"></span></div></div>
+                                <div className="input-group-text"><span className="fas fa-user"></span></div>
                             </div>
                             <div className="input-group mb-3">
                                 <input className="form-control" type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
-                                <div className="input-group-append"><div className="input-group-text"><span className="fas fa-envelope"></span></div></div>
+                                <div className="input-group-text"><span className="fas fa-envelope"></span></div>
                             </div>
                             <div className="input-group mb-3">
                                 <input className="form-control" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} />
-                                <div className="input-group-append"><div className="input-group-text"><span className="fas fa-phone"></span></div></div>
+                                <div className="input-group-text"><span className="fas fa-phone"></span></div>
                             </div>
                             <div className="input-group mb-3">
                                 <input className="form-control" type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required minLength="6" />
-                                <div className="input-group-append"><div className="input-group-text"><span className="fas fa-lock"></span></div></div>
+                                <div className="input-group-text"><span className="fas fa-lock"></span></div>
                             </div>
                             <div className="input-group mb-3">
                                 <input className="form-control" type="password" name="confirmPassword" placeholder="Confirm password" value={formData.confirmPassword} onChange={handleChange} required minLength="6" />
-                                <div className="input-group-append"><div className="input-group-text"><span className="fas fa-lock"></span></div></div>
+                                <div className="input-group-text"><span className="fas fa-lock"></span></div>
                             </div>
-                            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                            <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                                 {loading ? <span className="spinner-border spinner-border-sm"></span> : 'Register'}
                             </button>
                         </form>
