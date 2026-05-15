@@ -3,6 +3,19 @@ import { productApi, categoryApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, getProductImage } from '../data/shopData';
 
+const createEmptyVariant = (overrides = {}) => ({
+    id: null,
+    sku: `SKU-${Date.now()}`,
+    price: '',
+    salePrice: '',
+    stockQuantity: '',
+    size: '',
+    color: '',
+    imageUrl: '',
+    isActive: true,
+    ...overrides,
+});
+
 const emptyForm = {
     name: '',
     shortDescription: '',
@@ -17,6 +30,7 @@ const emptyForm = {
     color: '',
     isActive: true,
     isFeatured: false,
+    variants: [createEmptyVariant()],
 };
 
 const normalizeList = (data) => {
@@ -121,6 +135,39 @@ const Products = () => {
         setFormData((current) => ({ ...current, [name]: value }));
     };
 
+    const setVariantField = (index, name, value) => {
+        setFormData((current) => ({
+            ...current,
+            variants: current.variants.map((variant, variantIndex) =>
+                variantIndex === index ? { ...variant, [name]: value } : variant
+            ),
+        }));
+    };
+
+    const addVariant = () => {
+        setFormData((current) => ({
+            ...current,
+            variants: [
+                ...current.variants,
+                createEmptyVariant({
+                    sku: `SKU-${Date.now()}-${current.variants.length + 1}`,
+                    price: current.variants[0]?.price || current.price || '',
+                    imageUrl: current.imageUrl || '',
+                }),
+            ],
+        }));
+    };
+
+    const removeVariant = (index) => {
+        setFormData((current) => {
+            if (current.variants.length <= 1) return current;
+            return {
+                ...current,
+                variants: current.variants.filter((_, variantIndex) => variantIndex !== index),
+            };
+        });
+    };
+
     const handleCreateCategory = async () => {
         const name = newCategoryName.trim();
         if (!name) {
@@ -163,7 +210,24 @@ const Products = () => {
                 fullProduct = product;
             }
 
-            const variant = firstVariant(fullProduct);
+            const variants = Array.isArray(fullProduct.productVariants) && fullProduct.productVariants.length > 0
+                ? fullProduct.productVariants.map((variant) => ({
+                    id: variant.id ?? null,
+                    sku: variant.sku || '',
+                    price: variant.price ?? fullProduct.price ?? '',
+                    salePrice: variant.salePrice ?? '',
+                    stockQuantity: variant.stockQuantity ?? variant.stock ?? '',
+                    size: variant.size || '',
+                    color: variant.color || '',
+                    imageUrl: variant.imageUrl || '',
+                    isActive: variant.isActive !== false,
+                }))
+                : [createEmptyVariant({
+                    price: fullProduct.price ?? '',
+                    stockQuantity: fullProduct.stock ?? '',
+                    imageUrl: fullProduct.imageUrl || '',
+                })];
+            const variant = variants[0] || {};
             const selectedCategoryId = fullProduct.categoryId ?? fullProduct.category?.id ?? '';
             setEditingProduct(fullProduct);
             setFormData({
@@ -172,14 +236,15 @@ const Products = () => {
                 description: fullProduct.description || '',
                 imageUrl: fullProduct.imageUrl || '',
                 categoryId: selectedCategoryId === '' ? '' : String(selectedCategoryId),
-                price: variant.price ?? fullProduct.price ?? '',
+                price: variant.price ?? '',
                 salePrice: variant.salePrice ?? '',
-                stock: variant.stockQuantity ?? fullProduct.stock ?? '',
+                stock: variant.stockQuantity ?? '',
                 sku: variant.sku || '',
                 size: variant.size || '',
                 color: variant.color || '',
                 isActive: fullProduct.isActive !== false,
                 isFeatured: Boolean(fullProduct.isFeatured),
+                variants,
             });
         } else {
             setEditingProduct(null);
@@ -187,6 +252,7 @@ const Products = () => {
                 ...emptyForm,
                 categoryId: availableCategories[0]?.id ? String(availableCategories[0].id) : '',
                 sku: `SKU-${Date.now()}`,
+                variants: [createEmptyVariant({ sku: `SKU-${Date.now()}` })],
             });
         }
 
@@ -203,43 +269,86 @@ const Products = () => {
         event.preventDefault();
         setError('');
 
-        const price = Number(formData.price);
-        const stock = Number(formData.stock);
-        const salePrice = formData.salePrice === '' ? null : Number(formData.salePrice);
-
         if (!formData.categoryId) {
             setError('Please select a category.');
             return;
         }
 
-        if (!Number.isFinite(price) || price <= 0) {
-            setError('Price must be greater than zero.');
+        if (formData.variants.length === 0) {
+            setError('Add at least one product variant.');
             return;
         }
 
-        if (!Number.isFinite(stock) || stock < 0) {
-            setError('Stock must be zero or greater.');
-            return;
+        const normalizedVariants = [];
+        const skuSet = new Set();
+
+        for (let index = 0; index < formData.variants.length; index += 1) {
+            const variant = formData.variants[index];
+            const price = Number(variant.price);
+            const stockQuantity = Number(variant.stockQuantity);
+            const salePrice = variant.salePrice === '' ? null : Number(variant.salePrice);
+            const sku = variant.sku.trim();
+
+            if (!Number.isFinite(price) || price <= 0) {
+                setError(`Variant #${index + 1} price must be greater than zero.`);
+                return;
+            }
+
+            if (!Number.isFinite(stockQuantity) || stockQuantity < 0) {
+                setError(`Variant #${index + 1} stock must be zero or greater.`);
+                return;
+            }
+
+            if (salePrice !== null && (!Number.isFinite(salePrice) || salePrice < 0 || salePrice > price)) {
+                setError(`Variant #${index + 1} sale price must be between zero and the regular price.`);
+                return;
+            }
+
+            if (sku) {
+                const skuKey = sku.toLowerCase();
+                if (skuSet.has(skuKey)) {
+                    setError(`SKU ${sku} is duplicated.`);
+                    return;
+                }
+                skuSet.add(skuKey);
+            }
+
+            normalizedVariants.push({
+                id: variant.id || undefined,
+                sku,
+                price,
+                salePrice,
+                stockQuantity,
+                size: variant.size.trim(),
+                color: variant.color.trim(),
+                imageUrl: variant.imageUrl.trim() || formData.imageUrl.trim(),
+                isActive: variant.isActive,
+            });
         }
 
-        if (salePrice !== null && (!Number.isFinite(salePrice) || salePrice < 0 || salePrice > price)) {
-            setError('Sale price must be between zero and the regular price.');
+        if (formData.isActive && !normalizedVariants.some((variant) => variant.isActive)) {
+            setError('At least one variant must be active while this product is selling.');
             return;
         }
 
         try {
+            const visibleVariants = normalizedVariants.filter((variant) => variant.isActive);
+            const priceSource = visibleVariants.length > 0 ? visibleVariants : normalizedVariants;
+            const basePrice = Math.min(...priceSource.map((variant) => variant.salePrice ?? variant.price));
+            const firstVariant = normalizedVariants[0];
             const data = {
                 name: formData.name.trim(),
                 categoryId: Number(formData.categoryId),
                 shortDescription: formData.shortDescription.trim(),
                 description: formData.description.trim(),
                 imageUrl: formData.imageUrl.trim(),
-                price,
-                salePrice,
-                stock,
-                sku: formData.sku.trim(),
-                size: formData.size.trim(),
-                color: formData.color.trim(),
+                price: basePrice,
+                salePrice: firstVariant.salePrice,
+                stock: normalizedVariants.reduce((sum, variant) => sum + variant.stockQuantity, 0),
+                sku: firstVariant.sku,
+                size: firstVariant.size,
+                color: firstVariant.color,
+                variants: normalizedVariants,
                 isActive: formData.isActive,
                 isFeatured: formData.isFeatured,
             };
@@ -536,75 +645,118 @@ const Products = () => {
                                         </div>
 
                                         <div className="col-md-5">
-                                            <h6 className="text-uppercase text-muted">Sales And Stock</h6>
-                                            <div className="form-row">
-                                                <div className="form-group col-md-6">
-                                                    <label>Price</label>
-                                                    <input
-                                                        type="number"
-                                                        className="form-control"
-                                                        value={formData.price}
-                                                        onChange={(event) => setField('price', event.target.value)}
-                                                        required
-                                                        min="1"
-                                                    />
-                                                </div>
-                                                <div className="form-group col-md-6">
-                                                    <label>Sale Price</label>
-                                                    <input
-                                                        type="number"
-                                                        className="form-control"
-                                                        value={formData.salePrice}
-                                                        onChange={(event) => setField('salePrice', event.target.value)}
-                                                        min="0"
-                                                        placeholder="Optional"
-                                                    />
-                                                </div>
+                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 className="text-uppercase text-muted mb-0">Variants</h6>
+                                                <button type="button" className="btn btn-sm btn-outline-primary" onClick={addVariant}>
+                                                    <i className="fas fa-plus"></i> Add Variant
+                                                </button>
                                             </div>
-                                            <div className="form-row">
-                                                <div className="form-group col-md-6">
-                                                    <label>Stock</label>
-                                                    <input
-                                                        type="number"
-                                                        className="form-control"
-                                                        value={formData.stock}
-                                                        onChange={(event) => setField('stock', event.target.value)}
-                                                        required
-                                                        min="0"
-                                                    />
-                                                </div>
-                                                <div className="form-group col-md-6">
-                                                    <label>SKU</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={formData.sku}
-                                                        onChange={(event) => setField('sku', event.target.value)}
-                                                        placeholder="Auto if empty"
-                                                    />
-                                                </div>
+                                            <div className="table-responsive">
+                                                <table className="table table-sm table-bordered bg-white">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Size</th>
+                                                            <th>Color</th>
+                                                            <th>Price</th>
+                                                            <th>Sale</th>
+                                                            <th>Stock</th>
+                                                            <th>SKU</th>
+                                                            <th>Status</th>
+                                                            <th style={{ width: '44px' }}></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {formData.variants.map((variant, index) => (
+                                                            <tr key={variant.id || `${variant.sku}-${index}`}>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="form-control form-control-sm"
+                                                                        value={variant.size}
+                                                                        onChange={(event) => setVariantField(index, 'size', event.target.value)}
+                                                                        placeholder="M"
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="form-control form-control-sm"
+                                                                        value={variant.color}
+                                                                        onChange={(event) => setVariantField(index, 'color', event.target.value)}
+                                                                        placeholder="Black"
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="number"
+                                                                        className="form-control form-control-sm"
+                                                                        value={variant.price}
+                                                                        onChange={(event) => setVariantField(index, 'price', event.target.value)}
+                                                                        min="1"
+                                                                        required
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="number"
+                                                                        className="form-control form-control-sm"
+                                                                        value={variant.salePrice}
+                                                                        onChange={(event) => setVariantField(index, 'salePrice', event.target.value)}
+                                                                        min="0"
+                                                                        placeholder="-"
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="number"
+                                                                        className="form-control form-control-sm"
+                                                                        value={variant.stockQuantity}
+                                                                        onChange={(event) => setVariantField(index, 'stockQuantity', event.target.value)}
+                                                                        min="0"
+                                                                        required
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="form-control form-control-sm"
+                                                                        value={variant.sku}
+                                                                        onChange={(event) => setVariantField(index, 'sku', event.target.value)}
+                                                                        placeholder="Auto"
+                                                                    />
+                                                                </td>
+                                                                <td className="text-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={variant.isActive}
+                                                                        onChange={(event) => setVariantField(index, 'isActive', event.target.checked)}
+                                                                        aria-label="Variant active"
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-outline-danger"
+                                                                        disabled={formData.variants.length <= 1}
+                                                                        onClick={() => removeVariant(index)}
+                                                                    >
+                                                                        <i className="fas fa-trash"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
                                             </div>
-                                            <div className="form-row">
-                                                <div className="form-group col-md-6">
-                                                    <label>Size</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={formData.size}
-                                                        onChange={(event) => setField('size', event.target.value)}
-                                                        placeholder="S, M, L..."
-                                                    />
-                                                </div>
-                                                <div className="form-group col-md-6">
-                                                    <label>Color</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={formData.color}
-                                                        onChange={(event) => setField('color', event.target.value)}
-                                                        placeholder="Black, White..."
-                                                    />
-                                                </div>
+                                            <div className="form-group">
+                                                <label>Variant Image URL</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={formData.variants[0]?.imageUrl || ''}
+                                                    onChange={(event) => setVariantField(0, 'imageUrl', event.target.value)}
+                                                    placeholder="Optional image for first variant"
+                                                />
                                             </div>
                                             <div className="form-group">
                                                 <div className="custom-control custom-switch">
@@ -634,14 +786,14 @@ const Products = () => {
                                                 <div className="font-weight-bold mb-2">Preview</div>
                                                 <div className="d-flex align-items-center">
                                                     <img
-                                                        src={formData.imageUrl || '/img/product-1.jpg'}
+                                                        src={formData.variants[0]?.imageUrl || formData.imageUrl || '/img/product-1.jpg'}
                                                         alt="Preview"
                                                         style={{ width: '72px', height: '72px', objectFit: 'cover' }}
                                                         className="mr-3"
                                                     />
                                                     <div>
                                                         <div>{formData.name || 'Product name'}</div>
-                                                        <div className="text-muted">{formatCurrency(formData.salePrice || formData.price)}</div>
+                                                        <div className="text-muted">{formatCurrency(formData.variants[0]?.salePrice || formData.variants[0]?.price)}</div>
                                                     </div>
                                                 </div>
                                             </div>

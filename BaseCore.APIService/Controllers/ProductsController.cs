@@ -73,6 +73,10 @@ namespace BaseCore.APIService.Controllers
             if (category == null)
                 return BadRequest(new { message = "Category not found" });
 
+            var variants = BuildCreateVariants(dto, out var validationError);
+            if (validationError != null)
+                return BadRequest(new { message = validationError });
+
             var product = new Product
             {
                 Name = dto.Name,
@@ -86,20 +90,7 @@ namespace BaseCore.APIService.Controllers
                 IsFeatured = dto.IsFeatured,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                ProductVariants = new List<ProductVariant>
-                {
-                    new()
-                    {
-                        Sku = string.IsNullOrWhiteSpace(dto.Sku) ? $"SKU-{Guid.NewGuid():N}" : dto.Sku,
-                        Price = dto.Price,
-                        SalePrice = dto.SalePrice,
-                        StockQuantity = dto.Stock,
-                        Size = dto.Size,
-                        Color = dto.Color,
-                        ImageUrl = dto.ImageUrl,
-                        IsActive = dto.IsActive
-                    }
-                }
+                ProductVariants = variants
             };
 
             await _productRepository.AddAsync(product);
@@ -134,29 +125,38 @@ namespace BaseCore.APIService.Controllers
                 product.DeletedAt = null;
             product.UpdatedAt = DateTime.Now;
 
-            var variant = product.ProductVariants.FirstOrDefault();
-            if (variant == null)
+            if (dto.Variants != null)
             {
-                variant = new ProductVariant
-                {
-                    Sku = string.IsNullOrWhiteSpace(dto.Sku) ? $"SKU-{Guid.NewGuid():N}" : dto.Sku,
-                    Price = dto.Price ?? product.BasePrice,
-                    StockQuantity = dto.Stock ?? 0,
-                    ImageUrl = dto.ImageUrl ?? product.ImageUrl,
-                    IsActive = dto.IsActive ?? product.IsActive
-                };
-                product.ProductVariants.Add(variant);
+                var validationError = ApplyVariantUpdates(product, dto);
+                if (validationError != null)
+                    return BadRequest(new { message = validationError });
             }
             else
             {
-                variant.Sku = dto.Sku ?? variant.Sku;
-                variant.Price = dto.Price ?? variant.Price;
-                variant.SalePrice = dto.SalePrice;
-                variant.StockQuantity = dto.Stock ?? variant.StockQuantity;
-                variant.Size = dto.Size ?? variant.Size;
-                variant.Color = dto.Color ?? variant.Color;
-                variant.ImageUrl = dto.ImageUrl ?? variant.ImageUrl;
-                variant.IsActive = dto.IsActive ?? variant.IsActive;
+                var variant = product.ProductVariants.FirstOrDefault();
+                if (variant == null)
+                {
+                    variant = new ProductVariant
+                    {
+                        Sku = string.IsNullOrWhiteSpace(dto.Sku) ? $"SKU-{Guid.NewGuid():N}" : dto.Sku.Trim(),
+                        Price = dto.Price ?? product.BasePrice,
+                        StockQuantity = dto.Stock ?? 0,
+                        ImageUrl = dto.ImageUrl ?? product.ImageUrl,
+                        IsActive = dto.IsActive ?? product.IsActive
+                    };
+                    product.ProductVariants.Add(variant);
+                }
+                else
+                {
+                    variant.Sku = string.IsNullOrWhiteSpace(dto.Sku) ? variant.Sku : dto.Sku.Trim();
+                    variant.Price = dto.Price ?? variant.Price;
+                    variant.SalePrice = dto.SalePrice;
+                    variant.StockQuantity = dto.Stock ?? variant.StockQuantity;
+                    variant.Size = dto.Size ?? variant.Size;
+                    variant.Color = dto.Color ?? variant.Color;
+                    variant.ImageUrl = dto.ImageUrl ?? variant.ImageUrl;
+                    variant.IsActive = dto.IsActive ?? variant.IsActive;
+                }
             }
 
             await _productRepository.UpdateAsync(product);
@@ -202,6 +202,147 @@ namespace BaseCore.APIService.Controllers
 
             return slug.Trim('-');
         }
+
+        private static List<ProductVariant> BuildCreateVariants(ProductCreateDto dto, out string? validationError)
+        {
+            var variantDtos = dto.Variants?.Count > 0
+                ? dto.Variants
+                : new List<ProductVariantDto>
+                {
+                    new()
+                    {
+                        Sku = dto.Sku,
+                        Price = dto.Price,
+                        SalePrice = dto.SalePrice,
+                        StockQuantity = dto.Stock,
+                        Size = dto.Size,
+                        Color = dto.Color,
+                        ImageUrl = dto.ImageUrl,
+                        IsActive = dto.IsActive
+                    }
+                };
+
+            var variants = new List<ProductVariant>();
+            validationError = ValidateVariantDtos(variantDtos, dto.Price, dto.IsActive, out var normalizedVariants);
+            if (validationError != null)
+                return variants;
+
+            foreach (var variantDto in normalizedVariants)
+            {
+                variants.Add(new ProductVariant
+                {
+                    Sku = string.IsNullOrWhiteSpace(variantDto.Sku) ? $"SKU-{Guid.NewGuid():N}" : variantDto.Sku.Trim(),
+                    Price = variantDto.Price ?? dto.Price,
+                    SalePrice = variantDto.SalePrice,
+                    StockQuantity = variantDto.StockQuantity ?? variantDto.Stock ?? 0,
+                    Size = NormalizeOptionalText(variantDto.Size),
+                    Color = NormalizeOptionalText(variantDto.Color),
+                    ImageUrl = NormalizeOptionalText(variantDto.ImageUrl) ?? dto.ImageUrl,
+                    IsActive = variantDto.IsActive ?? dto.IsActive
+                });
+            }
+
+            return variants;
+        }
+
+        private static string? ApplyVariantUpdates(Product product, ProductUpdateDto dto)
+        {
+            if (dto.Variants == null || dto.Variants.Count == 0)
+                return "Product must contain at least one variant.";
+
+            var fallbackPrice = dto.Price ?? product.BasePrice;
+            var validationError = ValidateVariantDtos(dto.Variants, fallbackPrice, product.IsActive, out var normalizedVariants);
+            if (validationError != null)
+                return validationError;
+
+            var existingById = product.ProductVariants.ToDictionary(variant => variant.Id);
+            var postedExistingIds = new HashSet<long>();
+
+            foreach (var variantDto in normalizedVariants)
+            {
+                ProductVariant variant;
+                if (variantDto.Id.HasValue && variantDto.Id.Value > 0)
+                {
+                    if (!existingById.TryGetValue(variantDto.Id.Value, out var existingVariant))
+                        return "One or more variants do not belong to this product.";
+
+                    variant = existingVariant;
+                    postedExistingIds.Add(variant.Id);
+                }
+                else
+                {
+                    variant = new ProductVariant();
+                    product.ProductVariants.Add(variant);
+                }
+
+                variant.Sku = string.IsNullOrWhiteSpace(variantDto.Sku) ? variant.Sku : variantDto.Sku.Trim();
+                if (string.IsNullOrWhiteSpace(variant.Sku))
+                    variant.Sku = $"SKU-{Guid.NewGuid():N}";
+
+                variant.Price = variantDto.Price ?? fallbackPrice;
+                variant.SalePrice = variantDto.SalePrice;
+                variant.StockQuantity = variantDto.StockQuantity ?? variantDto.Stock ?? variant.StockQuantity;
+                variant.Size = NormalizeOptionalText(variantDto.Size);
+                variant.Color = NormalizeOptionalText(variantDto.Color);
+                variant.ImageUrl = NormalizeOptionalText(variantDto.ImageUrl) ?? product.ImageUrl;
+                variant.IsActive = variantDto.IsActive ?? true;
+            }
+
+            foreach (var variant in product.ProductVariants.Where(variant => variant.Id > 0 && !postedExistingIds.Contains(variant.Id)))
+                variant.IsActive = false;
+
+            if (product.IsActive && !product.ProductVariants.Any(variant => variant.IsActive))
+                return "Active products must contain at least one active variant.";
+
+            return null;
+        }
+
+        private static string? ValidateVariantDtos(
+            List<ProductVariantDto> variantDtos,
+            decimal fallbackPrice,
+            bool requireActiveVariant,
+            out List<ProductVariantDto> normalizedVariants)
+        {
+            normalizedVariants = variantDtos;
+            if (variantDtos.Count == 0)
+                return "Product must contain at least one variant.";
+
+            var duplicateSku = variantDtos
+                .Select(variant => variant.Sku?.Trim())
+                .Where(sku => !string.IsNullOrWhiteSpace(sku))
+                .GroupBy(sku => sku!, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
+
+            if (duplicateSku != null)
+                return $"SKU {duplicateSku.Key} is duplicated in the variant list.";
+
+            for (var index = 0; index < variantDtos.Count; index++)
+            {
+                var variant = variantDtos[index];
+                var price = variant.Price ?? fallbackPrice;
+                var stock = variant.StockQuantity ?? variant.Stock ?? 0;
+
+                if (price <= 0)
+                    return $"Variant #{index + 1} price must be greater than zero.";
+
+                if (stock < 0)
+                    return $"Variant #{index + 1} stock must be zero or greater.";
+
+                if (variant.SalePrice.HasValue && (variant.SalePrice.Value < 0 || variant.SalePrice.Value > price))
+                    return $"Variant #{index + 1} sale price must be between zero and the regular price.";
+            }
+
+            if (requireActiveVariant && !variantDtos.Any(variant => variant.IsActive != false))
+                return "Product must contain at least one active variant.";
+
+            return null;
+        }
+
+        private static string? NormalizeOptionalText(string? value)
+        {
+            var normalized = value?.Trim();
+            return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+        }
     }
 
     // DTOs
@@ -219,6 +360,7 @@ namespace BaseCore.APIService.Controllers
         public decimal? SalePrice { get; set; }
         public string? Size { get; set; }
         public string? Color { get; set; }
+        public List<ProductVariantDto>? Variants { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsFeatured { get; set; }
     }
@@ -237,8 +379,23 @@ namespace BaseCore.APIService.Controllers
         public decimal? SalePrice { get; set; }
         public string? Size { get; set; }
         public string? Color { get; set; }
+        public List<ProductVariantDto>? Variants { get; set; }
         public bool? IsActive { get; set; }
         public bool? IsFeatured { get; set; }
+    }
+
+    public class ProductVariantDto
+    {
+        public long? Id { get; set; }
+        public string? Sku { get; set; }
+        public decimal? Price { get; set; }
+        public decimal? SalePrice { get; set; }
+        public int? StockQuantity { get; set; }
+        public int? Stock { get; set; }
+        public string? Size { get; set; }
+        public string? Color { get; set; }
+        public string? ImageUrl { get; set; }
+        public bool? IsActive { get; set; }
     }
 
 }

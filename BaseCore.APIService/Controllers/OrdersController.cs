@@ -120,13 +120,15 @@ namespace BaseCore.APIService.Controllers
                 if (product == null)
                     return BadRequest(new { message = $"Product {item.ProductId} not found" });
 
-                var variant = product.ProductVariants
-                    .Where(v => v.IsActive)
-                    .OrderBy(v => v.Id)
-                    .FirstOrDefault();
+                var variant = item.ProductVariantId.HasValue
+                    ? product.ProductVariants.FirstOrDefault(v => v.Id == item.ProductVariantId.Value && v.IsActive)
+                    : product.ProductVariants
+                        .Where(v => v.IsActive)
+                        .OrderBy(v => v.Id)
+                        .FirstOrDefault();
 
                 if (variant == null)
-                    return BadRequest(new { message = $"Product {product.Name} has no active variant" });
+                    return BadRequest(new { message = $"Product {product.Name} has no active variant for the selected option" });
 
                 if (variant.StockQuantity < item.Quantity)
                     return BadRequest(new { message = $"Insufficient stock for {product.Name}" });
@@ -363,6 +365,7 @@ namespace BaseCore.APIService.Controllers
     public class OrderItemDto
     {
         public long ProductId { get; set; }
+        public long? ProductVariantId { get; set; }
         public int Quantity { get; set; }
     }
 

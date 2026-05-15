@@ -128,7 +128,9 @@ namespace BaseCore.Repository
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
                 entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
                 entity.HasIndex(e => e.UserId).IsUnique();
-                entity.HasIndex(e => e.SessionToken).IsUnique();
+                entity.HasIndex(e => e.SessionToken)
+      .IsUnique()
+      .HasFilter("[session_token] IS NOT NULL");
 
                 entity.HasOne(e => e.User)
                       .WithMany()

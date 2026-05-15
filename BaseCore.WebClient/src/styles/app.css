@@ -495,7 +495,7 @@ img {
   background: linear-gradient(90deg, var(--app-border), transparent);
 }
 
-.section-title > span.bg-secondary {
+.section-title>span.bg-secondary {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
@@ -549,7 +549,7 @@ img {
   text-align: left;
 }
 
-.carousel-caption > div {
+.carousel-caption>div {
   width: min(700px, 92%);
   margin-right: auto;
 }
@@ -804,8 +804,8 @@ img {
 }
 
 .table-light,
-.table-light > th,
-.table-light > td {
+.table-light>th,
+.table-light>td {
   background: #ffffff;
 }
 
@@ -914,7 +914,7 @@ img {
   margin-bottom: 18px;
 }
 
-.order-detail-summary > div,
+.order-detail-summary>div,
 .order-detail-section,
 .order-detail-totals {
   border: 1px solid var(--app-border);
@@ -922,7 +922,7 @@ img {
   background: #ffffff;
 }
 
-.order-detail-summary > div {
+.order-detail-summary>div {
   padding: 14px;
 }
 
@@ -955,7 +955,7 @@ img {
   padding: 16px;
 }
 
-.order-detail-totals > div {
+.order-detail-totals>div {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -1058,7 +1058,7 @@ img {
   font-weight: 800;
 }
 
-.admin-shell .nav-sidebar > .nav-item {
+.admin-shell .nav-sidebar>.nav-item {
   margin-bottom: 4px;
 }
 
@@ -1129,7 +1129,7 @@ img {
   box-shadow: var(--app-shadow-sm);
 }
 
-.admin-shell .small-box > .inner {
+.admin-shell .small-box>.inner {
   padding: 20px;
 }
 
@@ -1639,7 +1639,7 @@ img {
   font-weight: 700;
 }
 
-.section-title > span.bg-secondary {
+.section-title>span.bg-secondary {
   min-height: 32px;
   border-radius: 4px;
   box-shadow: none;
@@ -2291,7 +2291,7 @@ img {
   font-weight: 800;
 }
 
-.section-title > span.bg-secondary {
+.section-title>span.bg-secondary {
   border-color: var(--shop-line);
   border-radius: 8px;
   background: #ffffff !important;
@@ -2516,7 +2516,7 @@ img {
   font-weight: 850;
 }
 
-.checkout-panel-header > i {
+.checkout-panel-header>i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2671,7 +2671,7 @@ img {
   box-shadow: 0 0 0 3px rgba(232, 93, 79, 0.08);
 }
 
-.checkout-option > i {
+.checkout-option>i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2807,8 +2807,8 @@ img {
 
 .checkout-submit:hover,
 .checkout-submit:focus {
-  background: #cf4d42 !important;
-  border-color: #cf4d42 !important;
+  background: rgba(37, 99, 235, 0.34) !important;
+  border-color: rgba(37, 99, 235, 0.34) !important;
 }
 
 .checkout-policy {
@@ -2833,6 +2833,7 @@ img {
 }
 
 @media (max-width: 575.98px) {
+
   .checkout-panel,
   .checkout-summary-card,
   .checkout-voucher {

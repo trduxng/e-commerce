@@ -127,7 +127,12 @@ const ProductDetail = () => {
   };
 
   const optionHasStock = (field, value) =>
-    variants.some((variant) => normalizeVariantValue(variant?.[field]) === value && getVariantStock(variant) > 0);
+    variants.some((variant) => {
+      const matchesField = normalizeVariantValue(variant?.[field]) === value;
+      const matchesSize = field === "size" || !selectedSize || normalizeVariantValue(variant?.size) === selectedSize;
+      const matchesColor = field === "color" || !selectedColor || normalizeVariantValue(variant?.color) === selectedColor;
+      return matchesField && matchesSize && matchesColor && getVariantStock(variant) > 0;
+    });
 
   const setQuantitySafely = (nextValue) => {
     const nextQuantity = getSafeQuantity(nextValue);
