@@ -1,0 +1,29 @@
+{
+  "name": "base-webclient",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.1.0",
+    "axios": "^1.13.4",
+    "bootstrap": "^5.3.8",
+    "jquery": "^3.7.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.13.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.100.9",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^6.0.3",
+    "vite": "^5.0.8"
+  }
+}
