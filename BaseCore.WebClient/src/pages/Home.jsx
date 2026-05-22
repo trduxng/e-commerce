@@ -162,6 +162,21 @@ const Home = () => {
                             Explore Products
                           </Link>
                         </div>
+
+                        <div className="hero-metrics" aria-label="Store highlights">
+                          <div>
+                            <strong>1K+</strong>
+                            <span>Products</span>
+                          </div>
+                          <div>
+                            <strong>24h</strong>
+                            <span>Support</span>
+                          </div>
+                          <div>
+                            <strong>4.8</strong>
+                            <span>Rating</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
