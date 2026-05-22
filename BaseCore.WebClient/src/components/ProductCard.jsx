@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   formatCurrency,
@@ -11,15 +11,16 @@ import {
 } from "../data/shopData";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const rating = getProductRating(product);
   const stock = getProductStock(product);
-  const [message, setMessage] = useState("");
   const price = getProductPrice(product);
   const oldPrice = getProductOldPrice(product);
   const isOnSale = oldPrice && oldPrice > price;
@@ -28,12 +29,18 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      toast.info("Please sign in before adding products to cart.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
 
     const result = await addToCart(product);
-    setMessage(result.message || (result.success ? "Product added to cart." : "Cannot add this product."));
+    const message = result.message || (result.success ? "Product added to cart." : "Cannot add this product.");
+    if (result.success) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
   };
 
   const renderStars = () =>
@@ -86,11 +93,6 @@ const ProductCard = ({ product }) => {
           <small className={stock > 0 ? "text-muted" : "text-danger"}>
             {stock > 0 ? `${stock} in stock` : "Out of stock"}
           </small>
-        )}
-        {message && (
-          <div className={`cart-inline-message ${message.includes("Cannot") || message.includes("out of stock") ? "text-danger" : "text-success"}`}>
-            {message}
-          </div>
         )}
       </div>
     </div>

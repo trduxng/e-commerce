@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { categoryApi, productApi } from "../services/api";
+import { useToast } from "../contexts/ToastContext";
 import {
   getProductPrice,
   normalizeCategoryList,
@@ -48,6 +49,7 @@ const categoryImages = [
 ];
 
 const Home = () => {
+  const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,13 +77,16 @@ const Home = () => {
         setError(
           "API is not available, so the storefront is showing demo products."
         );
+        toast.warning("API is not available, so the storefront is showing demo products.", {
+          dedupeKey: "home-api-fallback",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     loadHomeData();
-  }, []);
+  }, [toast]);
 
   const featuredProducts = useMemo(() => {
     const featured = products.filter((product) => product.isFeatured);

@@ -116,7 +116,7 @@ const Topbar = () => {
             </div>
           </div>
 
-          <div className="d-inline-flex align-items-center d-block d-lg-none">
+          <div className="d-inline-flex align-items-center d-lg-none">
             <Link to="/cart" className="cart-button ms-2" aria-label="Shopping cart">
               <i className="fas fa-shopping-cart"></i>
               <span className="badge">

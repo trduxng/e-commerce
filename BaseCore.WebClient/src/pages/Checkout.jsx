@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { cartApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
 
@@ -39,6 +40,8 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { items, subtotal, reloadCart } = useCart();
   const { user } = useAuth();
+  const toast = useToast();
+  const loadingToastRef = useRef(null);
   const [billingData, setBillingData] = useState({
     firstName: user?.name || "",
     lastName: "",
@@ -57,7 +60,6 @@ const Checkout = () => {
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherMessage, setVoucherMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
 
   const selectedShipping = useMemo(
     () => shippingOptions.find((option) => option.id === shippingMethod) || shippingOptions[0],
@@ -83,22 +85,26 @@ const Checkout = () => {
   };
 
   const handleVoucher = () => {
-    setVoucherMessage(
-      voucherCode.trim()
-        ? "Voucher code saved. Discount validation can be connected to the API."
-        : "Enter a voucher code first."
-    );
+    const message = voucherCode.trim()
+      ? "Voucher code saved. Discount validation can be connected to the API."
+      : "Enter a voucher code first.";
+    setVoucherMessage(message);
+    if (voucherCode.trim()) {
+      toast.info(message);
+    } else {
+      toast.warning(message);
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (items.length === 0) {
-      setMessage("Your cart is empty.");
+      toast.warning("Your cart is empty.");
       return;
     }
 
     setSubmitting(true);
-    setMessage("");
+    loadingToastRef.current = toast.loading("Placing your order...");
     const payload = {
       receiverName,
       email: billingData.email,
@@ -113,13 +119,22 @@ const Checkout = () => {
       const response = await cartApi.checkout(payload);
       const orderId = response.data?.order?.id || response.data?.id;
       await reloadCart();
+      if (loadingToastRef.current) {
+        toast.dismissToast(loadingToastRef.current);
+        loadingToastRef.current = null;
+      }
+      toast.success("Order placed successfully.");
       navigate(orderId ? `/my-orders?orderId=${orderId}&success=1` : "/my-orders?success=1");
     } catch (error) {
       const responseData = error.response?.data;
       const detail = typeof responseData === "string"
         ? responseData.slice(0, 240)
         : responseData?.message;
-      setMessage(detail || "Order could not be submitted. Please check the API or sign in and try again.");
+      if (loadingToastRef.current) {
+        toast.dismissToast(loadingToastRef.current);
+        loadingToastRef.current = null;
+      }
+      toast.error(detail || "Order could not be submitted. Please check the API or sign in and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -153,8 +168,6 @@ const Checkout = () => {
                 </div>
                 <i className="fa fa-location-dot"></i>
               </div>
-
-              {message && <div className="alert alert-warning">{message}</div>}
 
               <div className="checkout-address-preview">
                 <div>

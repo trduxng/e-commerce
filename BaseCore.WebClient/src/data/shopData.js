@@ -154,8 +154,13 @@ export const getProductOldPrice = (product) => {
   return variant ? Number(variant.price) : null;
 };
 
-export const getProductImage = (product) =>
-  product?.imageUrl || product?.image || product?.thumbnailUrl || "/img/product-1.jpg";
+export const getProductImage = (product) => {
+  const variantImage = getProductVariants(product)
+    .map((variant) => variant?.imageUrl || variant?.image)
+    .find(Boolean);
+
+  return product?.imageUrl || product?.image || product?.thumbnailUrl || variantImage || "/img/product-1.jpg";
+};
 
 export const getProductStock = (product) => {
   if (product?.stock !== null && product?.stock !== undefined && product?.stock !== "") {

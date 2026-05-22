@@ -2,12 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { formatCurrency } from "../data/shopData";
 
 const Cart = () => {
   const { items, loading, subtotal, shipping, total, updateQuantity, removeFromCart, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
-  const [message, setMessage] = React.useState("");
+  const toast = useToast();
   const [quantityDrafts, setQuantityDrafts] = React.useState({});
 
   const changeQuantity = async (item, quantity) => {
@@ -17,7 +18,11 @@ const Cart = () => {
       delete nextDrafts[item.productVariantId ?? item.cartItemId ?? item.id];
       return nextDrafts;
     });
-    setMessage(result?.message || "");
+    if (result?.message) {
+      toast.error(result.message);
+    } else {
+      toast.success("Cart quantity updated.");
+    }
   };
 
   const commitQuantityInput = (item, value) => {
@@ -29,13 +34,21 @@ const Cart = () => {
 
   const removeItem = async (item) => {
     const result = await removeFromCart(item.productVariantId ?? item.cartItemId ?? item.id);
-    setMessage(result?.message || "");
+    if (result?.message) {
+      toast.error(result.message);
+    } else {
+      toast.success("Product removed from cart.");
+    }
   };
 
   const clearAllItems = async () => {
     const result = await clearCart();
     setQuantityDrafts({});
-    setMessage(result?.message || "");
+    if (result?.message) {
+      toast.error(result.message);
+    } else {
+      toast.success("Cart cleared.");
+    }
   };
 
   return (
@@ -55,12 +68,6 @@ const Cart = () => {
       <div className="container-fluid">
         <div className="row px-xl-5">
           <div className="col-lg-8 mb-5">
-            {message && (
-              <div className="alert alert-warning alert-dismissible fade show">
-                <button type="button" className="btn-close" onClick={() => setMessage("")} aria-label="Close"></button>
-                {message}
-              </div>
-            )}
             {loading ? (
               <div className="cart-empty-state bg-light p-5 text-center">
                 <div className="spinner-border text-primary" role="status">

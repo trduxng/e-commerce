@@ -3,6 +3,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import ShopLayout from './components/ShopLayout';
@@ -204,11 +205,13 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <Router>
-                <AuthProvider>
-                    <CartProvider>
-                        <AppRoutes />
-                    </CartProvider>
-                </AuthProvider>
+                <ToastProvider>
+                    <AuthProvider>
+                        <CartProvider>
+                            <AppRoutes />
+                        </CartProvider>
+                    </AuthProvider>
+                </ToastProvider>
             </Router>
         </QueryClientProvider>
     );

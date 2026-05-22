@@ -237,7 +237,7 @@ namespace BaseCore.APIService.Controllers
                     StockQuantity = variantDto.StockQuantity ?? variantDto.Stock ?? 0,
                     Size = NormalizeOptionalText(variantDto.Size),
                     Color = NormalizeOptionalText(variantDto.Color),
-                    ImageUrl = NormalizeOptionalText(variantDto.ImageUrl) ?? dto.ImageUrl,
+                    ImageUrl = NormalizeOptionalText(variantDto.ImageUrl),
                     IsActive = variantDto.IsActive ?? dto.IsActive
                 });
             }
@@ -284,7 +284,7 @@ namespace BaseCore.APIService.Controllers
                 variant.StockQuantity = variantDto.StockQuantity ?? variantDto.Stock ?? variant.StockQuantity;
                 variant.Size = NormalizeOptionalText(variantDto.Size);
                 variant.Color = NormalizeOptionalText(variantDto.Color);
-                variant.ImageUrl = NormalizeOptionalText(variantDto.ImageUrl) ?? product.ImageUrl;
+                variant.ImageUrl = NormalizeOptionalText(variantDto.ImageUrl);
                 variant.IsActive = variantDto.IsActive ?? true;
             }
 

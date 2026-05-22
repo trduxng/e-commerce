@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { productApi } from "../services/api";
 import {
   formatCurrency,
@@ -22,6 +23,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [product, setProduct] = useState(null);
@@ -31,7 +33,6 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [cartMessage, setCartMessage] = useState("");
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -61,17 +62,21 @@ const ProductDetail = () => {
         setActiveImage(getProductImage(demoProduct));
         setQuantity("1");
         setError("API is not available, so this product is shown from demo data.");
+        toast.warning("API is not available, so this product is shown from demo data.", {
+          dedupeKey: `product-api-fallback-${id}`,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     loadProduct();
-  }, [id]);
+  }, [id, toast]);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      toast.info("Please sign in before adding products to cart.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
@@ -79,17 +84,23 @@ const ProductDetail = () => {
     const safeQuantity = getSafeQuantity(quantity);
     if (stock !== null && safeQuantity > stock) {
       setQuantity(String(Math.max(1, stock)));
-      setCartMessage(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
+      toast.warning(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
       return;
     }
 
     const result = await addToCart(product, safeQuantity, selectedVariant?.id);
-    setCartMessage(result.message || (result.success ? "Product added to cart." : "Cannot add this product."));
+    const message = result.message || (result.success ? "Product added to cart." : "Cannot add this product.");
+    if (result.success) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
   };
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      toast.info("Please sign in before buying this product.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
@@ -97,11 +108,12 @@ const ProductDetail = () => {
     const safeQuantity = getSafeQuantity(quantity);
     const result = await addToCart(product, safeQuantity, selectedVariant?.id);
     if (result.success) {
+      toast.success(result.message || "Product added to cart.");
       navigate("/checkout");
       return;
     }
 
-    setCartMessage(result.message || "Cannot add this product.");
+    toast.error(result.message || "Cannot add this product.");
   };
 
   if (loading) {
@@ -158,7 +170,6 @@ const ProductDetail = () => {
     setSelectedVariantId(nextVariant?.id ?? null);
     setActiveImage(nextVariant?.imageUrl || nextVariant?.image || getProductImage(product));
     setQuantity("1");
-    setCartMessage("");
   };
 
   const optionHasStock = (field, value) =>
@@ -179,7 +190,6 @@ const ProductDetail = () => {
     const nextValue = event.target.value;
     if (/^\d*$/.test(nextValue)) {
       setQuantity(nextValue);
-      setCartMessage("");
     }
   };
 
@@ -292,12 +302,6 @@ const ProductDetail = () => {
                   })}
                 </div>
               )}
-              {cartMessage && (
-                <div className={`alert ${cartMessage.includes("Cannot") || cartMessage.includes("out of stock") ? "alert-warning" : "alert-success"}`}>
-                  {cartMessage}
-                </div>
-              )}
-
               <div className="d-flex align-items-center flex-wrap mb-4 pt-2">
                 <div className="input-group quantity me-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>
                   <div>
@@ -325,7 +329,7 @@ const ProductDetail = () => {
                       disabled={!canIncreaseQuantity}
                       onClick={() => {
                         if (!canIncreaseQuantity) {
-                          setCartMessage(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
+                          toast.warning(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
                           return;
                         }
                         setQuantitySafely(safeQuantity + 1);

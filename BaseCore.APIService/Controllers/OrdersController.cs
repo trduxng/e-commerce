@@ -260,10 +260,12 @@ namespace BaseCore.APIService.Controllers
             if (order == null) return NotFound(new { message = "Order not found" });
             if (!CanAccessOrder(order)) return Forbid();
 
-            if (order.OrderStatus == "delivered")
+            var currentStatus = NormalizeStatus(order.OrderStatus);
+
+            if (currentStatus == "delivered")
                 return BadRequest(new { message = "Cannot cancel completed order" });
 
-            if (order.OrderStatus == "cancelled")
+            if (currentStatus == "cancelled")
                 return Ok(new { message = "Order already cancelled", order });
 
             await RestoreOrderStock(id);
@@ -286,10 +288,12 @@ namespace BaseCore.APIService.Controllers
             if (order == null) return NotFound(new { message = "Order not found" });
             if (!CanAccessOrder(order)) return Forbid();
 
-            if (order.OrderStatus != "pending" && order.OrderStatus != "cancelled")
+            var currentStatus = NormalizeStatus(order.OrderStatus);
+
+            if (currentStatus != "pending" && currentStatus != "cancelled")
                 return BadRequest(new { message = "Only pending or cancelled orders can be deleted" });
 
-            if (order.OrderStatus != "cancelled")
+            if (currentStatus != "cancelled")
                 await RestoreOrderStock(id);
 
             var details = await _orderDetailRepository.GetByOrderAsync(id);
@@ -339,6 +343,8 @@ namespace BaseCore.APIService.Controllers
             {
                 "completed" => "delivered",
                 "delivered" => "delivered",
+                "cancel" => "cancelled",
+                "canceled" => "cancelled",
                 "cancelled" => "cancelled",
                 "shipping" => "shipping",
                 "confirmed" => "confirmed",

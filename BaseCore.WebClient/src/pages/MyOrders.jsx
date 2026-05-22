@@ -4,11 +4,11 @@ import { orderApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
 
 const statusMeta = {
-  pending: { label: "Pending", className: "bg-warning text-dark" },
-  confirmed: { label: "Confirmed", className: "bg-primary" },
-  shipping: { label: "Shipping", className: "bg-info text-dark" },
-  delivered: { label: "Delivered", className: "bg-success" },
-  cancelled: { label: "Cancelled", className: "bg-secondary" },
+  pending: { label: "Pending", className: "badge-warning" },
+  confirmed: { label: "Confirmed", className: "badge-primary" },
+  shipping: { label: "Shipping", className: "badge-info" },
+  delivered: { label: "Delivered", className: "badge-success" },
+  cancelled: { label: "Cancelled", className: "badge-secondary" },
 };
 
 const paymentLabels = {
@@ -41,8 +41,14 @@ const MyOrders = () => {
     || "/img/product-1.jpg"
   );
   const getProductId = (detail) => detail.productId || detail.productVariant?.productId || detail.productVariant?.product?.id;
-  const getStatus = (status) => statusMeta[String(status || "pending").toLowerCase()] || statusMeta.pending;
-  const canCancel = (order) => !["delivered", "cancelled"].includes(String(order?.orderStatus || "").toLowerCase());
+  const normalizeStatus = (status) => {
+    const value = String(status || "pending").trim().toLowerCase();
+    if (value === "cancel" || value === "canceled") return "cancelled";
+    if (value === "completed") return "delivered";
+    return value;
+  };
+  const getStatus = (status) => statusMeta[normalizeStatus(status)] || statusMeta.pending;
+  const canCancel = (order) => !["delivered", "cancelled"].includes(normalizeStatus(order?.orderStatus));
   const formatDate = (value) => (value ? new Date(value).toLocaleString("vi-VN") : "");
 
   const closeOrderDetail = () => {

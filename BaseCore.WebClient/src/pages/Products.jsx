@@ -71,6 +71,9 @@ const Products = () => {
 
     const firstVariant = (product) => product?.productVariants?.[0] || {};
 
+    const getVariantPreviewImage = (variant, fallback = '') =>
+        variant?.imageUrl || fallback || '/img/product-1.jpg';
+
     const loadCategories = async () => {
         try {
             setCategoryError('');
@@ -152,7 +155,6 @@ const Products = () => {
                 createEmptyVariant({
                     sku: `SKU-${Date.now()}-${current.variants.length + 1}`,
                     price: current.variants[0]?.price || current.price || '',
-                    imageUrl: current.imageUrl || '',
                 }),
             ],
         }));
@@ -321,7 +323,7 @@ const Products = () => {
                 stockQuantity,
                 size: variant.size.trim(),
                 color: variant.color.trim(),
-                imageUrl: variant.imageUrl.trim() || formData.imageUrl.trim(),
+                imageUrl: variant.imageUrl.trim(),
                 isActive: variant.isActive,
             });
         }
@@ -478,7 +480,7 @@ const Products = () => {
                                                             <tr key={product.id}>
                                                                 <td>
                                                                     <img
-                                                                        src={getProductImage(product)}
+                                                                        src={getVariantPreviewImage(variant, getProductImage(product))}
                                                                         alt={product.name}
                                                                         style={{ width: '64px', height: '64px', objectFit: 'cover' }}
                                                                     />
@@ -567,7 +569,7 @@ const Products = () => {
                                 <div className="modal-body">
                                     {error && <div className="alert alert-danger">{error}</div>}
                                     <div className="row">
-                                        <div className="col-md-7">
+                                        <div className="col-md-5">
                                             <h6 className="text-uppercase text-muted">Product Information</h6>
                                             <div className="form-group">
                                                 <label>Name</label>
@@ -633,7 +635,7 @@ const Products = () => {
                                                 />
                                             </div>
                                             <div className="form-group">
-                                                <label>Image URL</label>
+                                                <label>Product Image URL</label>
                                                 <input
                                                     type="text"
                                                     className="form-control"
@@ -644,7 +646,7 @@ const Products = () => {
                                             </div>
                                         </div>
 
-                                        <div className="col-md-5">
+                                        <div className="col-md-7">
                                             <div className="d-flex justify-content-between align-items-center mb-2">
                                                 <h6 className="text-uppercase text-muted mb-0">Variants</h6>
                                                 <button type="button" className="btn btn-sm btn-outline-primary" onClick={addVariant}>
@@ -655,12 +657,13 @@ const Products = () => {
                                                 <table className="table table-sm table-bordered bg-white">
                                                     <thead>
                                                         <tr>
+                                                            <th style={{ minWidth: '220px' }}>Image</th>
                                                             <th>Size</th>
                                                             <th>Color</th>
-                                                            <th>Price</th>
-                                                            <th>Sale</th>
-                                                            <th>Stock</th>
-                                                            <th>SKU</th>
+                                                            <th style={{ minWidth: '110px' }}>Price</th>
+                                                            <th style={{ minWidth: '110px' }}>Sale</th>
+                                                            <th style={{ minWidth: '92px' }}>Stock</th>
+                                                            <th style={{ minWidth: '140px' }}>SKU</th>
                                                             <th>Status</th>
                                                             <th style={{ width: '44px' }}></th>
                                                         </tr>
@@ -668,6 +671,22 @@ const Products = () => {
                                                     <tbody>
                                                         {formData.variants.map((variant, index) => (
                                                             <tr key={variant.id || `${variant.sku}-${index}`}>
+                                                                <td>
+                                                                    <div className="variant-image-cell">
+                                                                        <img
+                                                                            src={getVariantPreviewImage(variant, formData.imageUrl)}
+                                                                            alt={`Variant ${index + 1}`}
+                                                                            className="variant-image-preview"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            className="form-control form-control-sm"
+                                                                            value={variant.imageUrl}
+                                                                            onChange={(event) => setVariantField(index, 'imageUrl', event.target.value)}
+                                                                            placeholder="/img/product-1.jpg"
+                                                                        />
+                                                                    </div>
+                                                                </td>
                                                                 <td>
                                                                     <input
                                                                         type="text"
@@ -749,16 +768,6 @@ const Products = () => {
                                                 </table>
                                             </div>
                                             <div className="form-group">
-                                                <label>Variant Image URL</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={formData.variants[0]?.imageUrl || ''}
-                                                    onChange={(event) => setVariantField(0, 'imageUrl', event.target.value)}
-                                                    placeholder="Optional image for first variant"
-                                                />
-                                            </div>
-                                            <div className="form-group">
                                                 <div className="custom-control custom-switch">
                                                     <input
                                                         type="checkbox"
@@ -786,7 +795,7 @@ const Products = () => {
                                                 <div className="font-weight-bold mb-2">Preview</div>
                                                 <div className="d-flex align-items-center">
                                                     <img
-                                                        src={formData.variants[0]?.imageUrl || formData.imageUrl || '/img/product-1.jpg'}
+                                                        src={getVariantPreviewImage(formData.variants[0], formData.imageUrl)}
                                                         alt="Preview"
                                                         style={{ width: '72px', height: '72px', objectFit: 'cover' }}
                                                         className="mr-3"

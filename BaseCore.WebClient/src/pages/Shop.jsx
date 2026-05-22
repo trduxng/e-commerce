@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { categoryApi, productApi } from "../services/api";
+import { useToast } from "../contexts/ToastContext";
 import {
   formatCurrency,
   getProductOldPrice,
@@ -48,6 +49,7 @@ const buildPageItems = (currentPage, totalPages) => {
 };
 
 const Shop = () => {
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -118,13 +120,16 @@ const Shop = () => {
         setTotalCount(filteredProducts.length);
         setTotalPages(Math.ceil(filteredProducts.length / pageSize));
         setError("API is not available, so the catalog is showing demo products.");
+        toast.warning("API is not available, so the catalog is showing demo products.", {
+          dedupeKey: "shop-api-fallback",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     loadShop();
-  }, [keyword, categoryId, minPrice, maxPrice, page]);
+  }, [keyword, categoryId, minPrice, maxPrice, page, toast]);
 
   const visibleProducts = useMemo(() => {
     return [...products].sort((first, second) => {
