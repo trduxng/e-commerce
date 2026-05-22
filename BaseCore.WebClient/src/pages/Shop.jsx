@@ -96,11 +96,14 @@ const Shop = () => {
 
         const apiCategories = normalizeCategoryList(categoriesResponse.data);
         const apiProducts = normalizeProductList(productsResponse.data);
+        const nextProducts = apiProducts.length > 0 ? apiProducts : sampleProducts;
+        const apiTotalCount = Number(productsResponse.data?.totalCount);
+        const apiTotalPages = Number(productsResponse.data?.totalPages);
 
         setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
-        setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
-        setTotalCount(Number(productsResponse.data?.totalCount ?? apiProducts.length));
-        setTotalPages(Number(productsResponse.data?.totalPages ?? Math.ceil(apiProducts.length / pageSize)));
+        setProducts(nextProducts);
+        setTotalCount(Number.isFinite(apiTotalCount) && apiProducts.length > 0 ? apiTotalCount : nextProducts.length);
+        setTotalPages(Number.isFinite(apiTotalPages) && apiProducts.length > 0 ? apiTotalPages : Math.ceil(nextProducts.length / pageSize));
         setError("");
       } catch {
         const filteredProducts = sampleProducts.filter((product) => {

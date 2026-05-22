@@ -94,6 +94,20 @@ const ProductCard = ({ product }) => {
             {stock > 0 ? `${stock} in stock` : "Out of stock"}
           </small>
         )}
+        <div className="product-card-footer">
+          <button
+            type="button"
+            className="btn btn-primary product-card-add"
+            disabled={stock === 0}
+            onClick={handleAddToCart}
+          >
+            <i className="fa fa-cart-plus me-2"></i>
+            Add to cart
+          </button>
+          <Link className="btn btn-outline-dark product-card-view" to={`/product/${product.id}`} aria-label={`View ${product.name}`}>
+            <i className="fa fa-arrow-right"></i>
+          </Link>
+        </div>
       </div>
     </div>
   );
