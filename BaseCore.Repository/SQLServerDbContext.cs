@@ -14,6 +14,7 @@ namespace BaseCore.Repository
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<UserAddress> UserAddresses { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<Category> Categories { get; set; }
@@ -46,6 +47,28 @@ namespace BaseCore.Repository
                 entity.Property(e => e.Created).HasColumnName("created_at");
                 entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
                 entity.HasIndex(e => e.Email).IsUnique();
+            });
+
+            modelBuilder.Entity<UserAddress>(entity =>
+            {
+                entity.ToTable("user_addresses", "auth", table => table.UseSqlOutputClause(false));
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.ReceiverName).HasColumnName("receiver_name").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(20).IsRequired();
+                entity.Property(e => e.Province).HasColumnName("province").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.District).HasColumnName("district").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Ward).HasColumnName("ward").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.AddressDetail).HasColumnName("address_detail").HasMaxLength(500).IsRequired();
+                entity.Property(e => e.IsDefault).HasColumnName("is_default");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.HasIndex(e => e.UserId);
+
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Category>(entity =>

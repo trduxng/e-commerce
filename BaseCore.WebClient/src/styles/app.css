@@ -3231,6 +3231,107 @@ img {
   color: var(--shop-muted);
 }
 
+.checkout-address-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.checkout-address-loading {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px dashed var(--shop-line);
+  border-radius: 8px;
+  color: var(--shop-muted);
+  font-weight: 700;
+}
+
+.checkout-address-book {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.checkout-saved-address {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--shop-line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.checkout-saved-address.is-selected {
+  border-color: var(--checkout-accent);
+  background: var(--checkout-soft-2);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+}
+
+.checkout-saved-address label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkout-saved-address input,
+.checkout-save-address input {
+  margin-top: 3px;
+}
+
+.checkout-saved-address strong,
+.checkout-saved-address em,
+.checkout-saved-address p {
+  display: block;
+}
+
+.checkout-saved-address strong {
+  color: var(--shop-text);
+  font-weight: 850;
+}
+
+.checkout-saved-address small {
+  display: inline-flex;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #dcfce7;
+  color: #166534;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.checkout-saved-address em,
+.checkout-saved-address p {
+  margin: 4px 0 0;
+  color: var(--shop-muted);
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.checkout-save-address {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px dashed var(--shop-line);
+  border-radius: 8px;
+  background: var(--shop-surface-2);
+}
+
+.checkout-save-address label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+}
+
 .checkout-page label {
   color: #3f4652;
   font-size: 0.86rem;
@@ -3518,6 +3619,20 @@ img {
 
   .checkout-option b {
     grid-column: 2;
+  }
+
+  .checkout-saved-address,
+  .checkout-save-address {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-save-address {
+    flex-direction: column;
+  }
+
+  .checkout-save-address .btn {
+    width: 100%;
   }
 
   .checkout-summary-total {

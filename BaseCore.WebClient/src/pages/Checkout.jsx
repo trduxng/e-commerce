@@ -1,9 +1,9 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { cartApi } from "../services/api";
+import { addressApi, cartApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
 
 const shippingOptions = [
@@ -36,30 +36,103 @@ const paymentOptions = [
   ["paypal", "Paypal", "Pay securely with Paypal", "fa-wallet"],
 ];
 
+const createInitialBillingData = (user = {}) => ({
+  receiverName: user?.name || "",
+  email: user?.email || "",
+  phone: user?.phone || "",
+  addressDetail: "",
+  ward: "",
+  district: "",
+  province: "",
+  note: "",
+  isDefault: false,
+});
+
+const getAddressText = (address = {}) =>
+  [
+    address.addressDetail,
+    address.ward,
+    address.district,
+    address.province,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+const sortAddresses = (addresses) =>
+  [...addresses].sort((first, second) => Number(second.isDefault) - Number(first.isDefault));
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, subtotal, reloadCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
   const loadingToastRef = useRef(null);
-  const [billingData, setBillingData] = useState({
-    firstName: user?.name || "",
-    lastName: "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    address1: "",
-    address2: "",
-    country: "Vietnam",
-    city: "",
-    state: "",
-    zipCode: "",
-    note: "",
-  });
+  const [billingData, setBillingData] = useState(() => createInitialBillingData(user));
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("new");
+  const [addressMode, setAddressMode] = useState("new");
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [shippingMethod, setShippingMethod] = useState("standard");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherMessage, setVoucherMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setBillingData((current) => ({
+      ...current,
+      receiverName: current.receiverName || user?.name || "",
+      email: current.email || user?.email || "",
+      phone: current.phone || user?.phone || "",
+    }));
+  }, [user?.name, user?.email, user?.phone]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAddresses = async () => {
+      if (!user) {
+        setSavedAddresses([]);
+        setSelectedAddressId("new");
+        setAddressMode("new");
+        return;
+      }
+
+      setAddressLoading(true);
+      try {
+        const response = await addressApi.getMyAddresses();
+        if (!isMounted) return;
+
+        const addresses = sortAddresses(Array.isArray(response.data) ? response.data : []);
+        setSavedAddresses(addresses);
+
+        const preferredAddress = addresses.find((address) => address.isDefault) || addresses[0];
+        if (preferredAddress) {
+          setSelectedAddressId(String(preferredAddress.id));
+          setAddressMode("saved");
+        } else {
+          setSelectedAddressId("new");
+          setAddressMode("new");
+        }
+      } catch {
+        if (!isMounted) return;
+        setSavedAddresses([]);
+        setSelectedAddressId("new");
+        setAddressMode("new");
+      } finally {
+        if (isMounted) {
+          setAddressLoading(false);
+        }
+      }
+    };
+
+    loadAddresses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.userId, user?.id, user?.username, user?.email]);
 
   const selectedShipping = useMemo(
     () => shippingOptions.find((option) => option.id === shippingMethod) || shippingOptions[0],
@@ -68,20 +141,91 @@ const Checkout = () => {
   const shippingFee = items.length > 0 ? selectedShipping.fee : 0;
   const total = subtotal + shippingFee;
   const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-  const receiverName = `${billingData.firstName} ${billingData.lastName}`.trim();
-  const addressPreview = [
-    billingData.address1,
-    billingData.address2,
-    billingData.city,
-    billingData.state,
-    billingData.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const selectedAddress = savedAddresses.find((address) => String(address.id) === String(selectedAddressId));
+  const activeAddress = addressMode === "saved" && selectedAddress ? selectedAddress : billingData;
+  const receiverName = activeAddress.receiverName?.trim() || "";
+  const receiverPhone = activeAddress.phone?.trim() || "";
+  const addressPreview = getAddressText(activeAddress);
 
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setBillingData((current) => ({ ...current, [name]: value }));
+    const { checked, name, type, value } = event.target;
+    setBillingData((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleSelectSavedAddress = (addressId) => {
+    setSelectedAddressId(String(addressId));
+    setAddressMode("saved");
+  };
+
+  const handleUseNewAddress = () => {
+    setSelectedAddressId("new");
+    setAddressMode("new");
+  };
+
+  const buildAddressDto = () => ({
+    receiverName: billingData.receiverName,
+    phone: billingData.phone,
+    province: billingData.province,
+    district: billingData.district,
+    ward: billingData.ward,
+    addressDetail: billingData.addressDetail,
+    isDefault: billingData.isDefault,
+  });
+
+  const validateAddress = (address) => {
+    if (!address.receiverName?.trim()) return "Receiver name is required.";
+    if (!address.phone?.trim()) return "Phone number is required.";
+    if (!address.addressDetail?.trim()) return "Address detail is required.";
+    if (!address.ward?.trim()) return "Ward is required.";
+    if (!address.district?.trim()) return "District is required.";
+    if (!address.province?.trim()) return "Province is required.";
+    return null;
+  };
+
+  const handleSaveAddress = async () => {
+    const dto = buildAddressDto();
+    const validationMessage = validateAddress(dto);
+    if (validationMessage) {
+      toast.warning(validationMessage);
+      return;
+    }
+
+    setSavingAddress(true);
+    try {
+      const response = await addressApi.create(dto);
+      const createdAddress = response.data;
+      const nextAddresses = dto.isDefault || savedAddresses.length === 0
+        ? savedAddresses.map((address) => ({ ...address, isDefault: false }))
+        : savedAddresses;
+
+      setSavedAddresses(sortAddresses([createdAddress, ...nextAddresses]));
+      setSelectedAddressId(String(createdAddress.id));
+      setAddressMode("saved");
+      setBillingData((current) => ({ ...current, isDefault: false }));
+      toast.success("Address saved.");
+    } catch (error) {
+      const responseData = error.response?.data;
+      const message = typeof responseData === "string" ? responseData : responseData?.message;
+      toast.error(message || "Address could not be saved.");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId) => {
+    try {
+      await addressApi.setDefault(addressId);
+      setSavedAddresses((current) =>
+        sortAddresses(current.map((address) => ({ ...address, isDefault: String(address.id) === String(addressId) })))
+      );
+      setSelectedAddressId(String(addressId));
+      setAddressMode("saved");
+      toast.success("Default address updated.");
+    } catch (error) {
+      const responseData = error.response?.data;
+      const message = typeof responseData === "string" ? responseData : responseData?.message;
+      toast.error(message || "Default address could not be updated.");
+    }
   };
 
   const handleVoucher = () => {
@@ -103,12 +247,18 @@ const Checkout = () => {
       return;
     }
 
+    const validationMessage = validateAddress(activeAddress);
+    if (validationMessage) {
+      toast.warning(validationMessage);
+      return;
+    }
+
     setSubmitting(true);
     loadingToastRef.current = toast.loading("Placing your order...");
     const payload = {
       receiverName,
       email: billingData.email,
-      receiverPhone: billingData.phone,
+      receiverPhone,
       shippingAddress: addressPreview,
       paymentMethod,
       note: billingData.note,
@@ -172,46 +322,123 @@ const Checkout = () => {
               <div className="checkout-address-preview">
                 <div>
                   <strong>{receiverName || "Receiver name"}</strong>
-                  <span>{billingData.phone || "Phone number"}</span>
+                  <span>{receiverPhone || "Phone number"}</span>
                 </div>
                 <p>{addressPreview || "Enter your delivery address below."}</p>
               </div>
 
-              <div className="row">
-                {[
-                  ["firstName", "First Name", "Nguyen", "text"],
-                  ["lastName", "Last Name", "Van A", "text"],
-                  ["email", "E-mail", "example@email.com", "email"],
-                  ["phone", "Mobile No", "+84 909 123 456", "text"],
-                  ["address1", "Address Line 1", "123 Street", "text"],
-                  ["address2", "Address Line 2", "Apartment, suite, unit", "text"],
-                  ["city", "City", "Ho Chi Minh City", "text"],
-                  ["state", "State", "District 1", "text"],
-                  ["zipCode", "ZIP Code", "700000", "text"],
-                ].map(([name, label, placeholder, type]) => (
-                  <div key={name} className="col-md-6 form-group">
-                    <label>{label}</label>
-                    <input
-                      className="form-control"
-                      type={type}
-                      name={name}
-                      placeholder={placeholder}
-                      value={billingData[name]}
-                      onChange={handleInputChange}
-                      required={["firstName", "email", "phone", "address1", "city"].includes(name)}
-                    />
-                  </div>
-                ))}
+              <div className="checkout-address-actions">
+                <button
+                  className={`btn btn-sm ${addressMode === "new" ? "btn-primary" : "btn-outline-primary"}`}
+                  type="button"
+                  onClick={handleUseNewAddress}
+                >
+                  <i className="fa fa-plus mr-2"></i>
+                  Add New Address
+                </button>
+              </div>
 
-                <div className="col-md-6 form-group">
-                  <label>Country</label>
-                  <select className="form-select" name="country" value={billingData.country} onChange={handleInputChange}>
-                    <option>Vietnam</option>
-                    <option>United States</option>
-                    <option>Japan</option>
-                    <option>Singapore</option>
-                  </select>
+              {addressLoading ? (
+                <div className="checkout-address-loading">Loading saved addresses...</div>
+              ) : savedAddresses.length > 0 && (
+                <div className="checkout-address-book">
+                  {savedAddresses.map((address) => (
+                    <div
+                      key={address.id}
+                      className={`checkout-saved-address ${addressMode === "saved" && String(selectedAddressId) === String(address.id) ? "is-selected" : ""}`}
+                    >
+                      <label htmlFor={`address-${address.id}`}>
+                        <input
+                          type="radio"
+                          id={`address-${address.id}`}
+                          name="savedAddress"
+                          checked={addressMode === "saved" && String(selectedAddressId) === String(address.id)}
+                          onChange={() => handleSelectSavedAddress(address.id)}
+                        />
+                        <span>
+                          <strong>{address.receiverName}</strong>
+                          {address.isDefault && <small>Default</small>}
+                          <em>{address.phone}</em>
+                          <p>{getAddressText(address)}</p>
+                        </span>
+                      </label>
+                      {!address.isDefault && (
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          type="button"
+                          onClick={() => handleSetDefaultAddress(address.id)}
+                        >
+                          Set Default
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              )}
+
+              <div className="row">
+                <div className="col-md-6 form-group">
+                  <label>E-mail</label>
+                  <input
+                    className="form-control"
+                    type="email"
+                    name="email"
+                    placeholder="example@email.com"
+                    value={billingData.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                {addressMode === "new" && (
+                  <>
+                    {[
+                      ["receiverName", "Receiver Name", "Nguyen Van A", "text"],
+                      ["phone", "Mobile No", "+84 909 123 456", "text"],
+                      ["addressDetail", "Address Detail", "123 Street, apartment, suite", "text"],
+                      ["ward", "Ward", "Ben Nghe", "text"],
+                      ["district", "District", "District 1", "text"],
+                      ["province", "Province/City", "Ho Chi Minh City", "text"],
+                    ].map(([name, label, placeholder, type]) => (
+                      <div key={name} className="col-md-6 form-group">
+                        <label>{label}</label>
+                        <input
+                          className="form-control"
+                          type={type}
+                          name={name}
+                          placeholder={placeholder}
+                          value={billingData[name]}
+                          onChange={handleInputChange}
+                          required={addressMode === "new"}
+                        />
+                      </div>
+                    ))}
+
+                    <div className="col-md-12">
+                      <div className="checkout-save-address">
+                        <label htmlFor="isDefaultAddress">
+                          <input
+                            type="checkbox"
+                            id="isDefaultAddress"
+                            name="isDefault"
+                            checked={billingData.isDefault}
+                            onChange={handleInputChange}
+                          />
+                          <span>Set as default delivery address</span>
+                        </label>
+                        <button
+                          className="btn btn-outline-primary"
+                          type="button"
+                          onClick={handleSaveAddress}
+                          disabled={savingAddress}
+                        >
+                          {savingAddress ? "Saving..." : "Save Address"}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div className="col-md-12 form-group mb-0">
                   <label>Order Note</label>
                   <textarea

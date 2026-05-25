@@ -79,6 +79,13 @@ export const cartApi = {
     checkout: (data) => api.post('/cart/checkout', data),
 };
 
+// Address API
+export const addressApi = {
+    getMyAddresses: () => api.get('/addresses'),
+    create: (data) => api.post('/addresses', data),
+    setDefault: (id) => api.put(`/addresses/${id}/default`),
+};
+
 // Order API
 export const orderApi = {
     create: (data) => api.post('/orders', data),

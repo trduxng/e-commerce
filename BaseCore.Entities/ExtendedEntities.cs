@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace BaseCore.Entities
 {
@@ -16,6 +18,13 @@ namespace BaseCore.Entities
         public string AddressDetail { get; set; } = "";
         public bool IsDefault { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [JsonIgnore]
+        public User? User { get; set; }
+
+        [NotMapped]
+        public string FullAddress => string.Join(", ", new[] { AddressDetail, Ward, District, Province }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
     }
 
     public class AdminLog
