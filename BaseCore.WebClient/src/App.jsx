@@ -3,6 +3,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { FavoriteProvider } from './contexts/FavoriteContext';
 import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
@@ -22,6 +23,7 @@ import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import ProductDetail from './pages/ProductDetail';
 import MyOrders from './pages/MyOrders';
+import Favorites from './pages/Favorites';
 
 const queryClient = new QueryClient();
 const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users'];
@@ -80,6 +82,16 @@ function AppRoutes() {
                     <ShopLayout>
                         <Cart />
                     </ShopLayout>
+                }
+            />
+            <Route
+                path="/favorites"
+                element={
+                    <ProtectedRoute>
+                        <ShopLayout>
+                            <Favorites />
+                        </ShopLayout>
+                    </ProtectedRoute>
                 }
             />
             <Route
@@ -208,7 +220,9 @@ function App() {
                 <ToastProvider>
                     <AuthProvider>
                         <CartProvider>
-                            <AppRoutes />
+                            <FavoriteProvider>
+                                <AppRoutes />
+                            </FavoriteProvider>
                         </CartProvider>
                     </AuthProvider>
                 </ToastProvider>

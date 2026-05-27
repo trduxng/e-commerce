@@ -98,4 +98,11 @@ export const orderApi = {
     delete: (id) => api.delete(`/orders/${id}`),
 };
 
+export const favoriteApi = {
+    getAll: () => api.get('/favorites'),
+    getIds: () => api.get('/favorites/ids'),
+    add: (productId) => api.post(`/favorites/${productId}`),
+    remove: (productId) => api.delete(`/favorites/${productId}`),
+};
+
 export default api;
