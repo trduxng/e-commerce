@@ -12,10 +12,12 @@ import {
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { useFavorites } from "../contexts/FavoriteContext";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onFavoriteChange }) => {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,6 +27,24 @@ const ProductCard = ({ product }) => {
   const oldPrice = getProductOldPrice(product);
   const isOnSale = oldPrice && oldPrice > price;
   const categoryName = product.category?.name || product.categoryName || "BaseShop";
+  const favorite = isFavorite(product.id);
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      toast.info("Please sign in before updating favorites.");
+      navigate(`/login?returnUrl=${returnUrl}`);
+      return;
+    }
+
+    const result = await toggleFavorite(product.id);
+    if (result.success) {
+      toast.success(result.message);
+      onFavoriteChange?.(product.id, result.isFavorite);
+    } else {
+      toast.error(result.message);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -58,6 +78,15 @@ const ProductCard = ({ product }) => {
           {stock === 0 && <span className="product-badge product-badge-muted">Sold out</span>}
         </div>
         <div className="product-action">
+          <button
+            type="button"
+            className={`btn btn-square favorite-button ${favorite ? "is-favorite" : ""}`}
+            title={favorite ? "Remove from favorites" : "Add to favorites"}
+            aria-pressed={favorite}
+            onClick={handleToggleFavorite}
+          >
+            <i className="fa fa-heart"></i>
+          </button>
           <button
             type="button"
             className="btn btn-outline-dark btn-square"
@@ -112,5 +141,6 @@ const ProductCard = ({ product }) => {
     </div>
   );
 };
+
 
 export default ProductCard;

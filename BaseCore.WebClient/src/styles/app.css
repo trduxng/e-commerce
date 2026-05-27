@@ -759,6 +759,25 @@ img {
   color: #ffffff;
 }
 
+.product-action .favorite-button,
+.storefront .product-action .favorite-button {
+  background: #ffffff !important;
+  color: #334155 !important;
+}
+
+.product-action .favorite-button.is-favorite,
+.storefront .product-action .favorite-button.is-favorite {
+  background: #dc3545 !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 26px rgba(220, 53, 69, 0.32);
+}
+
+.product-action .favorite-button:hover,
+.storefront .product-action .favorite-button:hover {
+  background: #dc3545 !important;
+  color: #ffffff !important;
+}
+
 .product-item .h6 {
   min-height: 42px;
   color: var(--app-text);

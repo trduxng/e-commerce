@@ -3,11 +3,13 @@ import { Link, NavLink } from "react-router-dom";
 import { categoryApi } from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useFavorites } from "../../contexts/FavoriteContext";
 
 const Navbar = () => {
   const [categories, setCategories] = useState([]);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { count } = useCart();
+  const { count: favoriteCount } = useFavorites();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -91,6 +93,11 @@ const Navbar = () => {
                   Cart
                 </NavLink>
                 {isAuthenticated && (
+                  <NavLink to="/favorites" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
+                    Favorites
+                  </NavLink>
+                )}
+                {isAuthenticated && (
                   <NavLink to="/my-orders" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
                     My Orders
                   </NavLink>
@@ -104,6 +111,14 @@ const Navbar = () => {
               </div>
 
               <div className="navbar-nav ms-auto py-0 d-none d-lg-block">
+                {isAuthenticated && (
+                  <Link to="/favorites" className="cart-button ms-3" aria-label="Favorite products">
+                    <i className="fas fa-heart"></i>
+                    <span className="badge">
+                      {favoriteCount}
+                    </span>
+                  </Link>
+                )}
                 <Link to="/cart" className="cart-button ms-3" aria-label="Shopping cart">
                   <i className="fas fa-shopping-cart"></i>
                   <span className="badge">
