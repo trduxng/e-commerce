@@ -632,6 +632,77 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
+            modelBuilder.Entity("BaseCore.Entities.Review", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("BillDetailId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("bill_detail_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("HelpfulCount")
+                        .HasColumnType("int")
+                        .HasColumnName("helpful_count");
+
+                    b.Property<bool>("IsVerifiedPurchase")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_verified_purchase");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("product_id");
+
+                    b.Property<byte>("Rating")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("title");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BillDetailId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("product_reviews", "catalog", t =>
+                        {
+                            t.HasCheckConstraint("CK_product_reviews_rating", "[rating] BETWEEN 1 AND 5");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
             modelBuilder.Entity("BaseCore.Entities.User", b =>
                 {
                     b.Property<long>("Id")
@@ -885,6 +956,32 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("BaseCore.Entities.Review", b =>
+                {
+                    b.HasOne("BaseCore.Entities.OrderDetail", "BillDetail")
+                        .WithMany()
+                        .HasForeignKey("BillDetailId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BaseCore.Entities.Product", "Product")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BaseCore.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BillDetail");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BaseCore.Entities.UserAddress", b =>
                 {
                     b.HasOne("BaseCore.Entities.User", "User")
@@ -914,6 +1011,8 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
             modelBuilder.Entity("BaseCore.Entities.Product", b =>
                 {
                     b.Navigation("ProductVariants");
+
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

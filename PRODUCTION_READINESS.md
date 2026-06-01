@@ -9,6 +9,7 @@
 - Storefront routes are lazy-loaded. Shared retry, error boundary, dark mode, back-to-top, and skeleton UI are available.
 - Home includes promotion, newsletter, and testimonial sections.
 - Product Detail includes gallery zoom, description, specifications, review summary, review form UI, and mobile related-product carousel.
+- Product ratings and reviews are persisted. Product lists expose real review summaries and delivered orders are marked as verified purchases.
 
 ## Remaining Backlog
 
@@ -25,7 +26,7 @@
 
 - Add voucher persistence, validation rules, expiry, usage limits, and campaign administration.
 - Integrate a real payment provider with webhook verification and idempotency.
-- Persist product reviews, verified-purchase checks, moderation, and pagination.
+- Add product-review moderation and pagination.
 - Persist newsletter subscriptions with consent tracking.
 - Wire order status history to `OrderStatusLog`.
 

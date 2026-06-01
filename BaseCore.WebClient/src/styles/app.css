@@ -4185,13 +4185,16 @@ img {
 .review-summary strong { color: var(--app-primary); display: block; font-size: 3.5rem; line-height: 1; }
 .review-breakdown div { align-items: center; display: grid; gap: 8px; grid-template-columns: 52px 1fr 38px; margin-bottom: 7px; }
 .review-breakdown i { background: #e2e8f0; border-radius: 20px; display: block; height: 8px; overflow: hidden; }
-.review-breakdown b { background: #f59e0b; display: block; height: 100%; }
-.review-bar-5 { width: 72%; }
-.review-bar-4 { width: 20%; }
-.review-bar-3 { width: 6%; }
-.review-bar-2, .review-bar-1 { width: 1%; }
+.review-breakdown b { background: #f59e0b; display: block; height: 100%; width: var(--review-width, 0%); }
 .review-breakdown em { color: #64748b; font-size: .85rem; }
 .review-form { display: grid; gap: 12px; }
+.review-list { border-top: 1px solid var(--app-border); padding-top: 20px; }
+.review-empty { background: #f8fafc; border-radius: 8px; color: #64748b; padding: 14px; }
+.review-item { border-bottom: 1px solid var(--app-border); padding: 16px 0; }
+.review-item h5, .review-item p { margin: 8px 0 0; }
+.review-item-header { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.review-item-header time { color: #64748b; font-size: .85rem; margin-left: auto; }
+.review-verified { background: #dcfce7; border-radius: 20px; color: #166534; font-size: .75rem; padding: 3px 8px; }
 .product-zoom-overlay { align-items: center; background: rgba(0, 0, 0, .88); border: 0; display: flex; inset: 0; justify-content: center; padding: 30px; position: fixed; width: 100%; z-index: 2000; }
 .product-zoom-overlay img { max-height: 90vh; max-width: 90vw; object-fit: contain; }
 .product-zoom-overlay span { color: #fff; font-size: 2rem; position: absolute; right: 24px; top: 18px; }

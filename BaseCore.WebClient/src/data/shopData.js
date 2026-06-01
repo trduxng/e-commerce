@@ -12,7 +12,6 @@ export const sampleProducts = [
     price: 2490000,
     oldPrice: 2990000,
     stock: 24,
-    rating: 5,
     categoryId: 1,
     category: sampleCategories[0],
     imageUrl: "/img/product-1.jpg",
@@ -24,7 +23,6 @@ export const sampleProducts = [
     price: 1890000,
     oldPrice: 2190000,
     stock: 38,
-    rating: 4.5,
     categoryId: 1,
     category: sampleCategories[0],
     imageUrl: "/img/product-2.jpg",
@@ -36,7 +34,6 @@ export const sampleProducts = [
     price: 420000,
     oldPrice: 520000,
     stock: 62,
-    rating: 4,
     categoryId: 2,
     category: sampleCategories[1],
     imageUrl: "/img/product-3.jpg",
@@ -48,7 +45,6 @@ export const sampleProducts = [
     price: 1350000,
     oldPrice: 1590000,
     stock: 19,
-    rating: 5,
     categoryId: 2,
     category: sampleCategories[1],
     imageUrl: "/img/product-4.jpg",
@@ -60,7 +56,6 @@ export const sampleProducts = [
     price: 690000,
     oldPrice: 790000,
     stock: 31,
-    rating: 4.5,
     categoryId: 3,
     category: sampleCategories[2],
     imageUrl: "/img/product-5.jpg",
@@ -72,7 +67,6 @@ export const sampleProducts = [
     price: 560000,
     oldPrice: 650000,
     stock: 47,
-    rating: 4,
     categoryId: 3,
     category: sampleCategories[2],
     imageUrl: "/img/product-6.jpg",
@@ -84,7 +78,6 @@ export const sampleProducts = [
     price: 1680000,
     oldPrice: 1990000,
     stock: 29,
-    rating: 5,
     categoryId: 4,
     category: sampleCategories[3],
     imageUrl: "/img/product-7.jpg",
@@ -96,7 +89,6 @@ export const sampleProducts = [
     price: 490000,
     oldPrice: 590000,
     stock: 54,
-    rating: 4.5,
     categoryId: 4,
     category: sampleCategories[3],
     imageUrl: "/img/product-8.jpg",
@@ -108,7 +100,6 @@ export const sampleProducts = [
     price: 890000,
     oldPrice: 1090000,
     stock: 33,
-    rating: 4,
     categoryId: 1,
     category: sampleCategories[0],
     imageUrl: "/img/product-9.jpg",
@@ -209,14 +200,13 @@ export const getProductGallery = (product) => {
 };
 
 export const getProductRating = (product) => {
-  const rating = Number(product?.rating);
+  const rating = Number(product?.averageRating ?? product?.rating);
   if (Number.isFinite(rating) && rating > 0) return Math.min(5, rating);
-  const idBasedRating = 4 + (Number(product?.id || 0) % 3) * 0.25;
-  return Math.min(5, idBasedRating);
+  return 0;
 };
 
 export const getProductReviewCount = (product) => {
   const reviewCount = Number(product?.reviewCount);
-  if (Number.isFinite(reviewCount) && reviewCount > 0) return reviewCount;
-  return 18 + (Number(product?.id || 0) % 7) * 6;
+  if (Number.isFinite(reviewCount) && reviewCount > 0) return Math.floor(reviewCount);
+  return 0;
 };

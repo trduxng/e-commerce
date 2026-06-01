@@ -36,6 +36,9 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState("description");
   const [zoomed, setZoomed] = useState(false);
   const [review, setReview] = useState({ rating: "5", comment: "" });
+  const [reviewData, setReviewData] = useState(createEmptyReviewData);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -75,6 +78,27 @@ const ProductDetail = () => {
 
     loadProduct();
   }, [id, toast]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const response = await productApi.getReviews(id);
+        if (active) setReviewData(normalizeReviewData(response.data));
+      } catch {
+        if (active) setReviewData(createEmptyReviewData());
+      } finally {
+        if (active) setReviewsLoading(false);
+      }
+    };
+
+    loadReviews();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -119,10 +143,35 @@ const ProductDetail = () => {
     toast.error(result.message || "Cannot add this product.");
   };
 
-  const submitReview = (event) => {
+  const submitReview = async (event) => {
     event.preventDefault();
-    toast.info("Review submission will be enabled when the review API is connected.");
-    setReview({ rating: "5", comment: "" });
+    if (!isAuthenticated) {
+      const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      toast.info("Please sign in before writing a review.");
+      navigate(`/login?returnUrl=${returnUrl}`);
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const response = await productApi.saveReview(id, {
+        rating: Number(review.rating),
+        content: review.comment,
+      });
+      const nextReviewData = normalizeReviewData(response.data);
+      setReviewData(nextReviewData);
+      setProduct((current) => current ? {
+        ...current,
+        averageRating: nextReviewData.averageRating,
+        reviewCount: nextReviewData.totalCount,
+      } : current);
+      setReview({ rating: "5", comment: "" });
+      toast.success("Your review has been saved.");
+    } catch (reviewError) {
+      toast.error(reviewError.response?.data?.message || "Cannot save your review.");
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   if (loading) {
@@ -159,7 +208,8 @@ const ProductDetail = () => {
     : getProductOldPrice(product);
   const productImage = activeImage || selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product);
   const galleryImages = getProductGallery(product);
-  const rating = getProductRating(product);
+  const rating = reviewsLoading ? getProductRating(product) : reviewData.averageRating;
+  const reviewCount = reviewsLoading ? getProductReviewCount(product) : reviewData.totalCount;
   const safeQuantity = getSafeQuantity(quantity);
   const isOutOfStock = stock !== null && stock <= 0;
   const canIncreaseQuantity = stock === null || safeQuantity < stock;
@@ -258,7 +308,7 @@ const ProductDetail = () => {
                     ></small>
                   ))}
                 </div>
-                <small className="pt-1">({getProductReviewCount(product)} reviews)</small>
+                <small className="pt-1">({reviewCount} reviews)</small>
               </div>
               <div className="product-detail-price mb-4">
                 <h3>{formatCurrency(selectedPrice)}</h3>
@@ -400,12 +450,11 @@ const ProductDetail = () => {
                 {activeTab === "reviews" && (
                   <div className="row">
                     <div className="col-lg-5">
-                      <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{getProductReviewCount(product)} customer reviews</p></div>
+                      <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{reviewCount} customer reviews</p></div>
                       <div className="review-breakdown">
-                        {[5, 4, 3, 2, 1].map((stars) => {
-                          const width = stars === 5 ? 72 : stars === 4 ? 20 : stars === 3 ? 6 : 1;
-                          return <div key={stars}><span>{stars} star</span><i><b className={`review-bar-${stars}`}></b></i><em>{width}%</em></div>;
-                        })}
+                        {reviewData.breakdown.map(({ stars, percentage }) => (
+                          <div key={stars}><span>{stars} star</span><i><b style={{ "--review-width": `${percentage}%` }}></b></i><em>{percentage}%</em></div>
+                        ))}
                       </div>
                     </div>
                     <div className="col-lg-7">
@@ -415,8 +464,31 @@ const ProductDetail = () => {
                           {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} stars</option>)}
                         </select>
                         <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} required />
-                        <button className="btn btn-primary">Submit review</button>
+                        <button className="btn btn-primary" disabled={submittingReview}>{submittingReview ? "Saving..." : "Submit review"}</button>
                       </form>
+                    </div>
+                    <div className="col-12 mt-4">
+                      <div className="review-list">
+                        <h4>Customer Reviews</h4>
+                        {reviewsLoading && <p>Loading reviews...</p>}
+                        {!reviewsLoading && reviewData.items.length === 0 && <p className="review-empty">No reviews yet. Be the first to review this product.</p>}
+                        {!reviewsLoading && reviewData.items.map((item) => (
+                          <article className="review-item" key={item.id}>
+                            <div className="review-item-header">
+                              <strong>{item.reviewerName}</strong>
+                              {item.isVerifiedPurchase && <span className="review-verified">Verified purchase</span>}
+                              <time dateTime={item.createdAt}>{formatReviewDate(item.createdAt)}</time>
+                            </div>
+                            <div className="text-primary" aria-label={`${item.rating} out of 5 stars`}>
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <small key={index} className={`fa ${index < item.rating ? "fa-star" : "far fa-star"} me-1`}></small>
+                              ))}
+                            </div>
+                            {item.title && <h5>{item.title}</h5>}
+                            <p>{item.content}</p>
+                          </article>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -473,6 +545,32 @@ const getVariantPrice = (variant, product) => {
 const getSafeQuantity = (value) => {
   const quantity = Number(value);
   return Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
+};
+
+const createEmptyReviewData = () => ({
+  averageRating: 0,
+  totalCount: 0,
+  breakdown: [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, percentage: 0 })),
+  items: [],
+});
+
+const normalizeReviewData = (data) => ({
+  averageRating: Number.isFinite(Number(data?.averageRating)) ? Math.min(5, Math.max(0, Number(data.averageRating))) : 0,
+  totalCount: Number.isFinite(Number(data?.totalCount)) ? Math.max(0, Math.floor(Number(data.totalCount))) : 0,
+  breakdown: [5, 4, 3, 2, 1].map((stars) => {
+    const item = Array.isArray(data?.breakdown) ? data.breakdown.find((entry) => Number(entry.stars) === stars) : null;
+    return {
+      stars,
+      count: Number.isFinite(Number(item?.count)) ? Math.max(0, Math.floor(Number(item.count))) : 0,
+      percentage: Number.isFinite(Number(item?.percentage)) ? Math.min(100, Math.max(0, Math.round(Number(item.percentage)))) : 0,
+    };
+  }),
+  items: Array.isArray(data?.items) ? data.items : [],
+});
+
+const formatReviewDate = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("vi-VN");
 };
 
 export default ProductDetail;
