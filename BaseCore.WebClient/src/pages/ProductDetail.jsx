@@ -33,6 +33,9 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("description");
+  const [zoomed, setZoomed] = useState(false);
+  const [review, setReview] = useState({ rating: "5", comment: "" });
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -114,6 +117,12 @@ const ProductDetail = () => {
     }
 
     toast.error(result.message || "Cannot add this product.");
+  };
+
+  const submitReview = (event) => {
+    event.preventDefault();
+    toast.info("Review submission will be enabled when the review API is connected.");
+    setReview({ rating: "5", comment: "" });
   };
 
   if (loading) {
@@ -215,7 +224,10 @@ const ProductDetail = () => {
         <div className="row px-xl-5">
           <div className="col-lg-5 mb-30">
             <div className="product-detail-media bg-light">
-              <img className="product-detail-main-image" src={productImage} alt={product.name} />
+              <button className="product-detail-zoom-trigger" type="button" onClick={() => setZoomed(true)} aria-label="Zoom product image">
+                <img className="product-detail-main-image" src={productImage} alt={product.name} />
+                <span><i className="fa fa-magnifying-glass-plus"></i> Zoom</span>
+              </button>
             </div>
             {galleryImages.length > 1 && (
               <div className="product-detail-thumbs">
@@ -351,12 +363,75 @@ const ProductDetail = () => {
         </div>
       </div>
 
+      <section className="container-fluid pb-5">
+        <div className="row px-xl-5">
+          <div className="col-12">
+            <div className="product-tabs">
+              <div className="product-tab-list" role="tablist">
+                {["description", "specifications", "reviews"].map((tab) => (
+                  <button key={tab} className={activeTab === tab ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab)}>
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <div className="product-tab-content">
+                {activeTab === "description" && (
+                  <div>
+                    <h4>Product Description</h4>
+                    <p>{product.shortDescription || product.description || "A quality product ready for everyday use."}</p>
+                    <p>{product.description || "Designed for a practical shopping experience with reliable fulfillment."}</p>
+                  </div>
+                )}
+                {activeTab === "specifications" && (
+                  <div>
+                    <h4>Specifications</h4>
+                    <table className="table product-spec-table"><tbody>
+                      {[
+                        ["Brand", product.brand || "BaseShop"],
+                        ["Model", selectedVariant?.sku || product.slug || `Product-${product.id}`],
+                        ["Weight", selectedVariant?.weightGram ? `${selectedVariant.weightGram} g` : "Not specified"],
+                        ["Color", selectedVariant?.color || "Varies by option"],
+                        ["Material", product.material || "Not specified"],
+                        ["Warranty", product.warranty || "Contact support"],
+                      ].map(([label, value]) => <tr key={label}><th>{label}</th><td>{value}</td></tr>)}
+                    </tbody></table>
+                  </div>
+                )}
+                {activeTab === "reviews" && (
+                  <div className="row">
+                    <div className="col-lg-5">
+                      <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{getProductReviewCount(product)} customer reviews</p></div>
+                      <div className="review-breakdown">
+                        {[5, 4, 3, 2, 1].map((stars) => {
+                          const width = stars === 5 ? 72 : stars === 4 ? 20 : stars === 3 ? 6 : 1;
+                          return <div key={stars}><span>{stars} star</span><i><b className={`review-bar-${stars}`}></b></i><em>{width}%</em></div>;
+                        })}
+                      </div>
+                    </div>
+                    <div className="col-lg-7">
+                      <form className="review-form" onSubmit={submitReview}>
+                        <h4>Write a Review</h4>
+                        <select className="form-select" value={review.rating} onChange={(event) => setReview((current) => ({ ...current, rating: event.target.value }))}>
+                          {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} stars</option>)}
+                        </select>
+                        <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} required />
+                        <button className="btn btn-primary">Submit review</button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {relatedProducts.length > 0 && (
         <div className="container-fluid py-5">
           <h2 className="section-title position-relative text-uppercase mx-xl-5 mb-4">
             <span className="bg-secondary pe-3">Related Products</span>
           </h2>
-          <div className="row px-xl-5">
+          <div className="row px-xl-5 related-products-carousel">
             {relatedProducts.map((item) => (
               <div key={item.id} className="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <ProductCard product={item} />
@@ -364,6 +439,12 @@ const ProductDetail = () => {
             ))}
           </div>
         </div>
+      )}
+      {zoomed && (
+        <button className="product-zoom-overlay" type="button" onClick={() => setZoomed(false)} aria-label="Close zoomed image">
+          <img src={productImage} alt={product.name} />
+          <span><i className="fa fa-xmark"></i></span>
+        </button>
       )}
     </>
   );

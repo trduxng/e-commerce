@@ -1,4 +1,5 @@
 using BaseCore.Entities;
+using BaseCore.Common.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -37,7 +38,7 @@ namespace BaseCore.Repository
                 db.Users.Add(new User
                 {
                     Email = "admin@basecore.local",
-                    Password = "admin123",
+                    Password = PasswordHasher.Hash("admin123"),
                     Name = "BaseCore Admin",
                     Phone = "0900000001",
                     Role = "admin",
@@ -53,7 +54,7 @@ namespace BaseCore.Repository
                 db.Users.Add(new User
                 {
                     Email = "customer@basecore.local",
-                    Password = "customer123",
+                    Password = PasswordHasher.Hash("customer123"),
                     Name = "Demo Customer",
                     Phone = "0900000002",
                     Role = "customer",

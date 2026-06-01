@@ -10,12 +10,14 @@ namespace BaseCore.AuthService.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;
-        private const string SecretKey = "YourSecretKeyForAuthenticationShouldBeLongEnough";
+        private readonly string _secretKey;
         private const int TokenExpirationMinutes = 480; // 8 hours
 
-        public AuthController(IUserService userService)
+        public AuthController(IUserService userService, IConfiguration configuration)
         {
             _userService = userService;
+            _secretKey = configuration["Jwt:SecretKey"]
+                ?? throw new InvalidOperationException("Jwt:SecretKey configuration is required.");
         }
 
         [HttpPost("login")]
@@ -35,7 +37,7 @@ namespace BaseCore.AuthService.Controllers
 
             // Generate JWT token
             var token = TokenHelper.GenerateToken(
-                SecretKey,
+                _secretKey,
                 TokenExpirationMinutes,
                 user.Id.ToString(),
                 user.UserName,

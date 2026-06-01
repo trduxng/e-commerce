@@ -2,6 +2,7 @@ import React from "react";
 import Topbar from "./layout/Topbar";
 import Navbar from "./layout/Navbar";
 import Footer from "./layout/Footer";
+import BackToTop from "./BackToTop";
 
 const ShopLayout = ({ children }) => {
   return (
@@ -12,6 +13,7 @@ const ShopLayout = ({ children }) => {
       </header>
       {children}
       <Footer />
+      <BackToTop />
     </div>
   );
 };

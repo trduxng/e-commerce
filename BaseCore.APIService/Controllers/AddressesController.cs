@@ -88,6 +88,70 @@ namespace BaseCore.APIService.Controllers
             return Ok(address);
         }
 
+        [HttpPut("{id:long}")]
+        public async Task<IActionResult> Update(long id, [FromBody] CreateUserAddressDto dto)
+        {
+            if (!TryGetCurrentUserId(out var userId))
+                return Unauthorized();
+
+            var validationMessage = Validate(dto);
+            if (validationMessage != null)
+                return BadRequest(new { message = validationMessage });
+
+            var address = await _db.UserAddresses
+                .FirstOrDefaultAsync(item => item.Id == id && item.UserId == userId);
+
+            if (address == null)
+                return NotFound(new { message = "Address not found" });
+
+            if (dto.IsDefault)
+                await ClearDefaultAddress(userId);
+
+            address.ReceiverName = dto.ReceiverName.Trim();
+            address.Phone = dto.Phone.Trim();
+            address.Province = dto.Province.Trim();
+            address.District = dto.District.Trim();
+            address.Ward = dto.Ward.Trim();
+            address.AddressDetail = dto.AddressDetail.Trim();
+            address.IsDefault = dto.IsDefault || address.IsDefault;
+            await _db.SaveChangesAsync();
+
+            return Ok(address);
+        }
+
+        [HttpDelete("{id:long}")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            if (!TryGetCurrentUserId(out var userId))
+                return Unauthorized();
+
+            var address = await _db.UserAddresses
+                .FirstOrDefaultAsync(item => item.Id == id && item.UserId == userId);
+
+            if (address == null)
+                return NotFound(new { message = "Address not found" });
+
+            var wasDefault = address.IsDefault;
+            _db.UserAddresses.Remove(address);
+            await _db.SaveChangesAsync();
+
+            if (wasDefault)
+            {
+                var nextAddress = await _db.UserAddresses
+                    .Where(item => item.UserId == userId)
+                    .OrderByDescending(item => item.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+                if (nextAddress != null)
+                {
+                    nextAddress.IsDefault = true;
+                    await _db.SaveChangesAsync();
+                }
+            }
+
+            return NoContent();
+        }
+
         private async Task ClearDefaultAddress(long userId)
         {
             var defaultAddresses = await _db.UserAddresses

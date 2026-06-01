@@ -4060,3 +4060,162 @@ img {
 .wrapper .custom-control-label {
   cursor: pointer;
 }
+/* Production storefront utilities */
+.route-loading,
+.account-loading {
+  min-height: 65vh;
+}
+
+.skeleton-block,
+.product-skeleton {
+  background: #eef2f7;
+  overflow: hidden;
+  position: relative;
+}
+
+.skeleton-block::after,
+.product-skeleton::after {
+  animation: skeleton-shimmer 1.4s infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .7), transparent);
+  content: "";
+  inset: 0;
+  position: absolute;
+  transform: translateX(-100%);
+}
+
+.product-skeleton {
+  background: #fff;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.skeleton-image { height: 220px; }
+.skeleton-line { height: 14px; margin-top: 14px; }
+.skeleton-line-short { width: 58%; }
+
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.back-to-top {
+  align-items: center;
+  background: var(--app-primary);
+  border: 0;
+  border-radius: 50%;
+  bottom: 24px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .24);
+  color: #fff;
+  display: flex;
+  height: 46px;
+  justify-content: center;
+  position: fixed;
+  right: 24px;
+  width: 46px;
+  z-index: 1050;
+}
+
+.promotion-banner,
+.newsletter-banner {
+  background: linear-gradient(135deg, #1d4ed8, #0f766e);
+  border-radius: 20px;
+  color: #fff;
+  padding: clamp(28px, 5vw, 64px);
+}
+
+.promotion-banner p { max-width: 620px; }
+.newsletter-banner { align-items: center; display: flex; gap: 28px; justify-content: space-between; }
+.newsletter-banner .input-group { max-width: 460px; }
+
+.testimonial-card,
+.account-panel,
+.account-stat,
+.account-address {
+  background: #fff;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.testimonial-card { height: 100%; }
+.testimonial-card blockquote { color: var(--app-text); font-size: 1.05rem; }
+.testimonial-card figcaption { color: var(--app-primary); font-weight: 700; }
+
+.account-nav {
+  background: #fff;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.account-nav a,
+.account-nav button {
+  background: transparent;
+  border: 0;
+  color: var(--app-text);
+  display: block;
+  padding: 14px 18px;
+  text-align: left;
+  text-decoration: none;
+  text-transform: capitalize;
+  width: 100%;
+}
+
+.account-nav .is-active,
+.account-nav a:hover,
+.account-nav button:hover { background: #eff6ff; color: var(--app-primary); }
+.account-stat i { color: var(--app-primary); font-size: 1.4rem; }
+.account-stat span, .account-stat strong { display: block; margin-top: 8px; }
+.account-stat strong { font-size: 1.45rem; }
+.account-panel { margin-bottom: 20px; }
+.account-panel label { display: block; margin-bottom: 14px; }
+.account-checkbox { align-items: center; display: flex !important; gap: 8px; }
+.account-address-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.account-address span, .account-address p { display: block; margin-top: 8px; }
+.account-address small { background: #dcfce7; border-radius: 20px; color: #166534; margin-left: 5px; padding: 3px 8px; }
+
+.product-detail-zoom-trigger { background: transparent; border: 0; display: block; position: relative; width: 100%; }
+.product-detail-zoom-trigger span { background: rgba(15, 23, 42, .75); bottom: 12px; color: #fff; padding: 7px 11px; position: absolute; right: 12px; }
+.product-tabs { background: #fff; border: 1px solid var(--app-border); border-radius: 14px; overflow: hidden; }
+.product-tab-list { border-bottom: 1px solid var(--app-border); display: flex; overflow-x: auto; }
+.product-tab-list button { background: transparent; border: 0; color: var(--app-text); font-weight: 700; padding: 16px 22px; text-transform: capitalize; }
+.product-tab-list .is-active { border-bottom: 3px solid var(--app-primary); color: var(--app-primary); }
+.product-tab-content { padding: 24px; }
+.product-spec-table th { width: 180px; }
+.review-summary strong { color: var(--app-primary); display: block; font-size: 3.5rem; line-height: 1; }
+.review-breakdown div { align-items: center; display: grid; gap: 8px; grid-template-columns: 52px 1fr 38px; margin-bottom: 7px; }
+.review-breakdown i { background: #e2e8f0; border-radius: 20px; display: block; height: 8px; overflow: hidden; }
+.review-breakdown b { background: #f59e0b; display: block; height: 100%; }
+.review-bar-5 { width: 72%; }
+.review-bar-4 { width: 20%; }
+.review-bar-3 { width: 6%; }
+.review-bar-2, .review-bar-1 { width: 1%; }
+.review-breakdown em { color: #64748b; font-size: .85rem; }
+.review-form { display: grid; gap: 12px; }
+.product-zoom-overlay { align-items: center; background: rgba(0, 0, 0, .88); border: 0; display: flex; inset: 0; justify-content: center; padding: 30px; position: fixed; width: 100%; z-index: 2000; }
+.product-zoom-overlay img { max-height: 90vh; max-width: 90vw; object-fit: contain; }
+.product-zoom-overlay span { color: #fff; font-size: 2rem; position: absolute; right: 24px; top: 18px; }
+
+.app-error-boundary { align-items: center; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; padding: 30px; text-align: center; }
+.app-error-boundary i { color: #dc2626; font-size: 3rem; }
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .storefront { background: #0f172a; color: #e2e8f0; }
+html[data-theme="dark"] .storefront-shell,
+html[data-theme="dark"] .testimonial-card,
+html[data-theme="dark"] .account-panel,
+html[data-theme="dark"] .account-stat,
+html[data-theme="dark"] .account-address,
+html[data-theme="dark"] .account-nav,
+html[data-theme="dark"] .product-tabs,
+html[data-theme="dark"] .bg-light { background: #1e293b !important; color: #e2e8f0 !important; }
+html[data-theme="dark"] .text-dark,
+html[data-theme="dark"] .text-body,
+html[data-theme="dark"] .product-tab-list button { color: #e2e8f0 !important; }
+
+@media (max-width: 767px) {
+  .newsletter-banner { align-items: stretch; flex-direction: column; }
+  .product-tab-content { padding: 18px; }
+  .related-products-carousel { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+  .related-products-carousel > div { flex: 0 0 82%; max-width: 82%; }
+}

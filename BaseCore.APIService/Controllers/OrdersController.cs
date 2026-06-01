@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
+using BaseCore.Repository;
 using System.Security.Claims;
 
 using Microsoft.EntityFrameworkCore;
@@ -21,17 +22,20 @@ namespace BaseCore.APIService.Controllers
         private readonly IOrderRepositoryEF _orderRepository;
         private readonly IOrderDetailRepositoryEF _orderDetailRepository;
         private readonly IProductRepositoryEF _productRepository;
+        private readonly SQLServerDbContext _db;
 
         public OrdersController(
             IOrderRepositoryEF orderRepository,
             IOrderDetailRepositoryEF orderDetailRepository,
 
-            IProductRepositoryEF productRepository)
+            IProductRepositoryEF productRepository,
+            SQLServerDbContext db)
 
         {
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
             _productRepository = productRepository;
+            _db = db;
         }
 
         /// <summary>
@@ -106,6 +110,11 @@ namespace BaseCore.APIService.Controllers
             if (dto.Items.Count == 0)
                 return BadRequest(new { message = "Order must contain at least one item" });
 
+            var validationMessage = ValidateCheckout(dto);
+            if (validationMessage != null)
+                return BadRequest(new { message = validationMessage });
+
+            await using var transaction = await _db.Database.BeginTransactionAsync();
 
             // Validate products and calculate total
             decimal totalAmount = 0;
@@ -163,14 +172,14 @@ namespace BaseCore.APIService.Controllers
                 ReceiverPhone = dto.ReceiverPhone ?? "0000000000",
                 ShippingAddressFull = dto.ShippingAddress ?? "",
                 Subtotal = totalAmount,
-                ShippingFee = Math.Max(0, dto.ShippingFee),
-                DiscountAmount = Math.Max(0, dto.DiscountAmount),
-                TaxAmount = Math.Max(0, dto.TaxAmount),
-                TotalAmount = totalAmount + Math.Max(0, dto.ShippingFee) + Math.Max(0, dto.TaxAmount) - Math.Max(0, dto.DiscountAmount),
-                PaymentMethod = dto.PaymentMethod ?? "cod",
+                ShippingFee = GetShippingFee(dto.ShippingMethod),
+                DiscountAmount = 0,
+                TaxAmount = 0,
+                TotalAmount = totalAmount + GetShippingFee(dto.ShippingMethod),
+                PaymentMethod = dto.PaymentMethod!.Trim().ToLowerInvariant(),
                 PaymentStatus = "pending",
                 OrderStatus = "pending",
-                CouponCode = dto.CouponCode,
+                CouponCode = null,
                 Note = dto.Note
             };
 
@@ -183,6 +192,7 @@ namespace BaseCore.APIService.Controllers
                 await _orderDetailRepository.AddAsync(detail);
             }
 
+            await transaction.CommitAsync();
             return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order, details = orderDetails });
 
         }
@@ -351,6 +361,37 @@ namespace BaseCore.APIService.Controllers
                 _ => "pending"
             };
         }
+
+        private static decimal GetShippingFee(string? shippingMethod)
+        {
+            return shippingMethod?.Trim().ToLowerInvariant() switch
+            {
+                "express" => 55000,
+                "pickup" => 0,
+                _ => 30000
+            };
+        }
+
+        private static string? ValidateCheckout(CreateOrderDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.ReceiverName))
+                return "Receiver name is required.";
+
+            if (string.IsNullOrWhiteSpace(dto.ReceiverPhone))
+                return "Receiver phone is required.";
+
+            if (string.IsNullOrWhiteSpace(dto.ShippingAddress))
+                return "Shipping address is required.";
+
+            var paymentMethod = dto.PaymentMethod?.Trim().ToLowerInvariant();
+            if (paymentMethod is not ("cod" or "banktransfer" or "paypal"))
+                return "Payment method is not supported.";
+
+            if (!string.IsNullOrWhiteSpace(dto.CouponCode))
+                return "Voucher code is not valid.";
+
+            return null;
+        }
     }
 
     public class CreateOrderDto
@@ -361,9 +402,7 @@ namespace BaseCore.APIService.Controllers
         public string? ReceiverPhone { get; set; }
         public string? Email { get; set; }
         public string? PaymentMethod { get; set; }
-        public decimal ShippingFee { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public decimal TaxAmount { get; set; }
+        public string? ShippingMethod { get; set; }
         public string? CouponCode { get; set; }
         public string? Note { get; set; }
     }

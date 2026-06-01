@@ -1,29 +1,32 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { FavoriteProvider } from './contexts/FavoriteContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import ShopLayout from './components/ShopLayout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Users from './pages/Users';
-import Categories from './pages/Categories';
-import Orders from './pages/Orders';
-import Revenue from './pages/Revenue';
-import Home from './pages/Home';
-import Shop from './pages/Shop';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Contact from './pages/Contact';
-import ProductDetail from './pages/ProductDetail';
-import MyOrders from './pages/MyOrders';
-import Favorites from './pages/Favorites';
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Products = lazy(() => import('./pages/Products'));
+const Users = lazy(() => import('./pages/Users'));
+const Categories = lazy(() => import('./pages/Categories'));
+const Orders = lazy(() => import('./pages/Orders'));
+const Revenue = lazy(() => import('./pages/Revenue'));
+const Home = lazy(() => import('./pages/Home'));
+const Shop = lazy(() => import('./pages/Shop'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Contact = lazy(() => import('./pages/Contact'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const MyOrders = lazy(() => import('./pages/MyOrders'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const Account = lazy(() => import('./pages/Account'));
 
 const queryClient = new QueryClient();
 const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users'];
@@ -90,6 +93,16 @@ function AppRoutes() {
                     <ProtectedRoute>
                         <ShopLayout>
                             <Favorites />
+                        </ShopLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/account"
+                element={
+                    <ProtectedRoute>
+                        <ShopLayout>
+                            <Account />
                         </ShopLayout>
                     </ProtectedRoute>
                 }
@@ -217,15 +230,21 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <Router>
-                <ToastProvider>
-                    <AuthProvider>
-                        <CartProvider>
-                            <FavoriteProvider>
-                                <AppRoutes />
-                            </FavoriteProvider>
-                        </CartProvider>
-                    </AuthProvider>
-                </ToastProvider>
+                <ThemeProvider>
+                    <ToastProvider>
+                        <AuthProvider>
+                            <CartProvider>
+                                <FavoriteProvider>
+                                    <ErrorBoundary>
+                                        <Suspense fallback={<div className="route-loading skeleton-block" aria-label="Loading page"></div>}>
+                                            <AppRoutes />
+                                        </Suspense>
+                                    </ErrorBoundary>
+                                </FavoriteProvider>
+                            </CartProvider>
+                        </AuthProvider>
+                    </ToastProvider>
+                </ThemeProvider>
             </Router>
         </QueryClientProvider>
     );

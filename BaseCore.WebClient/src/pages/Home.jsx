@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import ProductSkeletonGrid from "../components/ProductSkeletonGrid";
 import { categoryApi, productApi } from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import {
@@ -54,6 +55,7 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
 
   useEffect(() => {
     const loadHomeData = async () => {
@@ -114,6 +116,12 @@ const Home = () => {
     [products]
   );
   const topCategories = useMemo(() => categories.slice(0, 8), [categories]);
+
+  const subscribeNewsletter = (event) => {
+    event.preventDefault();
+    toast.success("Thanks for subscribing to BaseShop updates.");
+    setNewsletterEmail("");
+  };
 
   return (
     <main className="home-page pb-5">
@@ -246,6 +254,7 @@ const Home = () => {
             </div>
           )}
 
+          {topCategories.length === 0 && <div className="col-12"><div className="empty-state">No categories available.</div></div>}
           {topCategories.map((category, index) => (
             <div key={category.id} className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
               <Link className="category-card text-decoration-none" to={`/shop?categoryId=${category.id}`}>
@@ -274,11 +283,7 @@ const Home = () => {
 
         <div className="row px-xl-5">
           {loading ? (
-            <div className="col-12 text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
+            <ProductSkeletonGrid count={8} />
           ) : featuredProducts.length === 0 ? (
             <div className="col-12">
               <div className="empty-state">No products found in database.</div>
@@ -290,6 +295,60 @@ const Home = () => {
               </div>
             ))
           )}
+        </div>
+      </section>
+
+      <section className="container-fluid section-block">
+        <div className="row px-xl-5">
+          <div className="col-12">
+            <div className="promotion-banner">
+              <div>
+                <span className="section-kicker">Limited time offer</span>
+                <h2>Refresh your everyday essentials</h2>
+                <p>Browse selected products with reliable delivery and a straightforward checkout.</p>
+                <Link className="btn btn-light" to="/shop">Explore deals</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="container-fluid section-block">
+        <div className="section-heading">
+          <span className="section-kicker">Customer stories</span>
+          <h2 className="section-title-modern">Why shoppers return</h2>
+        </div>
+        <div className="row px-xl-5">
+          {[
+            ["Minh Anh", "The checkout is clear and delivery updates are easy to follow."],
+            ["Quoc Bao", "Products are easy to compare and the mobile layout feels practical."],
+            ["Thanh Ha", "Saved addresses make repeat orders much faster."],
+          ].map(([name, quote]) => (
+            <div key={name} className="col-lg-4 mb-4">
+              <figure className="testimonial-card">
+                <div className="text-primary mb-3">★★★★★</div>
+                <blockquote>{quote}</blockquote>
+                <figcaption>{name}</figcaption>
+              </figure>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="container-fluid section-block">
+        <div className="row px-xl-5">
+          <div className="col-12">
+            <form className="newsletter-banner" onSubmit={subscribeNewsletter}>
+              <div>
+                <span className="section-kicker">Stay updated</span>
+                <h2>Get new arrivals and promotions</h2>
+              </div>
+              <div className="input-group">
+                <input type="email" className="form-control" placeholder="Your email address" value={newsletterEmail} onChange={(event) => setNewsletterEmail(event.target.value)} required />
+                <button className="btn btn-primary">Subscribe</button>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
 

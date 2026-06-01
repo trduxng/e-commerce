@@ -1,4 +1,5 @@
 ﻿using BaseCore.Common;
+using BaseCore.Common.Auth;
 using BaseCore.Entities;
 using BaseCore.Repository.Authen;
 using System;
@@ -37,11 +38,20 @@ namespace BaseCore.Services.Authen
             if (user == null)
                 return null;
 
-            // 🔥 So sánh trực tiếp (bỏ hash)
-            if (user.Password != password)
+            var passwordMatches = PasswordHasher.IsHashed(user.Password)
+                ? PasswordHasher.Verify(password, user.Password)
+                : user.Password == password;
+
+            if (!passwordMatches)
             {
                 Console.WriteLine($"Login fail: {username}");
                 return null;
+            }
+
+            if (!PasswordHasher.IsHashed(user.Password))
+            {
+                user.Password = PasswordHasher.Hash(password);
+                await _userRepository.UpdateAsync(user);
             }
 
             Console.WriteLine($"Login success: {username}");
@@ -60,7 +70,7 @@ namespace BaseCore.Services.Authen
 
         public async Task<User> Create(User user, string password)
         {
-            user.Password = password; // lưu plain text
+            user.Password = PasswordHasher.Hash(password);
             user.Salt = null;         // không dùng salt nữa
 
             user.Created = DateTime.Now;
@@ -75,7 +85,7 @@ namespace BaseCore.Services.Authen
         {
             if (!string.IsNullOrEmpty(password))
             {
-                user.Password = password; // lưu trực tiếp
+                user.Password = PasswordHasher.Hash(password);
                 user.Salt = null;
             }
 

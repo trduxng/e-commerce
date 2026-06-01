@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const Topbar = () => {
   const [keyword, setKeyword] = useState("");
@@ -9,6 +10,7 @@ const Topbar = () => {
   const location = useLocation();
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const { count } = useCart();
+  const { theme, toggleTheme } = useTheme();
   const timeoutRef = useRef(null);
 
   useEffect(() => {
@@ -72,6 +74,10 @@ const Topbar = () => {
                   {user?.name || user?.username}
                 </button>
                 <div className="dropdown-menu dropdown-menu-end">
+                  <Link className="dropdown-item" to="/account">
+                    <i className="fa fa-user-gear me-2"></i>
+                    My Account
+                  </Link>
                   <Link className="dropdown-item" to="/my-orders">
                     <i className="fa fa-receipt me-2"></i>
                     My Orders
@@ -104,6 +110,10 @@ const Topbar = () => {
                 <button className="dropdown-item" type="button">USD</button>
               </div>
             </div>
+
+            <button className="btn btn-sm btn-light theme-toggle" type="button" aria-label="Toggle dark mode" onClick={toggleTheme}>
+              <i className={`fa ${theme === "dark" ? "fa-sun" : "fa-moon"}`}></i>
+            </button>
 
             <div className="btn-group d-none d-sm-inline-flex">
               <button type="button" className="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
