@@ -4,8 +4,6 @@
 
 - Checkout totals are server-authoritative. Shipping fees are calculated from the selected shipping method.
 - Unvalidated voucher codes are rejected and both order creation paths use database transactions.
-- Passwords use salted PBKDF2 hashes. Legacy plain-text records are upgraded after a successful login.
-- JWT secrets are read from configuration instead of controller constants.
 - Address book supports create, update, set-default, and delete.
 - My Account includes dashboard totals, profile editing, address book, order history, and wishlist links.
 - Storefront routes are lazy-loaded. Shared retry, error boundary, dark mode, back-to-top, and skeleton UI are available.
@@ -16,6 +14,8 @@
 
 ### P0: Security And Operations
 
+- Replace legacy plain-text password storage with salted password hashing and a planned data migration.
+- Remove JWT constants and fallback secrets from source code before deploying outside local development.
 - Replace permissive CORS with configured origins.
 - Add refresh token rotation, token revocation, rate limiting, and account lockout.
 - Upgrade or remove vulnerable `AutoMapper 13.0.1`.

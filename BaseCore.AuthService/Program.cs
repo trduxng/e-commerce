@@ -10,7 +10,6 @@ using BaseCore.Repository.Authen;
 using BaseCore.Services.Authen;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using BaseCore.Common.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,9 +75,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // JWT Authentication Key
-var jwtSecret = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("Jwt:SecretKey configuration is required.");
-var key = Encoding.ASCII.GetBytes(jwtSecret);
+var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "YourSecretKeyForAuthenticationShouldBeLongEnough");
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -131,7 +128,7 @@ static void SeedUsers(SQLServerDbContext db)
         db.Users.Add(new User
         {
             Email = "admin@basecore.local",
-            Password = PasswordHasher.Hash("admin123"),
+            Password = "admin123",
             Name = "BaseCore Admin",
             Phone = "0900000001",
             Role = "admin",
@@ -147,7 +144,7 @@ static void SeedUsers(SQLServerDbContext db)
         db.Users.Add(new User
         {
             Email = "customer@basecore.local",
-            Password = PasswordHasher.Hash("customer123"),
+            Password = "customer123",
             Name = "Demo Customer",
             Phone = "0900000002",
             Role = "customer",
