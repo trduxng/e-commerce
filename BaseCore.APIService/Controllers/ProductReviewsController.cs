@@ -24,7 +24,8 @@ namespace BaseCore.APIService.Controllers
             if (!await ProductExists(productId))
                 return NotFound(new { message = "Product not found" });
 
-            return Ok(await BuildResponse(productId));
+            var currentUserId = TryGetCurrentUserId(out var userId) ? userId : (long?)null;
+            return Ok(await BuildResponse(productId, currentUserId));
         }
 
         [HttpPost]
@@ -54,11 +55,14 @@ namespace BaseCore.APIService.Controllers
                 .Where(detail =>
                     detail.Order != null &&
                     detail.Order.UserId == userId &&
-                    detail.Order.OrderStatus == "delivered" &&
+                    detail.Order.OrderStatus.ToLower() == "delivered" &&
                     detail.ProductVariant != null &&
                     detail.ProductVariant.ProductId == productId)
                 .OrderByDescending(detail => detail.Order!.CreatedAt)
                 .FirstOrDefaultAsync();
+
+            if (billDetail == null)
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only customers who bought and received this product can write a review." });
 
             var review = await _db.Reviews.FirstOrDefaultAsync(item =>
                 item.UserId == userId &&
@@ -83,10 +87,10 @@ namespace BaseCore.APIService.Controllers
             review.Status = "approved";
 
             await _db.SaveChangesAsync();
-            return Ok(await BuildResponse(productId));
+            return Ok(await BuildResponse(productId, userId));
         }
 
-        private async Task<ProductReviewResponseDto> BuildResponse(long productId)
+        private async Task<ProductReviewResponseDto> BuildResponse(long productId, long? currentUserId = null)
         {
             var reviews = await _db.Reviews
                 .Where(review => review.ProductId == productId && review.Status == "approved")
@@ -120,13 +124,29 @@ namespace BaseCore.APIService.Controllers
                 })
                 .ToList();
 
+            var canWriteReview = currentUserId.HasValue && await HasDeliveredPurchase(currentUserId.Value, productId);
+
             return new ProductReviewResponseDto
             {
                 AverageRating = totalCount == 0 ? 0 : Math.Round(reviews.Average(review => (decimal)review.Rating), 1),
                 TotalCount = totalCount,
                 Breakdown = breakdown,
-                Items = reviews
+                Items = reviews,
+                CanWriteReview = canWriteReview,
+                ReviewEligibilityMessage = canWriteReview
+                    ? ""
+                    : "Only customers who bought and received this product can write a review."
             };
+        }
+
+        private Task<bool> HasDeliveredPurchase(long userId, long productId)
+        {
+            return _db.OrderDetails.AnyAsync(detail =>
+                detail.Order != null &&
+                detail.Order.UserId == userId &&
+                detail.Order.OrderStatus.ToLower() == "delivered" &&
+                detail.ProductVariant != null &&
+                detail.ProductVariant.ProductId == productId);
         }
 
         private Task<bool> ProductExists(long productId)
@@ -157,6 +177,8 @@ namespace BaseCore.APIService.Controllers
         public int TotalCount { get; set; }
         public List<ProductReviewBreakdownDto> Breakdown { get; set; } = new();
         public List<ProductReviewItemDto> Items { get; set; } = new();
+        public bool CanWriteReview { get; set; }
+        public string ReviewEligibilityMessage { get; set; } = "";
     }
 
     public class ProductReviewBreakdownDto

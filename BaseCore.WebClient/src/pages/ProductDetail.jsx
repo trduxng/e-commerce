@@ -151,6 +151,10 @@ const ProductDetail = () => {
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
+    if (!reviewData.canWriteReview) {
+      toast.warning(reviewData.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.");
+      return;
+    }
 
     setSubmittingReview(true);
     try {
@@ -214,6 +218,11 @@ const ProductDetail = () => {
   const isOutOfStock = stock !== null && stock <= 0;
   const canIncreaseQuantity = stock === null || safeQuantity < stock;
   const canAddToCart = !isOutOfStock && (variants.length === 0 || Boolean(selectedVariant));
+  const reviewAccessMessage = !isAuthenticated
+    ? "Sign in to check whether this product is eligible for your review."
+    : reviewData.canWriteReview
+      ? ""
+      : reviewData.reviewEligibilityMessage;
 
   const selectVariant = (field, value) => {
     const nextVariant =
@@ -258,7 +267,7 @@ const ProductDetail = () => {
 
   return (
     <>
-      <div className="container-fluid">
+      <div className="container-fluid product-detail-breadcrumb-wrap">
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
@@ -460,11 +469,29 @@ const ProductDetail = () => {
                     <div className="col-lg-7">
                       <form className="review-form" onSubmit={submitReview}>
                         <h4>Write a Review</h4>
-                        <select className="form-select" value={review.rating} onChange={(event) => setReview((current) => ({ ...current, rating: event.target.value }))}>
-                          {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} stars</option>)}
-                        </select>
-                        <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} required />
-                        <button className="btn btn-primary" disabled={submittingReview}>{submittingReview ? "Saving..." : "Submit review"}</button>
+                        {reviewAccessMessage && <p className="review-access-note">{reviewAccessMessage}</p>}
+                        <div className="review-rating-control" role="radiogroup" aria-label="Choose your rating">
+                          {[1, 2, 3, 4, 5].map((value) => {
+                            const selectedRating = Number(review.rating);
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                className={value <= selectedRating ? "is-active" : ""}
+                                role="radio"
+                                aria-checked={value === selectedRating}
+                                aria-label={`${value} star${value > 1 ? "s" : ""}`}
+                                disabled={!reviewData.canWriteReview}
+                                onClick={() => setReview((current) => ({ ...current, rating: String(value) }))}
+                              >
+                                <i className="fa fa-star"></i>
+                              </button>
+                            );
+                          })}
+                          <span>{review.rating} / 5</span>
+                        </div>
+                        <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} required disabled={!reviewData.canWriteReview} />
+                        <button className="btn btn-primary" disabled={!reviewData.canWriteReview || submittingReview}>{submittingReview ? "Saving..." : "Submit review"}</button>
                       </form>
                     </div>
                     <div className="col-12 mt-4">
@@ -552,6 +579,8 @@ const createEmptyReviewData = () => ({
   totalCount: 0,
   breakdown: [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, percentage: 0 })),
   items: [],
+  canWriteReview: false,
+  reviewEligibilityMessage: "Only customers who bought and received this product can write a review.",
 });
 
 const normalizeReviewData = (data) => ({
@@ -566,6 +595,8 @@ const normalizeReviewData = (data) => ({
     };
   }),
   items: Array.isArray(data?.items) ? data.items : [],
+  canWriteReview: Boolean(data?.canWriteReview),
+  reviewEligibilityMessage: data?.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.",
 });
 
 const formatReviewDate = (value) => {
