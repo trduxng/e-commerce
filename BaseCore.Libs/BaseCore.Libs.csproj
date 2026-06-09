@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.Lolita.SqlServer" Version="6.0.5" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.Lolita2.SqlServer" Version="7.0.0" />

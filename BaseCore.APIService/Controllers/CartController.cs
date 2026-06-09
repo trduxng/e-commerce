@@ -198,9 +198,13 @@ namespace BaseCore.APIService.Controllers
                     variant.Product.SoldCount += item.Quantity;
                 }
 
-                var shippingFee = Math.Max(0, dto.ShippingFee);
-                var discountAmount = Math.Max(0, dto.DiscountAmount);
-                var taxAmount = Math.Max(0, dto.TaxAmount);
+                var validationMessage = ValidateCheckout(dto);
+                if (validationMessage != null)
+                    return BadRequest(new { message = validationMessage });
+
+                var shippingFee = GetShippingFee(dto.ShippingMethod);
+                const decimal discountAmount = 0;
+                const decimal taxAmount = 0;
                 var order = new Order
                 {
                     OrderCode = $"ORD-{DateTime.Now:yyyy}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
@@ -215,11 +219,11 @@ namespace BaseCore.APIService.Controllers
                     ShippingFee = shippingFee,
                     DiscountAmount = discountAmount,
                     TaxAmount = taxAmount,
-                    TotalAmount = subtotal + shippingFee + taxAmount - discountAmount,
-                    PaymentMethod = string.IsNullOrWhiteSpace(dto.PaymentMethod) ? "cod" : dto.PaymentMethod.Trim(),
+                    TotalAmount = subtotal + shippingFee,
+                    PaymentMethod = dto.PaymentMethod!.Trim().ToLowerInvariant(),
                     PaymentStatus = "pending",
                     OrderStatus = "pending",
-                    CouponCode = dto.CouponCode,
+                    CouponCode = null,
                     Note = dto.Note,
                     OrderDetails = orderDetails
                 };
@@ -308,6 +312,37 @@ namespace BaseCore.APIService.Controllers
             return long.TryParse(rawUserId, out userId);
         }
 
+        private static decimal GetShippingFee(string? shippingMethod)
+        {
+            return shippingMethod?.Trim().ToLowerInvariant() switch
+            {
+                "express" => 55000,
+                "pickup" => 0,
+                _ => DefaultShippingFee
+            };
+        }
+
+        private static string? ValidateCheckout(CartCheckoutDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.ReceiverName))
+                return "Receiver name is required.";
+
+            if (string.IsNullOrWhiteSpace(dto.ReceiverPhone))
+                return "Receiver phone is required.";
+
+            if (string.IsNullOrWhiteSpace(dto.ShippingAddress))
+                return "Shipping address is required.";
+
+            var paymentMethod = dto.PaymentMethod?.Trim().ToLowerInvariant();
+            if (paymentMethod is not ("cod" or "banktransfer" or "paypal"))
+                return "Payment method is not supported.";
+
+            if (!string.IsNullOrWhiteSpace(dto.CouponCode))
+                return "Voucher code is not valid.";
+
+            return null;
+        }
+
         private static object BuildCartResponse(Cart cart, string? message = null)
         {
             var items = cart.Items
@@ -370,9 +405,7 @@ namespace BaseCore.APIService.Controllers
         public string? ReceiverPhone { get; set; }
         public string? Email { get; set; }
         public string? PaymentMethod { get; set; }
-        public decimal ShippingFee { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public decimal TaxAmount { get; set; }
+        public string? ShippingMethod { get; set; }
         public string? CouponCode { get; set; }
         public string? Note { get; set; }
     }

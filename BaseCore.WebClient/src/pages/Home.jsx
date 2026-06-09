@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import ProductSkeletonGrid from "../components/ProductSkeletonGrid";
 import { categoryApi, productApi } from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import {
@@ -113,7 +114,7 @@ const Home = () => {
         .slice(0, 4),
     [products]
   );
-  const topCategories = useMemo(() => categories.slice(0, 8), [categories]);
+  const topCategories = useMemo(() => categories.slice(0, 4), [categories]);
 
   return (
     <main className="home-page pb-5">
@@ -246,6 +247,7 @@ const Home = () => {
             </div>
           )}
 
+          {topCategories.length === 0 && <div className="col-12"><div className="empty-state">No categories available.</div></div>}
           {topCategories.map((category, index) => (
             <div key={category.id} className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
               <Link className="category-card text-decoration-none" to={`/shop?categoryId=${category.id}`}>
@@ -274,11 +276,7 @@ const Home = () => {
 
         <div className="row px-xl-5">
           {loading ? (
-            <div className="col-12 text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
+            <ProductSkeletonGrid count={8} />
           ) : featuredProducts.length === 0 ? (
             <div className="col-12">
               <div className="empty-state">No products found in database.</div>
@@ -292,7 +290,6 @@ const Home = () => {
           )}
         </div>
       </section>
-
       <section className="container-fluid section-block">
         <div className="section-heading">
           <span className="section-kicker">Just arrived</span>

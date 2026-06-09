@@ -2,21 +2,12 @@
 using NUnit.Framework;
 using BaseCore.Common;
 using BaseCore.Entities;
-using BaseCore.Libs.Repository;
-using BaseCore.Repository.Authen;
 using System;
 
 namespace BaseCore.UnitTest
 {
-    public class UnitTestUserService: BaseConfigService
+    public class UnitTestUserService
     {
-        private IUserRepository _userRepository;
-        public UnitTestUserService(IUserRepository userRepository)
-        {
-            _userRepository = userRepository;
-        }
-
-
         [SetUp]
         public void Setup()
         {

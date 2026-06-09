@@ -33,6 +33,12 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("description");
+  const [zoomed, setZoomed] = useState(false);
+  const [review, setReview] = useState({ rating: "5", comment: "" });
+  const [reviewData, setReviewData] = useState(createEmptyReviewData);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -72,6 +78,27 @@ const ProductDetail = () => {
 
     loadProduct();
   }, [id, toast]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const response = await productApi.getReviews(id);
+        if (active) setReviewData(normalizeReviewData(response.data));
+      } catch {
+        if (active) setReviewData(createEmptyReviewData());
+      } finally {
+        if (active) setReviewsLoading(false);
+      }
+    };
+
+    loadReviews();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -116,6 +143,41 @@ const ProductDetail = () => {
     toast.error(result.message || "Cannot add this product.");
   };
 
+  const submitReview = async (event) => {
+    event.preventDefault();
+    if (!isAuthenticated) {
+      const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+      toast.info("Please sign in before writing a review.");
+      navigate(`/login?returnUrl=${returnUrl}`);
+      return;
+    }
+    if (!reviewData.canWriteReview) {
+      toast.warning(reviewData.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const response = await productApi.saveReview(id, {
+        rating: Number(review.rating),
+        content: review.comment,
+      });
+      const nextReviewData = normalizeReviewData(response.data);
+      setReviewData(nextReviewData);
+      setProduct((current) => current ? {
+        ...current,
+        averageRating: nextReviewData.averageRating,
+        reviewCount: nextReviewData.totalCount,
+      } : current);
+      setReview({ rating: "5", comment: "" });
+      toast.success("Your review has been saved.");
+    } catch (reviewError) {
+      toast.error(reviewError.response?.data?.message || "Cannot save your review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container-fluid py-5 text-center">
@@ -150,11 +212,17 @@ const ProductDetail = () => {
     : getProductOldPrice(product);
   const productImage = activeImage || selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product);
   const galleryImages = getProductGallery(product);
-  const rating = getProductRating(product);
+  const rating = reviewsLoading ? getProductRating(product) : reviewData.averageRating;
+  const reviewCount = reviewsLoading ? getProductReviewCount(product) : reviewData.totalCount;
   const safeQuantity = getSafeQuantity(quantity);
   const isOutOfStock = stock !== null && stock <= 0;
   const canIncreaseQuantity = stock === null || safeQuantity < stock;
   const canAddToCart = !isOutOfStock && (variants.length === 0 || Boolean(selectedVariant));
+  const reviewAccessMessage = !isAuthenticated
+    ? "Sign in to check whether this product is eligible for your review."
+    : reviewData.canWriteReview
+      ? ""
+      : reviewData.reviewEligibilityMessage;
 
   const selectVariant = (field, value) => {
     const nextVariant =
@@ -199,7 +267,7 @@ const ProductDetail = () => {
 
   return (
     <>
-      <div className="container-fluid">
+      <div className="container-fluid product-detail-breadcrumb-wrap">
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
@@ -215,7 +283,10 @@ const ProductDetail = () => {
         <div className="row px-xl-5">
           <div className="col-lg-5 mb-30">
             <div className="product-detail-media bg-light">
-              <img className="product-detail-main-image" src={productImage} alt={product.name} />
+              <button className="product-detail-zoom-trigger" type="button" onClick={() => setZoomed(true)} aria-label="Zoom product image">
+                <img className="product-detail-main-image" src={productImage} alt={product.name} />
+                <span><i className="fa fa-magnifying-glass-plus"></i> Zoom</span>
+              </button>
             </div>
             {galleryImages.length > 1 && (
               <div className="product-detail-thumbs">
@@ -246,7 +317,7 @@ const ProductDetail = () => {
                     ></small>
                   ))}
                 </div>
-                <small className="pt-1">({getProductReviewCount(product)} reviews)</small>
+                <small className="pt-1">({reviewCount} reviews)</small>
               </div>
               <div className="product-detail-price mb-4">
                 <h3>{formatCurrency(selectedPrice)}</h3>
@@ -351,12 +422,115 @@ const ProductDetail = () => {
         </div>
       </div>
 
+      <section className="container-fluid pb-5">
+        <div className="row px-xl-5">
+          <div className="col-12">
+            <div className="product-tabs">
+              <div className="product-tab-list" role="tablist">
+                {["description", "specifications", "reviews"].map((tab) => (
+                  <button key={tab} className={activeTab === tab ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab)}>
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <div className="product-tab-content">
+                {activeTab === "description" && (
+                  <div>
+                    <h4>Product Description</h4>
+                    <p>{product.shortDescription || product.description || "A quality product ready for everyday use."}</p>
+                    <p>{product.description || "Designed for a practical shopping experience with reliable fulfillment."}</p>
+                  </div>
+                )}
+                {activeTab === "specifications" && (
+                  <div>
+                    <h4>Specifications</h4>
+                    <table className="table product-spec-table"><tbody>
+                      {[
+                        ["Brand", product.brand || "BaseShop"],
+                        ["Model", selectedVariant?.sku || product.slug || `Product-${product.id}`],
+                        ["Weight", selectedVariant?.weightGram ? `${selectedVariant.weightGram} g` : "Not specified"],
+                        ["Color", selectedVariant?.color || "Varies by option"],
+                        ["Material", product.material || "Not specified"],
+                        ["Warranty", product.warranty || "Contact support"],
+                      ].map(([label, value]) => <tr key={label}><th>{label}</th><td>{value}</td></tr>)}
+                    </tbody></table>
+                  </div>
+                )}
+                {activeTab === "reviews" && (
+                  <div className="row">
+                    <div className="col-lg-5">
+                      <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{reviewCount} customer reviews</p></div>
+                      <div className="review-breakdown">
+                        {reviewData.breakdown.map(({ stars, percentage }) => (
+                          <div key={stars}><span>{stars} star</span><i><b style={{ "--review-width": `${percentage}%` }}></b></i><em>{percentage}%</em></div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-lg-7">
+                      <form className="review-form" onSubmit={submitReview}>
+                        <h4>Write a Review</h4>
+                        {reviewAccessMessage && <p className="review-access-note">{reviewAccessMessage}</p>}
+                        <div className="review-rating-control" role="radiogroup" aria-label="Choose your rating">
+                          {[1, 2, 3, 4, 5].map((value) => {
+                            const selectedRating = Number(review.rating);
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                className={value <= selectedRating ? "is-active" : ""}
+                                role="radio"
+                                aria-checked={value === selectedRating}
+                                aria-label={`${value} star${value > 1 ? "s" : ""}`}
+                                disabled={!reviewData.canWriteReview}
+                                onClick={() => setReview((current) => ({ ...current, rating: String(value) }))}
+                              >
+                                <i className="fa fa-star"></i>
+                              </button>
+                            );
+                          })}
+                          <span>{review.rating} / 5</span>
+                        </div>
+                        <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} required disabled={!reviewData.canWriteReview} />
+                        <button className="btn btn-primary" disabled={!reviewData.canWriteReview || submittingReview}>{submittingReview ? "Saving..." : "Submit review"}</button>
+                      </form>
+                    </div>
+                    <div className="col-12 mt-4">
+                      <div className="review-list">
+                        <h4>Customer Reviews</h4>
+                        {reviewsLoading && <p>Loading reviews...</p>}
+                        {!reviewsLoading && reviewData.items.length === 0 && <p className="review-empty">No reviews yet. Be the first to review this product.</p>}
+                        {!reviewsLoading && reviewData.items.map((item) => (
+                          <article className="review-item" key={item.id}>
+                            <div className="review-item-header">
+                              <strong>{item.reviewerName}</strong>
+                              {item.isVerifiedPurchase && <span className="review-verified">Verified purchase</span>}
+                              <time dateTime={item.createdAt}>{formatReviewDate(item.createdAt)}</time>
+                            </div>
+                            <div className="text-primary" aria-label={`${item.rating} out of 5 stars`}>
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <small key={index} className={`fa ${index < item.rating ? "fa-star" : "far fa-star"} me-1`}></small>
+                              ))}
+                            </div>
+                            {item.title && <h5>{item.title}</h5>}
+                            <p>{item.content}</p>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {relatedProducts.length > 0 && (
         <div className="container-fluid py-5">
           <h2 className="section-title position-relative text-uppercase mx-xl-5 mb-4">
             <span className="bg-secondary pe-3">Related Products</span>
           </h2>
-          <div className="row px-xl-5">
+          <div className="row px-xl-5 related-products-carousel">
             {relatedProducts.map((item) => (
               <div key={item.id} className="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <ProductCard product={item} />
@@ -364,6 +538,12 @@ const ProductDetail = () => {
             ))}
           </div>
         </div>
+      )}
+      {zoomed && (
+        <button className="product-zoom-overlay" type="button" onClick={() => setZoomed(false)} aria-label="Close zoomed image">
+          <img src={productImage} alt={product.name} />
+          <span><i className="fa fa-xmark"></i></span>
+        </button>
       )}
     </>
   );
@@ -392,6 +572,36 @@ const getVariantPrice = (variant, product) => {
 const getSafeQuantity = (value) => {
   const quantity = Number(value);
   return Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
+};
+
+const createEmptyReviewData = () => ({
+  averageRating: 0,
+  totalCount: 0,
+  breakdown: [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, percentage: 0 })),
+  items: [],
+  canWriteReview: false,
+  reviewEligibilityMessage: "Only customers who bought and received this product can write a review.",
+});
+
+const normalizeReviewData = (data) => ({
+  averageRating: Number.isFinite(Number(data?.averageRating)) ? Math.min(5, Math.max(0, Number(data.averageRating))) : 0,
+  totalCount: Number.isFinite(Number(data?.totalCount)) ? Math.max(0, Math.floor(Number(data.totalCount))) : 0,
+  breakdown: [5, 4, 3, 2, 1].map((stars) => {
+    const item = Array.isArray(data?.breakdown) ? data.breakdown.find((entry) => Number(entry.stars) === stars) : null;
+    return {
+      stars,
+      count: Number.isFinite(Number(item?.count)) ? Math.max(0, Math.floor(Number(item.count))) : 0,
+      percentage: Number.isFinite(Number(item?.percentage)) ? Math.min(100, Math.max(0, Math.round(Number(item.percentage)))) : 0,
+    };
+  }),
+  items: Array.isArray(data?.items) ? data.items : [],
+  canWriteReview: Boolean(data?.canWriteReview),
+  reviewEligibilityMessage: data?.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.",
+});
+
+const formatReviewDate = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("vi-VN");
 };
 
 export default ProductDetail;

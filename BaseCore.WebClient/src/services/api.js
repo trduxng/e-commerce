@@ -25,7 +25,20 @@ api.interceptors.request.use(
 // Handle response errors
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+        const config = error.config;
+        const shouldRetry =
+            config &&
+            String(config.method || '').toLowerCase() === 'get' &&
+            (!error.response || error.response.status >= 500) &&
+            (config.__retryCount || 0) < 2;
+
+        if (shouldRetry) {
+            config.__retryCount = (config.__retryCount || 0) + 1;
+            await new Promise((resolve) => setTimeout(resolve, 300 * config.__retryCount));
+            return api(config);
+        }
+
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -55,6 +68,8 @@ export const productApi = {
     getAll: (params) => api.get('/products', { params }),
     search: (params) => api.get('/products', { params }),
     getById: (id) => api.get(`/products/${id}`),
+    getReviews: (id) => api.get(`/products/${id}/reviews`),
+    saveReview: (id, data) => api.post(`/products/${id}/reviews`, data),
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
     delete: (id) => api.delete(`/products/${id}`),
@@ -83,7 +98,15 @@ export const cartApi = {
 export const addressApi = {
     getMyAddresses: () => api.get('/addresses'),
     create: (data) => api.post('/addresses', data),
+    update: (id, data) => api.put(`/addresses/${id}`, data),
+    delete: (id) => api.delete(`/addresses/${id}`),
     setDefault: (id) => api.put(`/addresses/${id}/default`),
+};
+
+export const accountApi = {
+    getDashboard: () => api.get('/account/dashboard'),
+    getProfile: () => api.get('/account/profile'),
+    updateProfile: (data) => api.put('/account/profile', data),
 };
 
 // Order API

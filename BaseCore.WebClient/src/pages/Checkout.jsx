@@ -230,7 +230,7 @@ const Checkout = () => {
 
   const handleVoucher = () => {
     const message = voucherCode.trim()
-      ? "Voucher code saved. Discount validation can be connected to the API."
+      ? "This voucher is not available. Only validated vouchers can change the order total."
       : "Enter a voucher code first.";
     setVoucherMessage(message);
     if (voucherCode.trim()) {
@@ -262,7 +262,7 @@ const Checkout = () => {
       shippingAddress: addressPreview,
       paymentMethod,
       note: billingData.note,
-      shippingFee,
+      shippingMethod,
     };
 
     try {

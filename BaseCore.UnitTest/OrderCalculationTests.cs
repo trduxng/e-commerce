@@ -68,9 +68,11 @@ namespace BaseCore.UnitTest
                     new OrderItemDto { ProductId = 101, Quantity = 2 },
                     new OrderItemDto { ProductId = 102, Quantity = 1 }
                 },
-                ShippingFee = 30000,
-                DiscountAmount = 15000,
-                TaxAmount = 0
+                ShippingMethod = "standard",
+                PaymentMethod = "cod",
+                ReceiverName = "Test Customer",
+                ReceiverPhone = "0900000000",
+                ShippingAddress = "123 Test Street"
             };
 
             // Mock Product 1: Price 100,000, Sale 90,000
@@ -110,15 +112,34 @@ namespace BaseCore.UnitTest
             var orderProp = responseObj.GetType().GetProperty("order").GetValue(responseObj, null) as Order;
 
             // Subtotal = (90,000 * 2) + (50,000 * 1) = 230,000
-            // Total = 230,000 + 30,000 (Ship) - 15,000 (Discount) = 245,000
+            // Total = 230,000 + 30,000 server-calculated shipping
             Assert.AreEqual(230000, orderProp.Subtotal);
             Assert.AreEqual(30000, orderProp.ShippingFee);
-            Assert.AreEqual(15000, orderProp.DiscountAmount);
-            Assert.AreEqual(245000, orderProp.TotalAmount);
+            Assert.AreEqual(0, orderProp.DiscountAmount);
+            Assert.AreEqual(260000, orderProp.TotalAmount);
             
             // Verify Stock update
             Assert.AreEqual(8, prod1.ProductVariants.First().StockQuantity);
             Assert.AreEqual(4, prod2.ProductVariants.First().StockQuantity);
+        }
+
+        [Test]
+        public async Task CreateOrder_RejectsUnvalidatedVoucher()
+        {
+            var dto = new CreateOrderDto
+            {
+                Items = new List<OrderItemDto> { new OrderItemDto { ProductId = 101, Quantity = 1 } },
+                ShippingMethod = "standard",
+                PaymentMethod = "cod",
+                ReceiverName = "Test Customer",
+                ReceiverPhone = "0900000000",
+                ShippingAddress = "123 Test Street",
+                CouponCode = "UNVERIFIED"
+            };
+
+            var result = await _controller.Create(dto);
+
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
         }
     }
 }

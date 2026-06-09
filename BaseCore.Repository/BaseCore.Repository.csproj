@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BaseCore.Common\BaseCore.Common.csproj" />
     <ProjectReference Include="..\BaseCore.Entities\BaseCore.Entities.csproj" />
   </ItemGroup>
 

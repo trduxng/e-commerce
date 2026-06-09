@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BaseCore.Repository;
+using BaseCore.Repository.EFCore;
 using System.Security.Claims;
 using BaseCore.Entities;
 
@@ -13,9 +14,12 @@ namespace BaseCore.APIService.Controllers
     public class FavoritesController : ControllerBase
     {
         private readonly SQLServerDbContext _db;
-        public FavoritesController(SQLServerDbContext db)
+        private readonly IProductRepositoryEF _productRepository;
+
+        public FavoritesController(SQLServerDbContext db, IProductRepositoryEF productRepository)
         {
             _db = db;
+            _productRepository = productRepository;
         }
 
         [HttpGet]
@@ -35,6 +39,7 @@ namespace BaseCore.APIService.Controllers
                     .OrderByDescending(item => item.CreatedAt)
                     .Select(item => item.Product)
                     .ToListAsync();
+            await _productRepository.PopulateReviewSummariesAsync(favorites.OfType<Product>());
             return Ok(favorites);
         }
 

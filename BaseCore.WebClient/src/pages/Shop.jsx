@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import ProductSkeletonGrid from "../components/ProductSkeletonGrid";
 import { categoryApi, productApi } from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import {
@@ -356,11 +357,7 @@ const Shop = () => {
               </div>
 
               {loading ? (
-                <div className="col-12 text-center py-5">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
+                <ProductSkeletonGrid count={6} />
               ) : visibleProducts.length === 0 ? (
                 <div className="col-12">
                   <div className="shop-empty-state bg-light p-5 text-center">

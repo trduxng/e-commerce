@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace BaseCore.Entities
 {
@@ -44,6 +45,15 @@ namespace BaseCore.Entities
         public Category? Category { get; set; }
 
         public List<ProductVariant> ProductVariants { get; set; } = new();
+
+        [JsonIgnore]
+        public List<Review> Reviews { get; set; } = new();
+
+        [NotMapped]
+        public decimal AverageRating { get; set; }
+
+        [NotMapped]
+        public int ReviewCount { get; set; }
 
         [NotMapped]
         public decimal Price

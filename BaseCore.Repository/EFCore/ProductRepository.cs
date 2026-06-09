@@ -11,6 +11,7 @@ namespace BaseCore.Repository.EFCore
         Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, int page, int pageSize);
         Task<List<Product>> GetByCategoryAsync(int categoryId);
         Task<Product?> GetProductWithVariantsAsync(long id);
+        Task PopulateReviewSummariesAsync(IEnumerable<Product> products);
     }
 
     public class ProductRepositoryEF : Repository<Product>, IProductRepositoryEF
@@ -62,24 +63,61 @@ namespace BaseCore.Repository.EFCore
                 .Take(pageSize)
                 .ToListAsync();
 
+            await PopulateReviewSummariesAsync(products);
             return (products, totalCount);
         }
 
         public async Task<List<Product>> GetByCategoryAsync(int categoryId)
         {
-            return await _dbSet
+            var products = await _dbSet
                 .Where(p => p.CategoryId == categoryId && p.DeletedAt == null && p.IsActive)
                 .Include(p => p.Category)
                 .Include(p => p.ProductVariants)
                 .ToListAsync();
+
+            await PopulateReviewSummariesAsync(products);
+            return products;
         }
 
         public async Task<Product?> GetProductWithVariantsAsync(long id)
         {
-            return await _dbSet
+            var product = await _dbSet
                 .Include(p => p.Category)
                 .Include(p => p.ProductVariants)
                 .FirstOrDefaultAsync(p => p.Id == id && p.DeletedAt == null);
+
+            if (product != null)
+                await PopulateReviewSummariesAsync(new[] { product });
+
+            return product;
+        }
+
+        public async Task PopulateReviewSummariesAsync(IEnumerable<Product> products)
+        {
+            var productList = products.ToList();
+            var productIds = productList.Select(product => product.Id).Distinct().ToList();
+            if (productIds.Count == 0)
+                return;
+
+            var summaries = await _context.Reviews
+                .Where(review => productIds.Contains(review.ProductId) && review.Status == "approved")
+                .GroupBy(review => review.ProductId)
+                .Select(group => new
+                {
+                    ProductId = group.Key,
+                    AverageRating = group.Average(review => (decimal)review.Rating),
+                    ReviewCount = group.Count()
+                })
+                .ToDictionaryAsync(summary => summary.ProductId);
+
+            foreach (var product in productList)
+            {
+                if (summaries.TryGetValue(product.Id, out var summary))
+                {
+                    product.AverageRating = summary.AverageRating;
+                    product.ReviewCount = summary.ReviewCount;
+                }
+            }
         }
     }
 }

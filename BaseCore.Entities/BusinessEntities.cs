@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace BaseCore.Entities
 {
@@ -8,14 +9,23 @@ namespace BaseCore.Entities
         public long Id { get; set; }
         public long UserId { get; set; }
         public long ProductId { get; set; }
-        public long BillDetailId { get; set; }
+        public long? BillDetailId { get; set; }
         public byte Rating { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
-        public bool IsVerifiedPurchase { get; set; } = true;
+        public bool IsVerifiedPurchase { get; set; }
         public int HelpfulCount { get; set; }
-        public string Status { get; set; } = "pending";
+        public string Status { get; set; } = "approved";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [JsonIgnore]
+        public User? User { get; set; }
+
+        [JsonIgnore]
+        public Product? Product { get; set; }
+
+        [JsonIgnore]
+        public OrderDetail? BillDetail { get; set; }
     }
 
     // NHÓM promotions

@@ -17,6 +17,7 @@ namespace BaseCore.Repository
         public DbSet<UserAddress> UserAddresses { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<FavoriteProduct> FavoriteProducts { get; set; }
+        public DbSet<Review> Reviews { get; set; }
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Cart> Carts { get; set; }
@@ -139,6 +140,44 @@ namespace BaseCore.Repository
                       .WithMany()
                       .HasForeignKey(e => e.ProductId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.ToTable("product_reviews", "catalog", table =>
+                {
+                    table.UseSqlOutputClause(false);
+                    table.HasCheckConstraint("CK_product_reviews_rating", "[rating] BETWEEN 1 AND 5");
+                });
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.ProductId).HasColumnName("product_id");
+                entity.Property(e => e.BillDetailId).HasColumnName("bill_detail_id");
+                entity.Property(e => e.Rating).HasColumnName("rating");
+                entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(150);
+                entity.Property(e => e.Content).HasColumnName("content").HasMaxLength(2000).IsRequired();
+                entity.Property(e => e.IsVerifiedPurchase).HasColumnName("is_verified_purchase");
+                entity.Property(e => e.HelpfulCount).HasColumnName("helpful_count");
+                entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.HasIndex(e => e.ProductId);
+                entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Product)
+                      .WithMany(e => e.Reviews)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.BillDetail)
+                      .WithMany()
+                      .HasForeignKey(e => e.BillDetailId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<ProductVariant>(entity =>
