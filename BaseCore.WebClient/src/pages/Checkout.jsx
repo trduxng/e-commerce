@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { addressApi, cartApi } from "../services/api";
-import { formatCurrency } from "../data/shopData";
+import { addressApi, cartApi, couponApi, checkoutAttributeApi } from "../services/api";
+import { formatCurrency, getProductPrice } from "../data/shopData";
 
 const shippingOptions = [
   {
@@ -77,7 +77,22 @@ const Checkout = () => {
   const [shippingMethod, setShippingMethod] = useState("standard");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherMessage, setVoucherMessage] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [checkoutAttributes, setCheckoutAttributes] = useState([]);
+  const [selectedAttributes, setSelectedAttributes] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadCheckoutData = async () => {
+      try {
+        const response = await checkoutAttributeApi.getAll();
+        setCheckoutAttributes(response.data || []);
+      } catch (error) {
+        console.error("Failed to load checkout attributes", error);
+      }
+    };
+    loadCheckoutData();
+  }, []);
 
   useEffect(() => {
     setBillingData((current) => ({
@@ -138,8 +153,21 @@ const Checkout = () => {
     () => shippingOptions.find((option) => option.id === shippingMethod) || shippingOptions[0],
     [shippingMethod]
   );
+
+  const attrAdjustment = useMemo(() => {
+    let adjustment = 0;
+    Object.entries(selectedAttributes).forEach(([attrId, value]) => {
+      const attr = checkoutAttributes.find(a => String(a.id) === attrId);
+      if (!attr || !value) return;
+      
+      const val = attr.values.find(v => String(v.id) === String(value));
+      if (val) adjustment += val.priceAdjustment;
+    });
+    return adjustment;
+  }, [selectedAttributes, checkoutAttributes]);
+
   const shippingFee = items.length > 0 ? selectedShipping.fee : 0;
-  const total = subtotal + shippingFee;
+  const total = Math.max(0, subtotal + shippingFee + attrAdjustment - discountAmount);
   const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const selectedAddress = savedAddresses.find((address) => String(address.id) === String(selectedAddressId));
   const activeAddress = addressMode === "saved" && selectedAddress ? selectedAddress : billingData;
@@ -228,15 +256,22 @@ const Checkout = () => {
     }
   };
 
-  const handleVoucher = () => {
-    const message = voucherCode.trim()
-      ? "This voucher is not available. Only validated vouchers can change the order total."
-      : "Enter a voucher code first.";
-    setVoucherMessage(message);
-    if (voucherCode.trim()) {
-      toast.info(message);
-    } else {
-      toast.warning(message);
+  const handleVoucher = async () => {
+    if (!voucherCode.trim()) {
+      toast.warning("Please enter a voucher code.");
+      return;
+    }
+
+    setVoucherMessage("Applying...");
+    try {
+      const response = await couponApi.apply(voucherCode, subtotal);
+      setDiscountAmount(response.data.discountAmount);
+      setVoucherMessage(`Voucher applied! Discount: ${formatCurrency(response.data.discountAmount)}`);
+      toast.success("Voucher applied successfully.");
+    } catch (error) {
+      setDiscountAmount(0);
+      setVoucherMessage(error.response?.data?.message || "Invalid voucher code.");
+      toast.error(error.response?.data?.message || "Invalid voucher code.");
     }
   };
 
@@ -263,6 +298,9 @@ const Checkout = () => {
       paymentMethod,
       note: billingData.note,
       shippingMethod,
+      couponCode: discountAmount > 0 ? voucherCode : null,
+      discountAmount: discountAmount,
+      checkoutAttributes: selectedAttributes
     };
 
     try {
@@ -284,7 +322,7 @@ const Checkout = () => {
         toast.dismissToast(loadingToastRef.current);
         loadingToastRef.current = null;
       }
-      toast.error(detail || "Order could not be submitted. Please check the API or sign in and try again.");
+      toast.error(detail || "Order could not be submitted.");
     } finally {
       setSubmitting(false);
     }
@@ -395,7 +433,7 @@ const Checkout = () => {
                     {[
                       ["receiverName", "Receiver Name", "Nguyen Van A", "text"],
                       ["phone", "Mobile No", "+84 909 123 456", "text"],
-                      ["addressDetail", "Address Detail", "123 Street, apartment, suite", "text"],
+                      ["addressDetail", "Address Detail", "123 Street", "text"],
                       ["ward", "Ward", "Ben Nghe", "text"],
                       ["district", "District", "District 1", "text"],
                       ["province", "Province/City", "Ho Chi Minh City", "text"],
@@ -454,6 +492,36 @@ const Checkout = () => {
             </div>
 
             <div className="checkout-panel">
+                <h5 className="section-title position-relative text-uppercase mb-3">
+                    <span className="bg-secondary pe-3">Additional Options</span>
+                </h5>
+                <div className="bg-light p-30 mb-4">
+                    {checkoutAttributes.map(attr => (
+                        <div key={attr.id} className="form-group mb-3">
+                            <label className="fw-bold">{attr.name}{attr.isRequired && <span className="text-danger">*</span>}</label>
+                            {attr.controlType === 'DropdownList' && (
+                                <select className="form-control" value={selectedAttributes[attr.id] || ''} onChange={e => setSelectedAttributes({...selectedAttributes, [attr.id]: e.target.value})}>
+                                    <option value="">Select an option</option>
+                                    {attr.values.map(v => <option key={v.id} value={v.id}>{v.name} {v.priceAdjustment > 0 ? `(+${formatCurrency(v.priceAdjustment)})` : ''}</option>)}
+                                </select>
+                            )}
+                            {attr.controlType === 'RadioList' && (
+                                <div className="mt-2">
+                                    {attr.values.map(v => (
+                                        <div key={v.id} className="custom-control custom-radio">
+                                            <input type="radio" className="custom-control-input" id={`attr-${v.id}`} name={`attr-${attr.id}`} checked={String(selectedAttributes[attr.id]) === String(v.id)} onChange={() => setSelectedAttributes({...selectedAttributes, [attr.id]: String(v.id)})} />
+                                            <label className="custom-control-label" htmlFor={`attr-${v.id}`}>{v.name} {v.priceAdjustment > 0 ? `(+${formatCurrency(v.priceAdjustment)})` : ''}</label>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {checkoutAttributes.length === 0 && <p className="text-muted small mb-0">No additional services available.</p>}
+                </div>
+            </div>
+
+            <div className="checkout-panel">
               <div className="checkout-panel-header">
                 <div>
                   <span className="checkout-step">Order</span>
@@ -465,7 +533,6 @@ const Checkout = () => {
               {items.length === 0 ? (
                 <div className="checkout-empty">
                   <h5>Your cart is empty</h5>
-                  <p>Add products before checkout.</p>
                   <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
                 </div>
               ) : (
@@ -483,9 +550,9 @@ const Checkout = () => {
                           </small>
                         )}
                       </div>
-                      <div className="checkout-item-price">{formatCurrency(item.price)}</div>
+                      <div className="checkout-item-price">{formatCurrency(getProductPrice(item))}</div>
                       <div className="checkout-item-qty">x{item.quantity}</div>
-                      <div className="checkout-item-total">{formatCurrency(item.price * item.quantity)}</div>
+                      <div className="checkout-item-total">{formatCurrency(getProductPrice(item) * item.quantity)}</div>
                     </div>
                   ))}
                 </div>
@@ -499,7 +566,6 @@ const Checkout = () => {
                   <h4>Shipping Option</h4>
                 </div>
               </div>
-
               <div className="checkout-option-grid">
                 {shippingOptions.map((option) => (
                   <button
@@ -526,7 +592,6 @@ const Checkout = () => {
                   <h4>Payment Method</h4>
                 </div>
               </div>
-
               <div className="checkout-option-grid payment-grid">
                 {paymentOptions.map(([value, label, description, icon]) => (
                   <label
@@ -564,7 +629,7 @@ const Checkout = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Enter voucher code"
+                    placeholder="Enter code"
                     value={voucherCode}
                     onChange={(event) => setVoucherCode(event.target.value)}
                   />
@@ -572,7 +637,7 @@ const Checkout = () => {
                     Apply
                   </button>
                 </div>
-                {voucherMessage && <small>{voucherMessage}</small>}
+                {voucherMessage && <small className={discountAmount > 0 ? "text-success" : "text-danger"}>{voucherMessage}</small>}
               </div>
 
               <div className="checkout-summary-card">
@@ -580,36 +645,37 @@ const Checkout = () => {
                   <i className="fa fa-receipt"></i>
                   Order Summary
                 </div>
-
                 <div className="checkout-summary-row">
-                  <span>Merchandise subtotal</span>
+                  <span>Subtotal</span>
                   <strong>{formatCurrency(subtotal)}</strong>
                 </div>
                 <div className="checkout-summary-row">
-                  <span>Shipping fee</span>
+                  <span>Shipping</span>
                   <strong>{formatCurrency(shippingFee)}</strong>
                 </div>
-                <div className="checkout-summary-row">
-                  <span>Payment method</span>
-                  <strong>{paymentOptions.find(([value]) => value === paymentMethod)?.[1]}</strong>
+                {discountAmount > 0 && (
+                  <div className="checkout-summary-row text-success">
+                    <span>Discount</span>
+                    <strong>-{formatCurrency(discountAmount)}</strong>
+                  </div>
+                )}
+                {attrAdjustment > 0 && (
+                  <div className="checkout-summary-row text-info">
+                    <span>Add-ons</span>
+                    <strong>+{formatCurrency(attrAdjustment)}</strong>
+                  </div>
+                )}
+                <div className="checkout-summary-row border-top mt-2 pt-2">
+                  <span><strong>Total</strong></span>
+                  <strong className="text-primary h5 mb-0">{formatCurrency(total)}</strong>
                 </div>
-
-                <div className="checkout-summary-total">
-                  <span>Total payment</span>
-                  <strong>{formatCurrency(total)}</strong>
-                </div>
-
                 <button
-                  className="btn w-100 btn-primary checkout-submit"
+                  className="btn w-100 btn-primary checkout-submit mt-3"
                   type="submit"
                   disabled={submitting || items.length === 0}
                 >
                   {submitting ? "Placing Order..." : "Place Order"}
                 </button>
-
-                <p className="checkout-policy">
-                  By placing your order, you agree to BaseShop processing this order and contacting you for delivery.
-                </p>
               </div>
             </aside>
           </div>

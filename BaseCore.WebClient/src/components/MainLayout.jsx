@@ -100,6 +100,36 @@ const MainLayout = ({ children }) => {
                                             <p>Users</p>
                                         </Link>
                                     </li>
+                                    <li className="nav-item">
+                                        <Link to="/reviews" className={`nav-link ${isActive('/reviews')}`}>
+                                            <i className="nav-icon fas fa-star"></i>
+                                            <p>Reviews</p>
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link to="/coupons" className={`nav-link ${isActive('/coupons')}`}>
+                                            <i className="nav-icon fas fa-ticket-alt"></i>
+                                            <p>Coupons</p>
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link to="/manufacturers" className={`nav-link ${isActive('/manufacturers')}`}>
+                                            <i className="nav-icon fas fa-industry"></i>
+                                            <p>Manufacturers</p>
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link to="/specification-attributes" className={`nav-link ${isActive('/specification-attributes')}`}>
+                                            <i className="nav-icon fas fa-cogs"></i>
+                                            <p>Spec Attributes</p>
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link to="/checkout-attributes" className={`nav-link ${isActive('/checkout-attributes')}`}>
+                                            <i className="nav-icon fas fa-shopping-basket"></i>
+                                            <p>Checkout Attributes</p>
+                                        </Link>
+                                    </li>
                                 </>
                             )}
                         </ul>

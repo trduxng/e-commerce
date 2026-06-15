@@ -18,6 +18,10 @@ namespace BaseCore.Repository
         public DbSet<Product> Products { get; set; }
         public DbSet<FavoriteProduct> FavoriteProducts { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<Manufacturer> Manufacturers { get; set; }
+        public DbSet<SpecificationAttribute> SpecificationAttributes { get; set; }
+        public DbSet<ProductSpecification> ProductSpecifications { get; set; }
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Cart> Carts { get; set; }
@@ -100,6 +104,7 @@ namespace BaseCore.Repository
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Slug).HasColumnName("slug").HasMaxLength(255).IsRequired();
                 entity.Property(e => e.CategoryId).HasColumnName("product_type_id");
+                entity.Property(e => e.ManufacturerId).HasColumnName("manufacturer_id");
                 entity.Property(e => e.CollectionId).HasColumnName("collection_id");
                 entity.Property(e => e.SupplierId).HasColumnName("supplier_id");
                 entity.Property(e => e.Description).HasColumnName("description");
@@ -108,6 +113,11 @@ namespace BaseCore.Repository
                 entity.Property(e => e.ImageUrl).HasColumnName("thumbnail_url").HasMaxLength(1000);
                 entity.Property(e => e.IsActive).HasColumnName("is_active");
                 entity.Property(e => e.IsFeatured).HasColumnName("is_featured");
+                entity.Property(e => e.IsDigital).HasColumnName("is_digital");
+                entity.Property(e => e.DownloadUrl).HasColumnName("download_url").HasMaxLength(1000);
+                entity.Property(e => e.IsRental).HasColumnName("is_rental");
+                entity.Property(e => e.RentalPriceLength).HasColumnName("rental_price_length");
+                entity.Property(e => e.RentalPricePeriod).HasColumnName("rental_price_period").HasMaxLength(20);
                 entity.Property(e => e.SoldCount).HasColumnName("sold_count");
                 entity.Property(e => e.ViewCount).HasColumnName("view_count");
                 entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
@@ -119,6 +129,85 @@ namespace BaseCore.Repository
                       .WithMany(e => e.Products)
                       .HasForeignKey(e => e.CategoryId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Manufacturer)
+                      .WithMany(e => e.Products)
+                      .HasForeignKey(e => e.ManufacturerId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<CheckoutAttribute>(entity =>
+            {
+                entity.ToTable("checkout_attributes", "sales");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
+                entity.Property(e => e.ControlType).HasColumnName("control_type").HasMaxLength(50).IsRequired();
+                entity.Property(e => e.IsRequired).HasColumnName("is_required");
+                entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+            });
+
+            modelBuilder.Entity<CheckoutAttributeValue>(entity =>
+            {
+                entity.ToTable("checkout_attribute_values", "sales");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.CheckoutAttributeId).HasColumnName("checkout_attribute_id");
+                entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
+                entity.Property(e => e.PriceAdjustment).HasColumnName("price_adjustment").HasPrecision(15, 2);
+                entity.Property(e => e.IsPreSelected).HasColumnName("is_preselected");
+                entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+
+                entity.HasOne(e => e.CheckoutAttribute)
+                      .WithMany(e => e.Values)
+                      .HasForeignKey(e => e.CheckoutAttributeId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Manufacturer>(entity =>
+            {
+                entity.ToTable("manufacturers", "catalog", table => table.UseSqlOutputClause(false));
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
+                entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(1000);
+                entity.Property(e => e.PictureUrl).HasColumnName("picture_url").HasMaxLength(1000);
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+                entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            });
+
+            modelBuilder.Entity<SpecificationAttribute>(entity =>
+            {
+                entity.ToTable("specification_attributes", "catalog", table => table.UseSqlOutputClause(false));
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
+                entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+            });
+
+            modelBuilder.Entity<ProductSpecification>(entity =>
+            {
+                entity.ToTable("product_specifications", "catalog", table => table.UseSqlOutputClause(false));
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.ProductId).HasColumnName("product_id");
+                entity.Property(e => e.SpecificationAttributeId).HasColumnName("specification_attribute_id");
+                entity.Property(e => e.Value).HasColumnName("value").HasMaxLength(1000).IsRequired();
+                entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+
+                entity.HasOne(e => e.Product)
+                      .WithMany(e => e.ProductSpecifications)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.SpecificationAttribute)
+                      .WithMany(e => e.ProductSpecifications)
+                      .HasForeignKey(e => e.SpecificationAttributeId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<FavoriteProduct>(entity =>
@@ -306,6 +395,24 @@ namespace BaseCore.Repository
                       .WithMany()
                       .HasForeignKey(e => e.ProductVariantId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Coupon>(entity =>
+            {
+                entity.ToTable("coupons", "sales");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Type).HasColumnName("type").HasMaxLength(20).IsRequired();
+                entity.Property(e => e.Value).HasColumnName("value").HasPrecision(18, 2);
+                entity.Property(e => e.MinOrderValue).HasColumnName("min_order_value").HasPrecision(18, 2);
+                entity.Property(e => e.MaxDiscountAmount).HasColumnName("max_discount_amount").HasPrecision(18, 2);
+                entity.Property(e => e.UsageLimit).HasColumnName("usage_limit");
+                entity.Property(e => e.UsedCount).HasColumnName("used_count");
+                entity.Property(e => e.StartDate).HasColumnName("start_date");
+                entity.Property(e => e.EndDate).HasColumnName("end_date");
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+                entity.HasIndex(e => e.Code).IsUnique();
             });
         }
     }

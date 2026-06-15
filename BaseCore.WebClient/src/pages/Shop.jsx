@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import ProductSkeletonGrid from "../components/ProductSkeletonGrid";
-import { categoryApi, productApi } from "../services/api";
+import { categoryApi, productApi, manufacturerApi, specificationAttributeApi } from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import {
   formatCurrency,
@@ -16,6 +16,14 @@ import {
 } from "../data/shopData";
 
 const pageSize = 9;
+
+const normalizeManufacturerList = (data) => {
+    if (!data) return [];
+    const items = data.items || data;
+    return Array.isArray(items) ? items : [];
+};
+
+const normalizeSpecList = (data) => Array.isArray(data) ? data : [];
 
 const normalizePrice = (value) => {
   if (value === null || value === undefined || value === "") return "";
@@ -54,6 +62,8 @@ const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [manufacturers, setManufacturers] = useState([]);
+  const [specAttributes, setSpecAttributes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sort, setSort] = useState("latest");
@@ -63,6 +73,7 @@ const Shop = () => {
 
   const keyword = searchParams.get("keyword") || "";
   const categoryId = searchParams.get("categoryId") || "";
+  const manufacturerId = searchParams.get("manufacturerId") || "";
   const minPrice = normalizePrice(searchParams.get("minPrice"));
   const maxPrice = normalizePrice(searchParams.get("maxPrice"));
   const requestedPage = Number(searchParams.get("page") || 1);
@@ -83,11 +94,20 @@ const Shop = () => {
     const loadShop = async () => {
       setLoading(true);
       try {
-        const [categoriesResponse, productsResponse] = await Promise.all([
+        const specFilters = {};
+        searchParams.forEach((value, key) => {
+            if (key.startsWith('s_')) specFilters[key] = value;
+        });
+
+        const [categoriesResponse, manufacturersResponse, specAttrResponse, productsResponse] = await Promise.all([
           categoryApi.getAll(),
+          manufacturerApi.getAll({ pageSize: 100 }),
+          specificationAttributeApi.getAll(),
           productApi.search({
             keyword: keyword || undefined,
             categoryId: categoryId || undefined,
+            manufacturerId: manufacturerId || undefined,
+            ...specFilters,
             minPrice: minPrice || undefined,
             maxPrice: maxPrice || undefined,
             page,
@@ -96,15 +116,19 @@ const Shop = () => {
         ]);
 
         const apiCategories = normalizeCategoryList(categoriesResponse.data);
+        const apiManufacturers = normalizeManufacturerList(manufacturersResponse.data);
+        const apiSpecAttrs = normalizeSpecList(specAttrResponse.data);
         const apiProducts = normalizeProductList(productsResponse.data);
-        const nextProducts = apiProducts.length > 0 ? apiProducts : sampleProducts;
+        
+        setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
+        setManufacturers(apiManufacturers);
+        setSpecAttributes(apiSpecAttrs);
+        setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
+        
         const apiTotalCount = Number(productsResponse.data?.totalCount);
         const apiTotalPages = Number(productsResponse.data?.totalPages);
-
-        setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
-        setProducts(nextProducts);
-        setTotalCount(Number.isFinite(apiTotalCount) && apiProducts.length > 0 ? apiTotalCount : nextProducts.length);
-        setTotalPages(Number.isFinite(apiTotalPages) && apiProducts.length > 0 ? apiTotalPages : Math.ceil(nextProducts.length / pageSize));
+        setTotalCount(productsResponse.data?.totalCount !== undefined && apiProducts.length > 0 ? apiTotalCount : sampleProducts.length);
+        setTotalPages(Number.isFinite(apiTotalPages) && apiProducts.length > 0 ? apiTotalPages : Math.ceil(sampleProducts.length / pageSize));
         setError("");
       } catch {
         const filteredProducts = sampleProducts.filter((product) => {
@@ -133,7 +157,7 @@ const Shop = () => {
     };
 
     loadShop();
-  }, [keyword, categoryId, minPrice, maxPrice, page, toast]);
+  }, [keyword, categoryId, manufacturerId, searchParams, minPrice, maxPrice, page, toast]);
 
   const visibleProducts = useMemo(() => {
     return [...products].sort((first, second) => {
@@ -162,6 +186,38 @@ const Shop = () => {
     else params.delete("categoryId");
     params.set("page", "1");
     setSearchParams(params);
+  };
+
+  const updateManufacturer = (value) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) params.set("manufacturerId", value);
+    else params.delete("manufacturerId");
+    params.set("page", "1");
+    setSearchParams(params);
+  };
+
+  const updateSpecification = (attrId, value) => {
+    const params = new URLSearchParams(searchParams);
+    const key = `s_${attrId}`;
+    const currentValues = params.get(key)?.split(',') || [];
+    
+    let nextValues;
+    if (currentValues.includes(value)) {
+        nextValues = currentValues.filter(v => v !== value);
+    } else {
+        nextValues = [...currentValues, value];
+    }
+
+    if (nextValues.length > 0) params.set(key, nextValues.join(','));
+    else params.delete(key);
+    
+    params.set("page", "1");
+    setSearchParams(params);
+  };
+
+  const isSpecSelected = (attrId, value) => {
+    const key = `s_${attrId}`;
+    return searchParams.get(key)?.split(',').includes(value) || false;
   };
 
   const applyPriceFilter = (event) => {
@@ -278,6 +334,36 @@ const Shop = () => {
             </div>
 
             <h5 className="section-title position-relative text-uppercase mb-3">
+              <span className="bg-secondary pe-3">Brands</span>
+            </h5>
+            <div className="shop-filter-panel bg-light p-4 mb-30">
+              <div className="shop-filter-option">
+                <input
+                  type="radio"
+                  className="form-check-input shop-filter-radio"
+                  id="brand-all"
+                  checked={!manufacturerId}
+                  onChange={() => updateManufacturer("")}
+                />
+                <label className="shop-filter-option-label" htmlFor="brand-all">All Brands</label>
+                <span className="badge border fw-normal">{!manufacturerId ? totalCount : ""}</span>
+              </div>
+              {manufacturers.map((brand) => (
+                <div key={brand.id} className="shop-filter-option">
+                  <input
+                    type="radio"
+                    className="form-check-input shop-filter-radio"
+                    id={`brand-${brand.id}`}
+                    checked={Number(manufacturerId) === Number(brand.id)}
+                    onChange={() => updateManufacturer(String(brand.id))}
+                  />
+                  <label className="shop-filter-option-label" htmlFor={`brand-${brand.id}`}>{brand.name}</label>
+                  <span className="badge border fw-normal">{Number(manufacturerId) === Number(brand.id) ? totalCount : ""}</span>
+                </div>
+              ))}
+            </div>
+
+            <h5 className="section-title position-relative text-uppercase mb-3">
               <span className="bg-secondary pe-3">Filter by price</span>
             </h5>
             <form className="shop-filter-panel bg-light p-4 mb-30" onSubmit={applyPriceFilter}>
@@ -328,6 +414,40 @@ const Shop = () => {
                 </button>
               </div>
             </form>
+
+            {specAttributes.map(attr => {
+                const uniqueValues = Array.from(new Set(
+                    products.flatMap(p => 
+                        (p.productSpecifications || [])
+                        .filter(ps => ps.specificationAttributeId === attr.id)
+                        .map(ps => ps.value)
+                    )
+                )).filter(Boolean).sort();
+
+                if (uniqueValues.length === 0) return null;
+
+                return (
+                    <React.Fragment key={attr.id}>
+                        <h5 className="section-title position-relative text-uppercase mb-3">
+                            <span className="bg-secondary pe-3">{attr.name}</span>
+                        </h5>
+                        <div className="shop-filter-panel bg-light p-4 mb-30">
+                            {uniqueValues.map(val => (
+                                <div key={val} className="shop-filter-option">
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        id={`spec-${attr.id}-${val}`}
+                                        checked={isSpecSelected(attr.id, val)}
+                                        onChange={() => updateSpecification(attr.id, val)}
+                                    />
+                                    <label className="shop-filter-option-label" htmlFor={`spec-${attr.id}-${val}`}>{val}</label>
+                                </div>
+                            ))}
+                        </div>
+                    </React.Fragment>
+                );
+            })}
           </div>
 
           <div className="col-lg-9 col-md-8">
