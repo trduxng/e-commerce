@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 
@@ -15,11 +16,13 @@ namespace BaseCore.APIService.Controllers
     {
         private readonly IProductRepositoryEF _productRepository;
         private readonly ICategoryRepositoryEF _categoryRepository;
+        private readonly BaseCore.Repository.SQLServerDbContext _context;
 
-        public ProductsController(IProductRepositoryEF productRepository, ICategoryRepositoryEF categoryRepository)
+        public ProductsController(IProductRepositoryEF productRepository, ICategoryRepositoryEF categoryRepository, BaseCore.Repository.SQLServerDbContext context)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
+            _context = context;
         }
 
         /// <summary>
@@ -29,12 +32,31 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetAll(
             [FromQuery] string? keyword,
             [FromQuery] int? categoryId,
+            [FromQuery] int? manufacturerId,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, minPrice, maxPrice, page, pageSize);
+            var specFilters = new Dictionary<int, List<string>>();
+            foreach (var key in Request.Query.Keys)
+            {
+                if (key.StartsWith("s_") && int.TryParse(key.Substring(2), out int attrId))
+                {
+                    var values = Request.Query[key].ToString().Split(',').ToList();
+                    specFilters[attrId] = values;
+                }
+            }
+
+            var (products, totalCount) = await _productRepository.SearchAsync(
+                keyword, 
+                categoryId, 
+                manufacturerId, 
+                specFilters.Any() ? specFilters : null,
+                minPrice, 
+                maxPrice, 
+                page, 
+                pageSize);
 
             return Ok(new
             {
@@ -121,6 +143,12 @@ namespace BaseCore.APIService.Controllers
             product.ImageUrl = dto.ImageUrl ?? product.ImageUrl;
             product.IsActive = dto.IsActive ?? product.IsActive;
             product.IsFeatured = dto.IsFeatured ?? product.IsFeatured;
+            product.IsDigital = dto.IsDigital ?? product.IsDigital;
+            product.DownloadUrl = dto.DownloadUrl ?? product.DownloadUrl;
+            product.IsRental = dto.IsRental ?? product.IsRental;
+            product.RentalPriceLength = dto.RentalPriceLength ?? product.RentalPriceLength;
+            product.RentalPricePeriod = dto.RentalPricePeriod ?? product.RentalPricePeriod;
+
             if (product.IsActive)
                 product.DeletedAt = null;
             product.UpdatedAt = DateTime.Now;
@@ -189,6 +217,37 @@ namespace BaseCore.APIService.Controllers
         {
             var products = await _productRepository.GetByCategoryAsync(categoryId);
             return Ok(products);
+        }
+
+        [HttpPut("{id}/specifications")]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> UpdateSpecifications(long id, [FromBody] List<ProductSpecificationDto> specs)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductSpecifications)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null) return NotFound();
+
+            // Remove existing specs
+            _context.ProductSpecifications.RemoveRange(product.ProductSpecifications);
+
+            // Add new specs
+            if (specs != null)
+            {
+                foreach (var spec in specs)
+                {
+                    product.ProductSpecifications.Add(new ProductSpecification
+                    {
+                        SpecificationAttributeId = spec.AttributeId,
+                        Value = spec.Value,
+                        SortOrder = spec.SortOrder
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(product.ProductSpecifications);
         }
 
         private static string Slugify(string value)
@@ -353,6 +412,7 @@ namespace BaseCore.APIService.Controllers
         public decimal Price { get; set; }
         public int Stock { get; set; }
         public int CategoryId { get; set; }
+        public int? ManufacturerId { get; set; }
         public string? ShortDescription { get; set; }
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
@@ -372,6 +432,7 @@ namespace BaseCore.APIService.Controllers
         public decimal? Price { get; set; }
         public int? Stock { get; set; }
         public int? CategoryId { get; set; }
+        public int? ManufacturerId { get; set; }
         public string? ShortDescription { get; set; }
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
@@ -398,4 +459,14 @@ namespace BaseCore.APIService.Controllers
         public bool? IsActive { get; set; }
     }
 
+    public class ProductSpecificationDto
+    {
+        public int AttributeId { get; set; }
+        public string Value { get; set; } = "";
+        public int SortOrder { get; set; }
+    }
+}
+     public string Value { get; set; } = "";
+        public int SortOrder { get; set; }
+    }
 }

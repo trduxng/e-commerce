@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { productApi, categoryApi } from '../services/api';
+import { productApi, categoryApi, manufacturerApi, specificationAttributeApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, getProductImage } from '../data/shopData';
 
@@ -22,6 +22,7 @@ const emptyForm = {
     description: '',
     imageUrl: '',
     categoryId: '',
+    manufacturerId: '',
     price: '',
     salePrice: '',
     stock: '',
@@ -31,6 +32,7 @@ const emptyForm = {
     isActive: true,
     isFeatured: false,
     variants: [createEmptyVariant()],
+    specifications: [],
 };
 
 const normalizeList = (data) => {
@@ -45,14 +47,17 @@ const normalizeList = (data) => {
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [manufacturers, setManufacturers] = useState([]);
+    const [specAttributes, setSpecAttributes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [showModal, setShowModal] = useState(false);
+    const [modalTab, setModalTab] = useState('info'); // 'info', 'variants', 'specs'
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState(emptyForm);
     const [error, setError] = useState('');
@@ -63,6 +68,8 @@ const Products = () => {
 
     useEffect(() => {
         loadCategories();
+        loadManufacturers();
+        loadSpecAttributes();
     }, []);
 
     useEffect(() => {
@@ -73,6 +80,27 @@ const Products = () => {
 
     const getVariantPreviewImage = (variant, fallback = '') =>
         variant?.imageUrl || fallback || '/img/product-1.jpg';
+
+    const loadSpecAttributes = async () => {
+        try {
+            const response = await specificationAttributeApi.getAll();
+            setSpecAttributes(response.data || []);
+        } catch (error) {
+            console.error('Failed to load spec attributes:', error);
+        }
+    };
+
+    const loadManufacturers = async () => {
+        try {
+            const response = await manufacturerApi.getAll({ pageSize: 100 });
+            const items = normalizeList(response.data);
+            setManufacturers(items);
+            return items;
+        } catch (error) {
+            console.error('Failed to load manufacturers:', error);
+            return [];
+        }
+    };
 
     const loadCategories = async () => {
         try {
@@ -112,17 +140,13 @@ const Products = () => {
                 ? response.data.items
                 : normalizeList(response.data);
 
-            if (!Array.isArray(response.data?.items) && !Array.isArray(response.data?.data) && !Array.isArray(response.data)) {
-                setError('Products API did not return a valid list. Check that ApiGateway and APIService are running.');
-            }
-
             setProducts(items);
             setTotalPages(Number(response.data?.totalPages) || 0);
             setTotalCount(Number(response.data?.totalCount) || items.length);
         } catch (error) {
             console.error('Failed to load products:', error);
             setProducts([]);
-            setError(error.response?.data?.message || 'Failed to load products. Check that ApiGateway and APIService are running.');
+            setError(error.response?.data?.message || 'Failed to load products.');
         } finally {
             setLoading(false);
         }
@@ -136,6 +160,32 @@ const Products = () => {
 
     const setField = (name, value) => {
         setFormData((current) => ({ ...current, [name]: value }));
+    };
+
+    const setSpecField = (index, name, value) => {
+        setFormData((current) => ({
+            ...current,
+            specifications: current.specifications.map((spec, specIndex) =>
+                specIndex === index ? { ...spec, [name]: value } : spec
+            ),
+        }));
+    };
+
+    const addSpec = () => {
+        setFormData((current) => ({
+            ...current,
+            specifications: [
+                ...current.specifications,
+                { attributeId: specAttributes[0]?.id || '', value: '', sortOrder: 0 },
+            ],
+        }));
+    };
+
+    const removeSpec = (index) => {
+        setFormData((current) => ({
+            ...current,
+            specifications: current.specifications.filter((_, specIndex) => specIndex !== index),
+        }));
     };
 
     const setVariantField = (index, name, value) => {
@@ -172,28 +222,16 @@ const Products = () => {
 
     const handleCreateCategory = async () => {
         const name = newCategoryName.trim();
-        if (!name) {
-            setCategoryError('Enter a category name first.');
-            return;
-        }
-
+        if (!name) return;
         setSavingCategory(true);
-        setCategoryError('');
-
         try {
-            const response = await categoryApi.create({
-                name,
-                description: '',
-                isActive: true,
-            });
+            const response = await categoryApi.create({ name, description: '', isActive: true });
             const createdCategory = response.data;
-            const updatedCategories = [...categories, createdCategory];
-            setCategories(updatedCategories);
+            setCategories([...categories, createdCategory]);
             setField('categoryId', String(createdCategory.id));
             setNewCategoryName('');
         } catch (error) {
             console.error('Failed to create category:', error);
-            setCategoryError(error.response?.data?.message || 'Failed to create category.');
         } finally {
             setSavingCategory(false);
         }
@@ -229,8 +267,19 @@ const Products = () => {
                     stockQuantity: fullProduct.stock ?? '',
                     imageUrl: fullProduct.imageUrl || '',
                 })];
+            
             const variant = variants[0] || {};
             const selectedCategoryId = fullProduct.categoryId ?? fullProduct.category?.id ?? '';
+            const selectedManufacturerId = fullProduct.manufacturerId ?? fullProduct.manufacturer?.id ?? '';
+            
+            const specs = Array.isArray(fullProduct.productSpecifications) 
+                ? fullProduct.productSpecifications.map(s => ({
+                    attributeId: s.specificationAttributeId,
+                    value: s.value,
+                    sortOrder: s.sortOrder
+                }))
+                : [];
+
             setEditingProduct(fullProduct);
             setFormData({
                 name: fullProduct.name || '',
@@ -238,6 +287,7 @@ const Products = () => {
                 description: fullProduct.description || '',
                 imageUrl: fullProduct.imageUrl || '',
                 categoryId: selectedCategoryId === '' ? '' : String(selectedCategoryId),
+                manufacturerId: selectedManufacturerId === '' ? '' : String(selectedManufacturerId),
                 price: variant.price ?? '',
                 salePrice: variant.salePrice ?? '',
                 stock: variant.stockQuantity ?? '',
@@ -247,6 +297,7 @@ const Products = () => {
                 isActive: fullProduct.isActive !== false,
                 isFeatured: Boolean(fullProduct.isFeatured),
                 variants,
+                specifications: specs,
             });
         } else {
             setEditingProduct(null);
@@ -255,9 +306,11 @@ const Products = () => {
                 categoryId: availableCategories[0]?.id ? String(availableCategories[0].id) : '',
                 sku: `SKU-${Date.now()}`,
                 variants: [createEmptyVariant({ sku: `SKU-${Date.now()}` })],
+                specifications: [],
             });
         }
 
+        setModalTab('info');
         setShowModal(true);
     };
 
@@ -276,89 +329,61 @@ const Products = () => {
             return;
         }
 
-        if (formData.variants.length === 0) {
-            setError('Add at least one product variant.');
-            return;
-        }
-
-        const normalizedVariants = [];
-        const skuSet = new Set();
-
-        for (let index = 0; index < formData.variants.length; index += 1) {
-            const variant = formData.variants[index];
-            const price = Number(variant.price);
-            const stockQuantity = Number(variant.stockQuantity);
-            const salePrice = variant.salePrice === '' ? null : Number(variant.salePrice);
-            const sku = variant.sku.trim();
-
-            if (!Number.isFinite(price) || price <= 0) {
-                setError(`Variant #${index + 1} price must be greater than zero.`);
-                return;
-            }
-
-            if (!Number.isFinite(stockQuantity) || stockQuantity < 0) {
-                setError(`Variant #${index + 1} stock must be zero or greater.`);
-                return;
-            }
-
-            if (salePrice !== null && (!Number.isFinite(salePrice) || salePrice < 0 || salePrice > price)) {
-                setError(`Variant #${index + 1} sale price must be between zero and the regular price.`);
-                return;
-            }
-
-            if (sku) {
-                const skuKey = sku.toLowerCase();
-                if (skuSet.has(skuKey)) {
-                    setError(`SKU ${sku} is duplicated.`);
-                    return;
-                }
-                skuSet.add(skuKey);
-            }
-
-            normalizedVariants.push({
-                id: variant.id || undefined,
-                sku,
-                price,
-                salePrice,
-                stockQuantity,
-                size: variant.size.trim(),
-                color: variant.color.trim(),
-                imageUrl: variant.imageUrl.trim(),
-                isActive: variant.isActive,
-            });
-        }
-
-        if (formData.isActive && !normalizedVariants.some((variant) => variant.isActive)) {
-            setError('At least one variant must be active while this product is selling.');
-            return;
-        }
+        const normalizedVariants = formData.variants.map(v => ({
+            id: v.id || undefined,
+            sku: v.sku.trim(),
+            price: Number(v.price),
+            salePrice: v.salePrice === '' ? null : Number(v.salePrice),
+            stockQuantity: Number(v.stockQuantity),
+            size: v.size.trim(),
+            color: v.color.trim(),
+            imageUrl: v.imageUrl.trim(),
+            isActive: v.isActive,
+        }));
 
         try {
-            const visibleVariants = normalizedVariants.filter((variant) => variant.isActive);
-            const priceSource = visibleVariants.length > 0 ? visibleVariants : normalizedVariants;
-            const basePrice = Math.min(...priceSource.map((variant) => variant.salePrice ?? variant.price));
-            const firstVariant = normalizedVariants[0];
+            const basePrice = Math.min(...normalizedVariants.map((variant) => variant.salePrice ?? variant.price));
             const data = {
                 name: formData.name.trim(),
                 categoryId: Number(formData.categoryId),
+                manufacturerId: formData.manufacturerId ? Number(formData.manufacturerId) : null,
                 shortDescription: formData.shortDescription.trim(),
                 description: formData.description.trim(),
                 imageUrl: formData.imageUrl.trim(),
                 price: basePrice,
-                salePrice: firstVariant.salePrice,
+                salePrice: normalizedVariants[0].salePrice,
                 stock: normalizedVariants.reduce((sum, variant) => sum + variant.stockQuantity, 0),
-                sku: firstVariant.sku,
-                size: firstVariant.size,
-                color: firstVariant.color,
+                sku: normalizedVariants[0].sku,
+                size: normalizedVariants[0].size,
+                color: normalizedVariants[0].color,
                 variants: normalizedVariants,
                 isActive: formData.isActive,
                 isFeatured: formData.isFeatured,
+                isDigital: formData.isDigital,
+                downloadUrl: formData.isDigital ? formData.downloadUrl.trim() : null,
+                isRental: formData.isRental,
+                rentalPriceLength: formData.isRental ? Number(formData.rentalPriceLength) : null,
+                rentalPricePeriod: formData.isRental ? formData.rentalPricePeriod : null,
             };
 
+            let productId;
             if (editingProduct) {
                 await productApi.update(editingProduct.id, data);
+                productId = editingProduct.id;
             } else {
-                await productApi.create(data);
+                const response = await productApi.create(data);
+                productId = response.data?.id || response.data?.value?.id;
+            }
+
+            if (productId) {
+                const normalizedSpecs = formData.specifications
+                    .filter(s => s.attributeId && s.value)
+                    .map(s => ({
+                        attributeId: Number(s.attributeId),
+                        value: s.value,
+                        sortOrder: Number(s.sortOrder) || 0
+                    }));
+                await productApi.updateSpecifications(productId, normalizedSpecs);
             }
 
             closeModal();
@@ -369,13 +394,12 @@ const Products = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to stop selling this product?')) return;
-
+        if (!window.confirm('Stop selling this product?')) return;
         try {
             await productApi.delete(id);
             loadProducts();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to update product');
+            alert('Failed to delete');
         }
     };
 
@@ -395,11 +419,7 @@ const Products = () => {
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid">
-                    <div className="row mb-2">
-                        <div className="col-sm-6">
-                            <h1 className="m-0">Products Management</h1>
-                        </div>
-                    </div>
+                    <h1 className="m-0">Products Management</h1>
                 </div>
             </div>
 
@@ -410,412 +430,171 @@ const Products = () => {
                             <div className="row">
                                 <div className="col-md-8">
                                     <form onSubmit={handleSearch} className="form-inline">
-                                        <input
-                                            type="text"
-                                            className="form-control mr-2"
-                                            placeholder="Search products"
-                                            value={keyword}
-                                            onChange={(event) => setKeyword(event.target.value)}
-                                        />
-                                        <select
-                                            className="form-control mr-2"
-                                            value={categoryId}
-                                            onChange={(event) => {
-                                                setCategoryId(event.target.value);
-                                                setPage(1);
-                                            }}
-                                        >
+                                        <input type="text" className="form-control mr-2" placeholder="Search..." value={keyword} onChange={e => setKeyword(e.target.value)} />
+                                        <select className="form-control mr-2" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
                                             <option value="">All Categories</option>
-                                            {categories.map((category) => (
-                                                <option key={category.id} value={String(category.id)}>{category.name}</option>
-                                            ))}
+                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
-                                        <button type="submit" className="btn btn-primary">
-                                            <i className="fas fa-search"></i> Search
-                                        </button>
+                                        <button type="submit" className="btn btn-primary"><i className="fas fa-search"></i></button>
                                     </form>
                                 </div>
                                 <div className="col-md-4 text-right">
-                                    {isAdmin() && (
-                                        <button className="btn btn-success" type="button" onClick={() => openModal()}>
-                                            <i className="fas fa-plus"></i> Add Product
-                                        </button>
-                                    )}
+                                    {isAdmin() && <button className="btn btn-success" onClick={() => openModal()}><i className="fas fa-plus"></i> Add Product</button>}
                                 </div>
                             </div>
                         </div>
-                        <div className="card-body">
-                            {error && !showModal && <div className="alert alert-warning">{error}</div>}
-                            {loading ? (
-                                <div className="text-center py-5">
-                                    <div className="spinner-border text-primary"></div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th style={{ width: '90px' }}>Image</th>
-                                                    <th>Name</th>
-                                                    <th>Category</th>
-                                                    <th>SKU</th>
-                                                    <th>Price</th>
-                                                    <th>Stock</th>
-                                                    <th>Status</th>
-                                                    {isAdmin() && <th style={{ width: '130px' }}>Actions</th>}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {products.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={isAdmin() ? 8 : 7} className="text-center">
-                                                            No products found
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    products.map((product) => {
-                                                        const variant = firstVariant(product);
-                                                        return (
-                                                            <tr key={product.id}>
-                                                                <td>
-                                                                    <img
-                                                                        src={getVariantPreviewImage(variant, getProductImage(product))}
-                                                                        alt={product.name}
-                                                                        style={{ width: '64px', height: '64px', objectFit: 'cover' }}
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <strong>{product.name}</strong>
-                                                                    {product.isFeatured && <span className="badge badge-primary ml-2">Featured</span>}
-                                                                    <div className="text-muted small">{product.shortDescription}</div>
-                                                                </td>
-                                                                <td>{product.category?.name || ''}</td>
-                                                                <td>{variant.sku || ''}</td>
-                                                                <td>
-                                                                    <div>{formatCurrency(variant.salePrice ?? product.price)}</div>
-                                                                    {variant.salePrice && <small className="text-muted"><del>{formatCurrency(variant.price)}</del></small>}
-                                                                </td>
-                                                                <td>{product.stock}</td>
-                                                                <td>
-                                                                    <span className={`badge ${product.isActive ? 'badge-success' : 'badge-secondary'}`}>
-                                                                        {product.isActive ? 'Selling' : 'Hidden'}
-                                                                    </span>
-                                                                </td>
-                                                                {isAdmin() && (
-                                                                    <td>
-                                                                        <button
-                                                                            className="btn btn-sm btn-info mr-1"
-                                                                            type="button"
-                                                                            onClick={() => openModal(product)}
-                                                                        >
-                                                                            <i className="fas fa-edit"></i>
-                                                                        </button>
-                                                                        <button
-                                                                            className="btn btn-sm btn-danger"
-                                                                            type="button"
-                                                                            onClick={() => handleDelete(product.id)}
-                                                                        >
-                                                                            <i className="fas fa-ban"></i>
-                                                                        </button>
-                                                                    </td>
-                                                                )}
-                                                            </tr>
-                                                        );
-                                                    })
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <span>Total: {totalCount} products</span>
-                                        <nav>
-                                            <ul className="pagination mb-0">
-                                                <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                                    <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>
-                                                        Previous
-                                                    </button>
-                                                </li>
-                                                {renderPagination()}
-                                                <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                    <button className="page-link" type="button" onClick={() => setPage(page + 1)}>
-                                                        Next
-                                                    </button>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
-                                </>
+                        <div className="card-body p-0">
+                            {loading ? <div className="text-center p-5">Loading...</div> : (
+                                <table className="table table-hover table-striped mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Stock</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {products.map(p => (
+                                            <tr key={p.id}>
+                                                <td><img src={getVariantPreviewImage(firstVariant(p), getProductImage(p))} style={{width: 50}} /></td>
+                                                <td><strong>{p.name}</strong> {p.manufacturer?.name && <span className="badge badge-info">{p.manufacturer.name}</span>}</td>
+                                                <td>{p.category?.name}</td>
+                                                <td>{formatCurrency(p.price)}</td>
+                                                <td>{p.stock}</td>
+                                                <td><span className={`badge badge-${p.isActive ? 'success' : 'secondary'}`}>{p.isActive ? 'Selling' : 'Hidden'}</span></td>
+                                                <td>
+                                                    <button className="btn btn-sm btn-info mr-1" onClick={() => openModal(p)}><i className="fas fa-edit"></i></button>
+                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}><i className="fas fa-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             )}
+                        </div>
+                        <div className="card-footer">
+                            <ul className="pagination pagination-sm m-0 float-right">{renderPagination()}</ul>
                         </div>
                     </div>
                 </div>
             </section>
 
             {showModal && (
-                <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+                <div className="modal fade show" style={{ display: 'block' }}>
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">
-                                    {editingProduct ? 'Edit Product' : 'Add Product'}
-                                </h5>
-                                <button type="button" className="close" onClick={closeModal}>
-                                    <span>&times;</span>
-                                </button>
+                                <h5 className="modal-title">{editingProduct ? 'Edit' : 'Add'} Product</h5>
+                                <button type="button" className="close" onClick={closeModal}>&times;</button>
+                            </div>
+                            <div className="modal-nav bg-light border-bottom">
+                                <ul className="nav nav-tabs px-3 pt-2">
+                                    {['info', 'variants', 'specs'].map(t => (
+                                        <li className="nav-item" key={t}>
+                                            <button type="button" className={`nav-link ${modalTab === t ? 'active' : ''}`} onClick={() => setModalTab(t)}>{t.toUpperCase()}</button>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                             <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    {error && <div className="alert alert-danger">{error}</div>}
-                                    <div className="row">
-                                        <div className="col-md-5">
-                                            <h6 className="text-uppercase text-muted">Product Information</h6>
-                                            <div className="form-group">
-                                                <label>Name</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={formData.name}
-                                                    onChange={(event) => setField('name', event.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Category</label>
-                                                <select
-                                                    className="form-control"
-                                                    value={String(formData.categoryId || '')}
-                                                    onChange={(event) => setField('categoryId', event.target.value)}
-                                                    required
-                                                    disabled={categories.length === 0}
-                                                >
-                                                    <option value="">Select Category</option>
-                                                    {categories.map((category) => (
-                                                        <option key={category.id} value={String(category.id)}>{category.name}</option>
-                                                    ))}
-                                                </select>
-                                                {categoryError && <small className="text-danger">{categoryError}</small>}
-                                                <div className="input-group mt-2">
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={newCategoryName}
-                                                        onChange={(event) => setNewCategoryName(event.target.value)}
-                                                        placeholder="New category name"
-                                                    />
-                                                    <div className="input-group-append">
-                                                        <button
-                                                            className="btn btn-outline-primary"
-                                                            type="button"
-                                                            onClick={handleCreateCategory}
-                                                            disabled={savingCategory}
-                                                        >
-                                                            {savingCategory ? 'Adding...' : 'Add Category'}
-                                                        </button>
-                                                    </div>
+                                <div className="modal-body" style={{maxHeight: '70vh', overflowY: 'auto'}}>
+                                    {modalTab === 'info' && (
+                                        <div className="row">
+                                            <div className="col-md-6">
+                                                <div className="form-group"><label>Name</label><input className="form-control" required value={formData.name} onChange={e => setField('name', e.target.value)} /></div>
+                                                <div className="form-group"><label>Category</label>
+                                                    <select className="form-control" required value={formData.categoryId} onChange={e => setField('categoryId', e.target.value)}>
+                                                        <option value="">Select Category</option>
+                                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="form-group"><label>Brand</label>
+                                                    <select className="form-control" value={formData.manufacturerId} onChange={e => setField('manufacturerId', e.target.value)}>
+                                                        <option value="">Select Brand</option>
+                                                        {manufacturers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                                    </select>
                                                 </div>
                                             </div>
-                                            <div className="form-group">
-                                                <label>Short Description</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={formData.shortDescription}
-                                                    onChange={(event) => setField('shortDescription', event.target.value)}
-                                                />
+                                            <div className="col-md-6">
+                                                <div className="form-group"><label>Image URL</label><input className="form-control" value={formData.imageUrl} onChange={e => setField('imageUrl', e.target.value)} /></div>
+                                                <div className="custom-control custom-switch mt-4"><input type="checkbox" className="custom-control-input" id="sw1" checked={formData.isActive} onChange={e => setField('isActive', e.target.checked)} /><label className="custom-control-label" htmlFor="sw1">Is Active</label></div>
+                                                <div className="custom-control custom-switch mt-2"><input type="checkbox" className="custom-control-input" id="sw2" checked={formData.isFeatured} onChange={e => setField('isFeatured', e.target.checked)} /><label className="custom-control-label" htmlFor="sw2">Is Featured</label></div>
                                             </div>
-                                            <div className="form-group">
-                                                <label>Description</label>
-                                                <textarea
-                                                    className="form-control"
-                                                    value={formData.description}
-                                                    onChange={(event) => setField('description', event.target.value)}
-                                                    rows="5"
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Product Image URL</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={formData.imageUrl}
-                                                    onChange={(event) => setField('imageUrl', event.target.value)}
-                                                    placeholder="/img/product-1.jpg or https://..."
-                                                />
+                                            <div className="col-12 mt-2">
+                                                <div className="form-group"><label>Short Description</label><input className="form-control" value={formData.shortDescription} onChange={e => setField('shortDescription', e.target.value)} /></div>
+                                                <div className="form-group"><label>Full Description</label><textarea className="form-control" rows="4" value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
                                             </div>
                                         </div>
-
-                                        <div className="col-md-7">
-                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                <h6 className="text-uppercase text-muted mb-0">Variants</h6>
-                                                <button type="button" className="btn btn-sm btn-outline-primary" onClick={addVariant}>
-                                                    <i className="fas fa-plus"></i> Add Variant
-                                                </button>
-                                            </div>
-                                            <div className="table-responsive">
-                                                <table className="table table-sm table-bordered bg-white">
-                                                    <thead>
-                                                        <tr>
-                                                            <th style={{ minWidth: '220px' }}>Image</th>
-                                                            <th>Size</th>
-                                                            <th>Color</th>
-                                                            <th style={{ minWidth: '110px' }}>Price</th>
-                                                            <th style={{ minWidth: '110px' }}>Sale</th>
-                                                            <th style={{ minWidth: '92px' }}>Stock</th>
-                                                            <th style={{ minWidth: '140px' }}>SKU</th>
-                                                            <th>Status</th>
-                                                            <th style={{ width: '44px' }}></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {formData.variants.map((variant, index) => (
-                                                            <tr key={variant.id || `${variant.sku}-${index}`}>
-                                                                <td>
-                                                                    <div className="variant-image-cell">
-                                                                        <img
-                                                                            src={getVariantPreviewImage(variant, formData.imageUrl)}
-                                                                            alt={`Variant ${index + 1}`}
-                                                                            className="variant-image-preview"
-                                                                        />
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control form-control-sm"
-                                                                            value={variant.imageUrl}
-                                                                            onChange={(event) => setVariantField(index, 'imageUrl', event.target.value)}
-                                                                            placeholder="/img/product-1.jpg"
-                                                                        />
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="text"
-                                                                        className="form-control form-control-sm"
-                                                                        value={variant.size}
-                                                                        onChange={(event) => setVariantField(index, 'size', event.target.value)}
-                                                                        placeholder="M"
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="text"
-                                                                        className="form-control form-control-sm"
-                                                                        value={variant.color}
-                                                                        onChange={(event) => setVariantField(index, 'color', event.target.value)}
-                                                                        placeholder="Black"
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control form-control-sm"
-                                                                        value={variant.price}
-                                                                        onChange={(event) => setVariantField(index, 'price', event.target.value)}
-                                                                        min="1"
-                                                                        required
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control form-control-sm"
-                                                                        value={variant.salePrice}
-                                                                        onChange={(event) => setVariantField(index, 'salePrice', event.target.value)}
-                                                                        min="0"
-                                                                        placeholder="-"
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control form-control-sm"
-                                                                        value={variant.stockQuantity}
-                                                                        onChange={(event) => setVariantField(index, 'stockQuantity', event.target.value)}
-                                                                        min="0"
-                                                                        required
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <input
-                                                                        type="text"
-                                                                        className="form-control form-control-sm"
-                                                                        value={variant.sku}
-                                                                        onChange={(event) => setVariantField(index, 'sku', event.target.value)}
-                                                                        placeholder="Auto"
-                                                                    />
-                                                                </td>
-                                                                <td className="text-center">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={variant.isActive}
-                                                                        onChange={(event) => setVariantField(index, 'isActive', event.target.checked)}
-                                                                        aria-label="Variant active"
-                                                                    />
-                                                                </td>
-                                                                <td>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn btn-sm btn-outline-danger"
-                                                                        disabled={formData.variants.length <= 1}
-                                                                        onClick={() => removeVariant(index)}
-                                                                    >
-                                                                        <i className="fas fa-trash"></i>
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div className="form-group">
-                                                <div className="custom-control custom-switch">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="custom-control-input"
-                                                        id="product-active"
-                                                        checked={formData.isActive}
-                                                        onChange={(event) => setField('isActive', event.target.checked)}
-                                                    />
-                                                    <label className="custom-control-label" htmlFor="product-active">Show this product in the shop</label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group">
-                                                <div className="custom-control custom-switch">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="custom-control-input"
-                                                        id="product-featured"
-                                                        checked={formData.isFeatured}
-                                                        onChange={(event) => setField('isFeatured', event.target.checked)}
-                                                    />
-                                                    <label className="custom-control-label" htmlFor="product-featured">Featured product</label>
-                                                </div>
-                                            </div>
-                                            <div className="bg-light p-3">
-                                                <div className="font-weight-bold mb-2">Preview</div>
-                                                <div className="d-flex align-items-center">
-                                                    <img
-                                                        src={getVariantPreviewImage(formData.variants[0], formData.imageUrl)}
-                                                        alt="Preview"
-                                                        style={{ width: '72px', height: '72px', objectFit: 'cover' }}
-                                                        className="mr-3"
-                                                    />
-                                                    <div>
-                                                        <div>{formData.name || 'Product name'}</div>
-                                                        <div className="text-muted">{formatCurrency(formData.variants[0]?.salePrice || formData.variants[0]?.price)}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    )}
+                                    {modalTab === 'variants' && (
+                                        <table className="table table-sm table-bordered">
+                                            <thead><tr><th>Size</th><th>Color</th><th>Price</th><th>Sale</th><th>Stock</th><th>SKU</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addVariant}>+</button></th></tr></thead>
+                                            <tbody>
+                                                {formData.variants.map((v, i) => (
+                                                    <tr key={i}>
+                                                        <td><input className="form-control form-control-sm" value={v.size} onChange={e => setVariantField(i, 'size', e.target.value)} /></td>
+                                                        <td><input className="form-control form-control-sm" value={v.color} onChange={e => setVariantField(i, 'color', e.target.value)} /></td>
+                                                        <td><input type="number" className="form-control form-control-sm" value={v.price} onChange={e => setVariantField(i, 'price', e.target.value)} /></td>
+                                                        <td><input type="number" className="form-control form-control-sm" value={v.salePrice} onChange={e => setVariantField(i, 'salePrice', e.target.value)} /></td>
+                                                        <td><input type="number" className="form-control form-control-sm" value={v.stockQuantity} onChange={e => setVariantField(i, 'stockQuantity', e.target.value)} /></td>
+                                                        <td><input className="form-control form-control-sm" value={v.sku} onChange={e => setVariantField(i, 'sku', e.target.value)} /></td>
+                                                        <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeVariant(i)} disabled={formData.variants.length <= 1}>x</button></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                    {modalTab === 'specs' && (
+                                        <table className="table table-sm table-bordered">
+                                            <thead><tr><th>Attribute</th><th>Value</th><th>Order</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addSpec}>+</button></th></tr></thead>
+                                            <tbody>
+                                                {formData.specifications.map((s, i) => (
+                                                    <tr key={i}>
+                                                        <td><select className="form-control form-control-sm" value={s.attributeId} onChange={e => setSpecField(i, 'attributeId', e.target.value)}><option value="">Select</option>{specAttributes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></td>
+                                                        <td><input className="form-control form-control-sm" value={s.value} onChange={e => setSpecField(i, 'value', e.target.value)} /></td>
+                                                        <td><input type="number" className="form-control form-control-sm" value={s.sortOrder} onChange={e => setSpecField(i, 'sortOrder', e.target.value)} /></td>
+                                                        <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeSpec(i)}>x</button></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        {editingProduct ? 'Update Product' : 'Create Product'}
-                                    </button>
+                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">Save Product</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showModal && <div className="modal-backdrop fade show"></div>}
+        </div>
+    );
+};
+
+export default Products;
+                    <tbody>
+                                                {formData.specifications.map((s, i) => (
+                                                    <tr key={i}>
+                                                        <td><select className="form-control form-control-sm" value={s.attributeId} onChange={e => setSpecField(i, 'attributeId', e.target.value)}><option value="">Select</option>{specAttributes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></td>
+                                                        <td><input className="form-control form-control-sm" value={s.value} onChange={e => setSpecField(i, 'value', e.target.value)} /></td>
+                                                        <td><input type="number" className="form-control form-control-sm" value={s.sortOrder} onChange={e => setSpecField(i, 'sortOrder', e.target.value)} /></td>
+                                                        <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeSpec(i)}>x</button></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">Save Product</button>
                                 </div>
                             </form>
                         </div>

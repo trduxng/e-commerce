@@ -8,7 +8,15 @@ namespace BaseCore.Repository.EFCore
     /// </summary>
     public interface IProductRepositoryEF : IRepository<Product>
     {
-        Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, int page, int pageSize);
+        Task<(List<Product> Products, int TotalCount)> SearchAsync(
+            string? keyword,
+            int? categoryId,
+            int? manufacturerId,
+            Dictionary<int, List<string>>? specificationFilters,
+            decimal? minPrice,
+            decimal? maxPrice,
+            int page,
+            int pageSize);
         Task<List<Product>> GetByCategoryAsync(int categoryId);
         Task<Product?> GetProductWithVariantsAsync(long id);
         Task PopulateReviewSummariesAsync(IEnumerable<Product> products);
@@ -20,11 +28,21 @@ namespace BaseCore.Repository.EFCore
         {
         }
 
-        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, int page, int pageSize)
+        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(
+            string? keyword,
+            int? categoryId,
+            int? manufacturerId,
+            Dictionary<int, List<string>>? specificationFilters,
+            decimal? minPrice,
+            decimal? maxPrice,
+            int page,
+            int pageSize)
         {
             var query = _dbSet
                 .Include(p => p.Category)
+                .Include(p => p.Manufacturer)
                 .Include(p => p.ProductVariants)
+                .Include(p => p.ProductSpecifications)
                 .Where(p => p.DeletedAt == null && p.IsActive)
                 .AsQueryable();
 
@@ -39,6 +57,27 @@ namespace BaseCore.Repository.EFCore
             if (categoryId.HasValue && categoryId > 0)
             {
                 query = query.Where(p => p.CategoryId == categoryId);
+            }
+
+            if (manufacturerId.HasValue && manufacturerId > 0)
+            {
+                query = query.Where(p => p.ManufacturerId == manufacturerId);
+            }
+
+            if (specificationFilters != null && specificationFilters.Any())
+            {
+                foreach (var filter in specificationFilters)
+                {
+                    var attrId = filter.Key;
+                    var values = filter.Value;
+
+                    if (values != null && values.Any())
+                    {
+                        query = query.Where(p => p.ProductSpecifications.Any(ps => 
+                            ps.SpecificationAttributeId == attrId && 
+                            values.Contains(ps.Value)));
+                    }
+                }
             }
 
             if (minPrice.HasValue)

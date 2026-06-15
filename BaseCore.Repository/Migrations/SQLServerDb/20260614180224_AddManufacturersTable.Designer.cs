@@ -4,6 +4,7 @@ using BaseCore.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseCore.Repository.Migrations.SQLServerDb
 {
     [DbContext(typeof(SQLServerDbContext))]
-    partial class SQLServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260614180224_AddManufacturersTable")]
+    partial class AddManufacturersTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,83 +191,6 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
-            modelBuilder.Entity("BaseCore.Entities.CheckoutAttribute", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ControlType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("control_type");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_required");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("name");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("checkout_attributes", "sales");
-                });
-
-            modelBuilder.Entity("BaseCore.Entities.CheckoutAttributeValue", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CheckoutAttributeId")
-                        .HasColumnType("int")
-                        .HasColumnName("checkout_attribute_id");
-
-                    b.Property<bool>("IsPreSelected")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_preselected");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("name");
-
-                    b.Property<decimal>("PriceAdjustment")
-                        .HasPrecision(15, 2)
-                        .HasColumnType("decimal(15,2)")
-                        .HasColumnName("price_adjustment");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CheckoutAttributeId");
-
-                    b.ToTable("checkout_attribute_values", "sales");
-                });
-
             modelBuilder.Entity("BaseCore.Entities.Coupon", b =>
                 {
                     b.Property<int>("Id")
@@ -434,48 +360,35 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("description");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("name");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PictureUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("picture_url");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.ToTable("manufacturers", "catalog");
-
-                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                    b.ToTable("Manufacturers");
                 });
 
             modelBuilder.Entity("BaseCore.Entities.Order", b =>
@@ -695,11 +608,6 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
-                    b.Property<string>("DownloadUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("download_url");
-
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)")
@@ -709,36 +617,18 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<bool>("IsDigital")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_digital");
-
                     b.Property<bool>("IsFeatured")
                         .HasColumnType("bit")
                         .HasColumnName("is_featured");
 
-                    b.Property<bool>("IsRental")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_rental");
-
                     b.Property<int?>("ManufacturerId")
-                        .HasColumnType("int")
-                        .HasColumnName("manufacturer_id");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("name");
-
-                    b.Property<int?>("RentalPriceLength")
-                        .HasColumnType("int")
-                        .HasColumnName("rental_price_length");
-
-                    b.Property<string>("RentalPricePeriod")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("rental_price_period");
 
                     b.Property<string>("ShortDescription")
                         .HasMaxLength(500)
@@ -777,44 +667,6 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                         .IsUnique();
 
                     b.ToTable("products", "catalog");
-
-                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
-                });
-
-            modelBuilder.Entity("BaseCore.Entities.ProductSpecification", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("ProductId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("product_id");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.Property<int>("SpecificationAttributeId")
-                        .HasColumnType("int")
-                        .HasColumnName("specification_attribute_id");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("value");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("SpecificationAttributeId");
-
-                    b.ToTable("product_specifications", "catalog");
 
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
@@ -954,36 +806,6 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                         {
                             t.HasCheckConstraint("CK_product_reviews_rating", "[rating] BETWEEN 1 AND 5");
                         });
-
-                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
-                });
-
-            modelBuilder.Entity("BaseCore.Entities.SpecificationAttribute", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("name");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("specification_attributes", "catalog");
 
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
@@ -1171,17 +993,6 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("BaseCore.Entities.CheckoutAttributeValue", b =>
-                {
-                    b.HasOne("BaseCore.Entities.CheckoutAttribute", "CheckoutAttribute")
-                        .WithMany("Values")
-                        .HasForeignKey("CheckoutAttributeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CheckoutAttribute");
-                });
-
             modelBuilder.Entity("BaseCore.Entities.FavoriteProduct", b =>
                 {
                     b.HasOne("BaseCore.Entities.Product", "Product")
@@ -1240,31 +1051,11 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
 
                     b.HasOne("BaseCore.Entities.Manufacturer", "Manufacturer")
                         .WithMany("Products")
-                        .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ManufacturerId");
 
                     b.Navigation("Category");
 
                     b.Navigation("Manufacturer");
-                });
-
-            modelBuilder.Entity("BaseCore.Entities.ProductSpecification", b =>
-                {
-                    b.HasOne("BaseCore.Entities.Product", "Product")
-                        .WithMany("ProductSpecifications")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BaseCore.Entities.SpecificationAttribute", "SpecificationAttribute")
-                        .WithMany("ProductSpecifications")
-                        .HasForeignKey("SpecificationAttributeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("SpecificationAttribute");
                 });
 
             modelBuilder.Entity("BaseCore.Entities.ProductVariant", b =>
@@ -1325,11 +1116,6 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("BaseCore.Entities.CheckoutAttribute", b =>
-                {
-                    b.Navigation("Values");
-                });
-
             modelBuilder.Entity("BaseCore.Entities.Manufacturer", b =>
                 {
                     b.Navigation("Products");
@@ -1342,16 +1128,9 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
 
             modelBuilder.Entity("BaseCore.Entities.Product", b =>
                 {
-                    b.Navigation("ProductSpecifications");
-
                     b.Navigation("ProductVariants");
 
                     b.Navigation("Reviews");
-                });
-
-            modelBuilder.Entity("BaseCore.Entities.SpecificationAttribute", b =>
-                {
-                    b.Navigation("ProductSpecifications");
                 });
 #pragma warning restore 612, 618
         }

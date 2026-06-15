@@ -73,6 +73,21 @@ export const productApi = {
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
     delete: (id) => api.delete(`/products/${id}`),
+    updateSpecifications: (id, specs) => api.put(`/products/${id}/specifications`, specs),
+};
+
+export const specificationAttributeApi = {
+    getAll: () => api.get('/specificationAttributes'),
+    create: (data) => api.post('/specificationAttributes', data),
+    update: (id, data) => api.put(`/specificationAttributes/${id}`, data),
+    delete: (id) => api.delete(`/specificationAttributes/${id}`),
+};
+
+export const checkoutAttributeApi = {
+    getAll: () => api.get('/checkoutAttributes'),
+    create: (data) => api.post('/checkoutAttributes', data),
+    update: (id, data) => api.put(`/checkoutAttributes/${id}`, data),
+    delete: (id) => api.delete(`/checkoutAttributes/${id}`),
 };
 
 // Category API
@@ -126,6 +141,27 @@ export const favoriteApi = {
     getIds: () => api.get('/favorites/ids'),
     add: (productId) => api.post(`/favorites/${productId}`),
     remove: (productId) => api.delete(`/favorites/${productId}`),
+};
+
+export const reviewApi = {
+    getAll: (params) => api.get('/reviews', { params }),
+    updateStatus: (id, status) => api.patch(`/reviews/${id}/status`, { status })
+};
+
+export const couponApi = {
+    getAll: (params) => api.get('/coupons', { params }),
+    create: (data) => api.post('/coupons', data),
+    update: (id, data) => api.put(`/coupons/${id}`, data),
+    delete: (id) => api.delete(`/coupons/${id}`),
+    apply: (code, orderValue) => api.post('/coupons/apply', { code, orderValue })
+};
+
+export const manufacturerApi = {
+    getAll: (params) => api.get('/manufacturers', { params }),
+    getById: (id) => api.get(`/manufacturers/${id}`),
+    create: (data) => api.post('/manufacturers', data),
+    update: (id, data) => api.put(`/manufacturers/${id}`, data),
+    delete: (id) => api.delete(`/manufacturers/${id}`),
 };
 
 export default api;

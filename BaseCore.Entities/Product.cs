@@ -16,6 +16,8 @@ namespace BaseCore.Entities
 
         public int CategoryId { get; set; }
 
+        public int? ManufacturerId { get; set; }
+
         public int? CollectionId { get; set; }
 
         public int? SupplierId { get; set; }
@@ -32,6 +34,16 @@ namespace BaseCore.Entities
 
         public bool IsFeatured { get; set; }
 
+        public bool IsDigital { get; set; }
+
+        public string? DownloadUrl { get; set; }
+
+        public bool IsRental { get; set; }
+
+        public int? RentalPriceLength { get; set; }
+
+        public string? RentalPricePeriod { get; set; } // days, weeks, months
+
         public int SoldCount { get; set; }
 
         public int ViewCount { get; set; }
@@ -44,10 +56,14 @@ namespace BaseCore.Entities
 
         public Category? Category { get; set; }
 
+        public Manufacturer? Manufacturer { get; set; }
+
         public List<ProductVariant> ProductVariants { get; set; } = new();
 
         [JsonIgnore]
         public List<Review> Reviews { get; set; } = new();
+
+        public List<ProductSpecification> ProductSpecifications { get; set; } = new();
 
         [NotMapped]
         public decimal AverageRating { get; set; }

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { productApi } from "../services/api";
+import { productApi, addressApi, cartApi } from "../services/api";
 import {
   formatCurrency,
   getProductCategoryName,
@@ -17,6 +17,7 @@ import {
   getProductStock,
   normalizeProductList,
   sampleProducts,
+  shippingOptions,
 } from "../data/shopData";
 
 const ProductDetail = () => {
@@ -36,7 +37,7 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState("description");
   const [zoomed, setZoomed] = useState(false);
   const [review, setReview] = useState({ rating: "5", comment: "" });
-  const [reviewData, setReviewData] = useState(createEmptyReviewData);
+  const [reviewData, setReviewData] = useState(createEmptyReviewData());
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [submittingReview, setSubmittingReview] = useState(false);
 
@@ -100,6 +101,24 @@ const ProductDetail = () => {
     };
   }, [id]);
 
+  const variants = useMemo(() => getActiveVariants(product), [product]);
+  const selectedVariant = useMemo(() => variants.find((v) => v.id === selectedVariantId) || null, [variants, selectedVariantId]);
+  
+  const sizeOptions = useMemo(() => getUniqueVariantValues(variants, "size"), [variants]);
+  const colorOptions = useMemo(() => getUniqueVariantValues(variants, "color"), [variants]);
+
+  const selectedSize = selectedVariant?.size || null;
+  const selectedColor = selectedVariant?.color || null;
+
+  const stock = getVariantStock(selectedVariant) ?? getProductStock(product);
+  const selectedPrice = getVariantPrice(selectedVariant, product);
+  const oldPrice = getProductOldPrice(product);
+  const rating = product?.averageRating || getProductRating(product);
+  const reviewCount = product?.reviewCount || getProductReviewCount(product);
+  const safeQuantity = getSafeQuantity(quantity);
+  const canIncreaseQuantity = stock === null || safeQuantity < stock;
+  const canAddToCart = stock === null || stock > 0;
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
@@ -108,19 +127,18 @@ const ProductDetail = () => {
       return;
     }
 
-    const safeQuantity = getSafeQuantity(quantity);
-    if (stock !== null && safeQuantity > stock) {
+    const safeQty = getSafeQuantity(quantity);
+    if (stock !== null && safeQty > stock) {
       setQuantity(String(Math.max(1, stock)));
       toast.warning(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
       return;
     }
 
-    const result = await addToCart(product, safeQuantity, selectedVariant?.id);
-    const message = result.message || (result.success ? "Product added to cart." : "Cannot add this product.");
+    const result = await addToCart(product, safeQty, selectedVariant?.id);
     if (result.success) {
-      toast.success(message);
+      toast.success(result.message || "Product added to cart.");
     } else {
-      toast.error(message);
+      toast.error(result.message || "Cannot add this product.");
     }
   };
 
@@ -132,8 +150,8 @@ const ProductDetail = () => {
       return;
     }
 
-    const safeQuantity = getSafeQuantity(quantity);
-    const result = await addToCart(product, safeQuantity, selectedVariant?.id);
+    const safeQty = getSafeQuantity(quantity);
+    const result = await addToCart(product, safeQty, selectedVariant?.id);
     if (result.success) {
       toast.success(result.message || "Product added to cart.");
       navigate("/checkout");
@@ -151,6 +169,7 @@ const ProductDetail = () => {
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
+
     if (!reviewData.canWriteReview) {
       toast.warning(reviewData.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.");
       return;
@@ -162,112 +181,87 @@ const ProductDetail = () => {
         rating: Number(review.rating),
         content: review.comment,
       });
-      const nextReviewData = normalizeReviewData(response.data);
+      
+      toast.success("Review submitted! It will appear after admin approval.");
+      setReview({ rating: "5", comment: "" });
+      
+      // Reload reviews to show the updated list/status
+      const reviewResponse = await productApi.getReviews(id);
+      const nextReviewData = normalizeReviewData(reviewResponse.data);
       setReviewData(nextReviewData);
+      
       setProduct((current) => current ? {
         ...current,
         averageRating: nextReviewData.averageRating,
         reviewCount: nextReviewData.totalCount,
       } : current);
-      setReview({ rating: "5", comment: "" });
-      toast.success("Your review has been saved.");
-    } catch (reviewError) {
-      toast.error(reviewError.response?.data?.message || "Cannot save your review.");
+      
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit review.");
     } finally {
       setSubmittingReview(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container-fluid py-5 text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className="container-fluid py-5">
-        <div className="alert alert-warning mx-xl-5">{error || "Product not found."}</div>
-        <div className="mx-xl-5">
-          <Link to="/shop" className="btn btn-primary">Back to Shop</Link>
-        </div>
-      </div>
-    );
-  }
-
-  const variants = getActiveVariants(product);
-  const selectedVariant = variants.find((variant) => Number(variant.id) === Number(selectedVariantId)) || variants[0] || null;
-  const sizeOptions = getUniqueVariantValues(variants, "size");
-  const colorOptions = getUniqueVariantValues(variants, "color");
-  const selectedSize = normalizeVariantValue(selectedVariant?.size);
-  const selectedColor = normalizeVariantValue(selectedVariant?.color);
-  const stock = selectedVariant ? getVariantStock(selectedVariant) : getProductStock(product);
-  const selectedPrice = getVariantPrice(selectedVariant, product);
-  const oldPrice = selectedVariant?.salePrice && selectedVariant?.price > selectedVariant?.salePrice
-    ? selectedVariant.price
-    : getProductOldPrice(product);
-  const productImage = activeImage || selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product);
-  const galleryImages = getProductGallery(product);
-  const rating = reviewsLoading ? getProductRating(product) : reviewData.averageRating;
-  const reviewCount = reviewsLoading ? getProductReviewCount(product) : reviewData.totalCount;
-  const safeQuantity = getSafeQuantity(quantity);
-  const isOutOfStock = stock !== null && stock <= 0;
-  const canIncreaseQuantity = stock === null || safeQuantity < stock;
-  const canAddToCart = !isOutOfStock && (variants.length === 0 || Boolean(selectedVariant));
-  const reviewAccessMessage = !isAuthenticated
-    ? "Sign in to check whether this product is eligible for your review."
-    : reviewData.canWriteReview
-      ? ""
-      : reviewData.reviewEligibilityMessage;
-
-  const selectVariant = (field, value) => {
-    const nextVariant =
-      variants.find((variant) => {
-        const matchesField = normalizeVariantValue(variant?.[field]) === value;
-        const matchesSize = field === "size" || !selectedSize || normalizeVariantValue(variant?.size) === selectedSize;
-        const matchesColor = field === "color" || !selectedColor || normalizeVariantValue(variant?.color) === selectedColor;
-        return matchesField && matchesSize && matchesColor && getVariantStock(variant) > 0;
-      }) ||
-      variants.find((variant) => normalizeVariantValue(variant?.[field]) === value) ||
-      null;
-
-    setSelectedVariantId(nextVariant?.id ?? null);
-    setActiveImage(nextVariant?.imageUrl || nextVariant?.image || getProductImage(product));
-    setQuantity("1");
-  };
-
-  const optionHasStock = (field, value) =>
-    variants.some((variant) => {
-      const matchesField = normalizeVariantValue(variant?.[field]) === value;
-      const matchesSize = field === "size" || !selectedSize || normalizeVariantValue(variant?.size) === selectedSize;
-      const matchesColor = field === "color" || !selectedColor || normalizeVariantValue(variant?.color) === selectedColor;
-      return matchesField && matchesSize && matchesColor && getVariantStock(variant) > 0;
-    });
-
-  const setQuantitySafely = (nextValue) => {
-    const nextQuantity = getSafeQuantity(nextValue);
-    const cappedQuantity = stock === null ? nextQuantity : Math.min(nextQuantity, Math.max(1, stock));
-    setQuantity(String(cappedQuantity));
-  };
-
-  const handleQuantityInput = (event) => {
-    const nextValue = event.target.value;
-    if (/^\d*$/.test(nextValue)) {
-      setQuantity(nextValue);
+  const setQuantitySafely = (value) => {
+    const nextValue = Math.max(1, value);
+    if (stock !== null && nextValue > stock) {
+      setQuantity(String(stock));
+    } else {
+      setQuantity(String(nextValue));
     }
   };
 
-  const handleQuantityBlur = () => {
-    setQuantitySafely(quantity);
+  const handleQuantityInput = (event) => {
+    const value = event.target.value.replace(/[^0-9]/g, "");
+    setQuantity(value);
   };
+
+  const handleQuantityBlur = () => {
+    setQuantitySafely(getSafeQuantity(quantity));
+  };
+
+  const selectVariant = (field, value) => {
+    const nextCriteria = {
+      size: field === "size" ? value : selectedSize,
+      color: field === "color" ? value : selectedColor,
+    };
+
+    const match = variants.find((v) => normalizeVariantValue(v.size) === normalizeVariantValue(nextCriteria.size) && normalizeVariantValue(v.color) === normalizeVariantValue(nextCriteria.color)) ||
+                  variants.find((v) => normalizeVariantValue(v[field]) === normalizeVariantValue(value)) ||
+                  variants[0];
+
+    if (match) {
+      setSelectedVariantId(match.id);
+      if (match.imageUrl || match.image) {
+        setActiveImage(match.imageUrl || match.image);
+      }
+    }
+  };
+
+  const optionHasStock = (field, value) => {
+    const otherField = field === "size" ? "color" : "size";
+    const otherValue = field === "size" ? selectedColor : selectedSize;
+
+    return variants.some((v) => normalizeVariantValue(v[field]) === normalizeVariantValue(value) && 
+                               (otherValue === null || normalizeVariantValue(v[otherField]) === normalizeVariantValue(otherValue)) && 
+                               getVariantStock(v) > 0);
+  };
+
+  if (loading) {
+    return <div className="container-fluid py-5 text-center"><div className="spinner-border text-primary" role="status"></div></div>;
+  }
+
+  if (!product) {
+    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">Product not found.</div></div>;
+  }
+
+  const images = [getProductImage(product), ...getProductGallery(product)];
+  const reviewAccessMessage = !isAuthenticated ? "Sign in to write a review." : !reviewData.canWriteReview ? reviewData.reviewEligibilityMessage : null;
 
   return (
     <>
-      <div className="container-fluid product-detail-breadcrumb-wrap">
+      <div className="container-fluid">
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
@@ -283,20 +277,15 @@ const ProductDetail = () => {
         <div className="row px-xl-5">
           <div className="col-lg-5 mb-30">
             <div className="product-detail-media bg-light">
-              <button className="product-detail-zoom-trigger" type="button" onClick={() => setZoomed(true)} aria-label="Zoom product image">
-                <img className="product-detail-main-image" src={productImage} alt={product.name} />
-                <span><i className="fa fa-magnifying-glass-plus"></i> Zoom</span>
+              <button className="product-main-image" type="button" onClick={() => setZoomed(true)}>
+                <img src={activeImage} alt={product.name} />
+                <span><i className="fa fa-magnifying-glass-plus"></i></span>
               </button>
             </div>
-            {galleryImages.length > 1 && (
-              <div className="product-detail-thumbs">
-                {galleryImages.map((image) => (
-                  <button
-                    key={image}
-                    type="button"
-                    className={`product-detail-thumb ${productImage === image ? "is-active" : ""}`}
-                    onClick={() => setActiveImage(image)}
-                  >
+            {images.length > 1 && (
+              <div className="product-detail-gallery mt-2">
+                {images.map((image, index) => (
+                  <button key={index} type="button" className={activeImage === image ? "is-active" : ""} onClick={() => setActiveImage(image)}>
                     <img src={image} alt={product.name} />
                   </button>
                 ))}
@@ -311,10 +300,7 @@ const ProductDetail = () => {
               <div className="d-flex mb-3">
                 <div className="text-primary me-2">
                   {Array.from({ length: 5 }).map((_, index) => (
-                    <small
-                      key={index}
-                      className={`fa ${index < Math.floor(rating) ? "fa-star" : index < rating ? "fa-star-half-alt" : "far fa-star"} me-1`}
-                    ></small>
+                    <small key={index} className={`fa ${index < Math.floor(rating) ? "fa-star" : index < rating ? "fa-star-half-alt" : "far fa-star"} me-1`}></small>
                   ))}
                 </div>
                 <small className="pt-1">({reviewCount} reviews)</small>
@@ -324,98 +310,17 @@ const ProductDetail = () => {
                 {oldPrice && <del>{formatCurrency(oldPrice)}</del>}
               </div>
               <p className="mb-4">{product.description || "A quality product ready for everyday use."}</p>
-              <p className="mb-2">
-                <strong>Category:</strong> {getProductCategoryName(product, [])}
-              </p>
-              <p className="mb-4">
-                <strong>Stock:</strong> {stock ?? "Available"}
-              </p>
-              {selectedVariant?.sku && (
-                <p className="mb-3">
-                  <strong>SKU:</strong> {selectedVariant.sku}
-                </p>
-              )}
-              {sizeOptions.length > 0 && (
-                <div className="d-flex align-items-center flex-wrap mb-3">
-                  <strong className="text-dark me-3 mb-2">Size:</strong>
-                  {sizeOptions.map((size) => {
-                    const disabled = !optionHasStock("size", size);
-                    return (
-                      <button
-                        key={size}
-                        type="button"
-                        className={`btn btn-sm me-2 mb-2 ${selectedSize === size ? "btn-primary" : "btn-outline-dark"}`}
-                        disabled={disabled}
-                        onClick={() => selectVariant("size", size)}
-                      >
-                        {size}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {colorOptions.length > 0 && (
-                <div className="d-flex align-items-center flex-wrap mb-4">
-                  <strong className="text-dark me-3 mb-2">Color:</strong>
-                  {colorOptions.map((color) => {
-                    const disabled = !optionHasStock("color", color);
-                    return (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`btn btn-sm me-2 mb-2 ${selectedColor === color ? "btn-primary" : "btn-outline-dark"}`}
-                        disabled={disabled}
-                        onClick={() => selectVariant("color", color)}
-                      >
-                        {color}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              <p className="mb-2"><strong>Category:</strong> {getProductCategoryName(product, [])}</p>
+              <p className="mb-4"><strong>Stock:</strong> {stock ?? "Available"}</p>
+              
               <div className="d-flex align-items-center flex-wrap mb-4 pt-2">
                 <div className="input-group quantity me-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>
-                  <div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-minus"
-                      onClick={() => setQuantitySafely(safeQuantity - 1)}
-                    >
-                      <i className="fa fa-minus"></i>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="form-control bg-white text-center text-dark"
-                    value={quantity}
-                    onChange={handleQuantityInput}
-                    onBlur={handleQuantityBlur}
-                    aria-label="Quantity"
-                  />
-                  <div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-plus"
-                      disabled={!canIncreaseQuantity}
-                      onClick={() => {
-                        if (!canIncreaseQuantity) {
-                          toast.warning(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
-                          return;
-                        }
-                        setQuantitySafely(safeQuantity + 1);
-                      }}
-                    >
-                      <i className="fa fa-plus"></i>
-                    </button>
-                  </div>
+                  <button type="button" className="btn btn-primary btn-minus" onClick={() => setQuantitySafely(safeQuantity - 1)}><i className="fa fa-minus"></i></button>
+                  <input type="text" className="form-control bg-white text-center text-dark" value={quantity} onChange={handleQuantityInput} onBlur={handleQuantityBlur} />
+                  <button type="button" className="btn btn-primary btn-plus" disabled={!canIncreaseQuantity} onClick={() => setQuantitySafely(safeQuantity + 1)}><i className="fa fa-plus"></i></button>
                 </div>
-                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}>
-                  <i className="fa fa-shopping-cart me-1"></i> Add To Cart
-                </button>
-                <button type="button" className="btn btn-outline-primary px-3 ms-2 mb-2" disabled={!canAddToCart} onClick={handleBuyNow}>
-                  <i className="fa fa-bolt me-1"></i> Buy Now
-                </button>
+                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}><i className="fa fa-shopping-cart me-1"></i> Add To Cart</button>
+                <button type="button" className="btn btn-outline-primary px-3 ms-2 mb-2" disabled={!canAddToCart} onClick={handleBuyNow}><i className="fa fa-bolt me-1"></i> Buy Now</button>
               </div>
             </div>
           </div>
@@ -428,9 +333,7 @@ const ProductDetail = () => {
             <div className="product-tabs">
               <div className="product-tab-list" role="tablist">
                 {["description", "specifications", "reviews"].map((tab) => (
-                  <button key={tab} className={activeTab === tab ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab)}>
-                    {tab}
-                  </button>
+                  <button key={tab} className={activeTab === tab ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab)}>{tab}</button>
                 ))}
               </div>
               <div className="product-tab-content">
@@ -438,7 +341,6 @@ const ProductDetail = () => {
                   <div>
                     <h4>Product Description</h4>
                     <p>{product.shortDescription || product.description || "A quality product ready for everyday use."}</p>
-                    <p>{product.description || "Designed for a practical shopping experience with reliable fulfillment."}</p>
                   </div>
                 )}
                 {activeTab === "specifications" && (
@@ -448,10 +350,6 @@ const ProductDetail = () => {
                       {[
                         ["Brand", product.brand || "BaseShop"],
                         ["Model", selectedVariant?.sku || product.slug || `Product-${product.id}`],
-                        ["Weight", selectedVariant?.weightGram ? `${selectedVariant.weightGram} g` : "Not specified"],
-                        ["Color", selectedVariant?.color || "Varies by option"],
-                        ["Material", product.material || "Not specified"],
-                        ["Warranty", product.warranty || "Contact support"],
                       ].map(([label, value]) => <tr key={label}><th>{label}</th><td>{value}</td></tr>)}
                     </tbody></table>
                   </div>
@@ -460,58 +358,27 @@ const ProductDetail = () => {
                   <div className="row">
                     <div className="col-lg-5">
                       <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{reviewCount} customer reviews</p></div>
-                      <div className="review-breakdown">
-                        {reviewData.breakdown.map(({ stars, percentage }) => (
-                          <div key={stars}><span>{stars} star</span><i><b style={{ "--review-width": `${percentage}%` }}></b></i><em>{percentage}%</em></div>
-                        ))}
-                      </div>
                     </div>
                     <div className="col-lg-7">
                       <form className="review-form" onSubmit={submitReview}>
                         <h4>Write a Review</h4>
                         {reviewAccessMessage && <p className="review-access-note">{reviewAccessMessage}</p>}
-                        <div className="review-rating-control" role="radiogroup" aria-label="Choose your rating">
-                          {[1, 2, 3, 4, 5].map((value) => {
-                            const selectedRating = Number(review.rating);
-                            return (
-                              <button
-                                key={value}
-                                type="button"
-                                className={value <= selectedRating ? "is-active" : ""}
-                                role="radio"
-                                aria-checked={value === selectedRating}
-                                aria-label={`${value} star${value > 1 ? "s" : ""}`}
-                                disabled={!reviewData.canWriteReview}
-                                onClick={() => setReview((current) => ({ ...current, rating: String(value) }))}
-                              >
-                                <i className="fa fa-star"></i>
-                              </button>
-                            );
-                          })}
-                          <span>{review.rating} / 5</span>
+                        <div className="review-rating-control">
+                          {[1, 2, 3, 4, 5].map((value) => (
+                            <button key={value} type="button" className={value <= Number(review.rating) ? "is-active" : ""} disabled={!reviewData.canWriteReview} onClick={() => setReview((c) => ({ ...current, rating: String(value) }))}><i className="fa fa-star"></i></button>
+                          ))}
                         </div>
-                        <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} required disabled={!reviewData.canWriteReview} />
+                        <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(e) => setReview((c) => ({ ...c, comment: e.target.value }))} required disabled={!reviewData.canWriteReview} />
                         <button className="btn btn-primary" disabled={!reviewData.canWriteReview || submittingReview}>{submittingReview ? "Saving..." : "Submit review"}</button>
                       </form>
                     </div>
                     <div className="col-12 mt-4">
                       <div className="review-list">
                         <h4>Customer Reviews</h4>
-                        {reviewsLoading && <p>Loading reviews...</p>}
-                        {!reviewsLoading && reviewData.items.length === 0 && <p className="review-empty">No reviews yet. Be the first to review this product.</p>}
-                        {!reviewsLoading && reviewData.items.map((item) => (
+                        {reviewsLoading ? <p>Loading reviews...</p> : reviewData.items.length === 0 ? <p>No reviews yet.</p> : reviewData.items.map((item) => (
                           <article className="review-item" key={item.id}>
-                            <div className="review-item-header">
-                              <strong>{item.reviewerName}</strong>
-                              {item.isVerifiedPurchase && <span className="review-verified">Verified purchase</span>}
-                              <time dateTime={item.createdAt}>{formatReviewDate(item.createdAt)}</time>
-                            </div>
-                            <div className="text-primary" aria-label={`${item.rating} out of 5 stars`}>
-                              {Array.from({ length: 5 }).map((_, index) => (
-                                <small key={index} className={`fa ${index < item.rating ? "fa-star" : "far fa-star"} me-1`}></small>
-                              ))}
-                            </div>
-                            {item.title && <h5>{item.title}</h5>}
+                            <div className="review-item-header"><strong>{item.reviewerName}</strong> <time>{formatReviewDate(item.createdAt)}</time></div>
+                            <div className="text-primary">{Array.from({ length: 5 }).map((_, i) => (<small key={i} className={`fa ${i < item.rating ? "fa-star" : "far fa-star"}`}></small>))}</div>
                             <p>{item.content}</p>
                           </article>
                         ))}
@@ -524,84 +391,18 @@ const ProductDetail = () => {
           </div>
         </div>
       </section>
-
-      {relatedProducts.length > 0 && (
-        <div className="container-fluid py-5">
-          <h2 className="section-title position-relative text-uppercase mx-xl-5 mb-4">
-            <span className="bg-secondary pe-3">Related Products</span>
-          </h2>
-          <div className="row px-xl-5 related-products-carousel">
-            {relatedProducts.map((item) => (
-              <div key={item.id} className="col-lg-3 col-md-4 col-sm-6 pb-1">
-                <ProductCard product={item} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {zoomed && (
-        <button className="product-zoom-overlay" type="button" onClick={() => setZoomed(false)} aria-label="Close zoomed image">
-          <img src={productImage} alt={product.name} />
-          <span><i className="fa fa-xmark"></i></span>
-        </button>
-      )}
     </>
   );
 };
 
-const getActiveVariants = (product) => {
-  const variants = product?.productVariants || product?.variants || [];
-  return Array.isArray(variants) ? variants.filter((variant) => variant?.isActive !== false) : [];
-};
-
+const getActiveVariants = (product) => Array.isArray(product?.productVariants || product?.variants) ? (product?.productVariants || product?.variants).filter(v => v?.isActive !== false) : [];
 const normalizeVariantValue = (value) => String(value || "").trim();
-
-const getUniqueVariantValues = (variants, field) =>
-  Array.from(new Set(variants.map((variant) => normalizeVariantValue(variant?.[field])).filter(Boolean)));
-
-const getVariantStock = (variant) => {
-  const stock = Number(variant?.stockQuantity ?? variant?.stock);
-  return Number.isFinite(stock) ? Math.max(0, stock) : 0;
-};
-
-const getVariantPrice = (variant, product) => {
-  if (!variant) return getProductPrice(product);
-  return variant.salePrice ?? variant.price ?? getProductPrice(product);
-};
-
-const getSafeQuantity = (value) => {
-  const quantity = Number(value);
-  return Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
-};
-
-const createEmptyReviewData = () => ({
-  averageRating: 0,
-  totalCount: 0,
-  breakdown: [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, percentage: 0 })),
-  items: [],
-  canWriteReview: false,
-  reviewEligibilityMessage: "Only customers who bought and received this product can write a review.",
-});
-
-const normalizeReviewData = (data) => ({
-  averageRating: Number.isFinite(Number(data?.averageRating)) ? Math.min(5, Math.max(0, Number(data.averageRating))) : 0,
-  totalCount: Number.isFinite(Number(data?.totalCount)) ? Math.max(0, Math.floor(Number(data.totalCount))) : 0,
-  breakdown: [5, 4, 3, 2, 1].map((stars) => {
-    const item = Array.isArray(data?.breakdown) ? data.breakdown.find((entry) => Number(entry.stars) === stars) : null;
-    return {
-      stars,
-      count: Number.isFinite(Number(item?.count)) ? Math.max(0, Math.floor(Number(item.count))) : 0,
-      percentage: Number.isFinite(Number(item?.percentage)) ? Math.min(100, Math.max(0, Math.round(Number(item.percentage)))) : 0,
-    };
-  }),
-  items: Array.isArray(data?.items) ? data.items : [],
-  canWriteReview: Boolean(data?.canWriteReview),
-  reviewEligibilityMessage: data?.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.",
-});
-
-const formatReviewDate = (value) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("vi-VN");
-};
+const getUniqueVariantValues = (variants, field) => Array.from(new Set(variants.map(v => normalizeVariantValue(v?.[field])).filter(Boolean)));
+const getVariantStock = (variant) => { const s = Number(variant?.stockQuantity ?? variant?.stock); return Number.isFinite(s) ? Math.max(0, s) : 0; };
+const getVariantPrice = (variant, product) => !variant ? (product?.price ?? product?.basePrice ?? 0) : (variant.salePrice ?? variant.price ?? product?.price ?? 0);
+const getSafeQuantity = (v) => { const q = Number(v); return Number.isFinite(q) && q > 0 ? Math.floor(q) : 1; };
+const createEmptyReviewData = () => ({ averageRating: 0, totalCount: 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: [], canWriteReview: false, reviewEligibilityMessage: "Only customers who bought and received this product can write a review." });
+const normalizeReviewData = (data) => ({ averageRating: Number(data?.averageRating) || 0, totalCount: Number(data?.totalCount) || 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: Array.isArray(data?.items) ? data.items : [], canWriteReview: !!data?.canWriteReview, reviewEligibilityMessage: data?.reviewEligibilityMessage || "Only verified customers can write reviews." });
+const formatReviewDate = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN"); };
 
 export default ProductDetail;

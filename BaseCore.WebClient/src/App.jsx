@@ -27,9 +27,13 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const Account = lazy(() => import('./pages/Account'));
+const Reviews = lazy(() => import('./pages/Reviews'));
+const Coupons = lazy(() => import('./pages/Coupons'));
+const Manufacturers = lazy(() => import('./pages/Manufacturers'));
+const SpecificationAttributes = lazy(() => import('./pages/SpecificationAttributes'));
 
 const queryClient = new QueryClient();
-const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users'];
+const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes'];
 const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
 // Wrapper to redirect authenticated users away from login
@@ -217,6 +221,86 @@ function AppRoutes() {
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
                             <Users />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/reviews"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Reviews />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/coupons"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Coupons />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/users"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Users />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/reviews"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Reviews />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/coupons"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Coupons />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/manufacturers"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Manufacturers />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/specification-attributes"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <SpecificationAttributes />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/checkout-attributes"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <CheckoutAttributes />
                         </MainLayout>
                     </ProtectedRoute>
                 }
