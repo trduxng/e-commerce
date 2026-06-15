@@ -347,17 +347,40 @@ namespace BaseCore.APIService.Controllers
             }
         }
 
+        /// <summary>
+        /// Request a return for an order
+        /// </summary>
+        [HttpPut("{id}/request-return")]
+        [Authorize]
+        public async Task<IActionResult> RequestReturn(long id)
+        {
+            var order = await _orderRepository.GetByIdAsync(id);
+            if (order == null) return NotFound(new { message = "Order not found" });
+            if (!CanAccessOrder(order)) return Forbid();
+
+            if (order.OrderStatus != "delivered")
+            {
+                return BadRequest(new { message = "Only delivered orders can be returned" });
+            }
+
+            order.OrderStatus = "return_requested";
+            order.UpdatedAt = DateTime.Now;
+            await _orderRepository.UpdateAsync(order);
+
+            return Ok(order);
+        }
+
         private static string NormalizeStatus(string? status)
         {
             return status?.ToLowerInvariant() switch
             {
-                "completed" => "delivered",
-                "delivered" => "delivered",
-                "cancel" => "cancelled",
-                "canceled" => "cancelled",
-                "cancelled" => "cancelled",
+                "completed" or "delivered" => "delivered",
+                "cancel" or "canceled" or "cancelled" => "cancelled",
                 "shipping" => "shipping",
                 "confirmed" => "confirmed",
+                "return_requested" => "return_requested",
+                "returned" => "returned",
+                "refunded" => "refunded",
                 _ => "pending"
             };
         }

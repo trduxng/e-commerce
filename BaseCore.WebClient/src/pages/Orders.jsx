@@ -8,6 +8,9 @@ const orderStatuses = [
     { value: 'shipping', label: 'Shipping', badge: 'badge-info' },
     { value: 'delivered', label: 'Delivered', badge: 'badge-success' },
     { value: 'cancelled', label: 'Cancelled', badge: 'badge-secondary' },
+    { value: 'return_requested', label: 'Return Requested', badge: 'badge-info' },
+    { value: 'returned', label: 'Returned', badge: 'badge-dark' },
+    { value: 'refunded', label: 'Refunded', badge: 'badge-danger' },
 ];
 
 const Orders = () => {

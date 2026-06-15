@@ -133,7 +133,12 @@ export const orderApi = {
     update: (id, data) => api.put(`/orders/${id}`, data),
     updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
     cancel: (id) => api.put(`/orders/${id}/cancel`),
+    requestReturn: (id) => api.put(`/orders/${id}/request-return`),
     delete: (id) => api.delete(`/orders/${id}`),
+};
+
+export const adminCartsApi = {
+    getActiveCarts: (params) => api.get('/adminCarts', { params }),
 };
 
 export const favoriteApi = {

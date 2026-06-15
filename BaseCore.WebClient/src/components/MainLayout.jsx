@@ -130,6 +130,12 @@ const MainLayout = ({ children }) => {
                                             <p>Checkout Attributes</p>
                                         </Link>
                                     </li>
+                                    <li className="nav-item">
+                                        <Link to="/current-carts" className={`nav-link ${isActive('/current-carts')}`}>
+                                            <i className="nav-icon fas fa-shopping-cart"></i>
+                                            <p>Current Carts</p>
+                                        </Link>
+                                    </li>
                                 </>
                             )}
                         </ul>

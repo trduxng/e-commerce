@@ -9,6 +9,9 @@ const statusMeta = {
   shipping: { label: "Shipping", className: "badge-info" },
   delivered: { label: "Delivered", className: "badge-success" },
   cancelled: { label: "Cancelled", className: "badge-secondary" },
+  return_requested: { label: "Return Requested", className: "badge-info" },
+  returned: { label: "Returned", className: "badge-dark" },
+  refunded: { label: "Refunded", className: "badge-danger" },
 };
 
 const paymentLabels = {
@@ -48,7 +51,8 @@ const MyOrders = () => {
     return value;
   };
   const getStatus = (status) => statusMeta[normalizeStatus(status)] || statusMeta.pending;
-  const canCancel = (order) => !["delivered", "cancelled"].includes(normalizeStatus(order?.orderStatus));
+  const canCancel = (order) => !["delivered", "cancelled", "return_requested", "returned", "refunded"].includes(normalizeStatus(order?.orderStatus));
+  const canReturn = (order) => normalizeStatus(order?.orderStatus) === "delivered";
   const formatDate = (value) => (value ? new Date(value).toLocaleString("vi-VN") : "");
 
   const closeOrderDetail = () => {
@@ -122,6 +126,29 @@ const MyOrders = () => {
       setError(error.response?.data?.message || "Cannot cancel this order.");
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const requestReturn = async (order) => {
+    if (!window.confirm(`Request a return for order ${order.orderCode}?`)) return;
+
+    setError("");
+    try {
+      const response = await orderApi.requestReturn(order.id);
+      const updatedOrder = response.data;
+      setOrders((current) => current.map((item) => (
+        Number(item.id) === Number(order.id)
+          ? { ...item, ...updatedOrder, orderDetails: item.orderDetails }
+          : item
+      )));
+      setSelectedOrder((current) => (
+        current && Number(current.id) === Number(order.id)
+          ? { ...current, ...updatedOrder, orderDetails: getOrderDetails(current) }
+          : current
+      ));
+      toast.success("Return requested successfully.");
+    } catch (error) {
+      setError(error.response?.data?.message || "Cannot request return.");
     }
   };
 
@@ -234,12 +261,21 @@ const MyOrders = () => {
                           type="button"
                           disabled={cancellingId === order.id}
                           onClick={() => cancelOrder(order)}
-                        >
+                          >
                           {cancellingId === order.id ? "Cancelling..." : "Cancel Order"}
-                        </button>
-                      )}
-                    </div>
-                  </article>
+                          </button>
+                          )}
+                          {canReturn(order) && (
+                          <button
+                          className="btn btn-outline-info"
+                          type="button"
+                          onClick={() => requestReturn(order)}
+                          >
+                          Request Return
+                          </button>
+                          )}
+                          </div>
+                          </article>
                 ))}
               </div>
             )}
@@ -328,6 +364,15 @@ const MyOrders = () => {
                       onClick={() => cancelOrder(selectedOrder)}
                     >
                       {cancellingId === selectedOrder.id ? "Cancelling..." : "Cancel Order"}
+                    </button>
+                  )}
+                  {canReturn(selectedOrder) && (
+                    <button
+                      className="btn btn-outline-info"
+                      type="button"
+                      onClick={() => requestReturn(selectedOrder)}
+                    >
+                      Request Return
                     </button>
                   )}
                   <button className="btn btn-primary" type="button" onClick={closeOrderDetail}>Close</button>

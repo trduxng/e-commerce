@@ -31,9 +31,11 @@ const Reviews = lazy(() => import('./pages/Reviews'));
 const Coupons = lazy(() => import('./pages/Coupons'));
 const Manufacturers = lazy(() => import('./pages/Manufacturers'));
 const SpecificationAttributes = lazy(() => import('./pages/SpecificationAttributes'));
+const CheckoutAttributes = lazy(() => import('./pages/CheckoutAttributes'));
+const CurrentCarts = lazy(() => import('./pages/CurrentCarts'));
 
 const queryClient = new QueryClient();
-const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes'];
+const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes', '/checkout-attributes', '/current-carts'];
 const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
 // Wrapper to redirect authenticated users away from login
@@ -246,36 +248,6 @@ function AppRoutes() {
                 }
             />
             <Route
-                path="/users"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
-                            <Users />
-                        </MainLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/reviews"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
-                            <Reviews />
-                        </MainLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/coupons"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
-                            <Coupons />
-                        </MainLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
                 path="/manufacturers"
                 element={
                     <ProtectedRoute adminOnly={true}>
@@ -301,6 +273,16 @@ function AppRoutes() {
                     <ProtectedRoute adminOnly={true}>
                         <MainLayout>
                             <CheckoutAttributes />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/current-carts"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <CurrentCarts />
                         </MainLayout>
                     </ProtectedRoute>
                 }

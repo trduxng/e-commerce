@@ -81,10 +81,13 @@ namespace BaseCore.Entities
         {
             return status?.ToLowerInvariant() switch
             {
-                "completed" => "delivered",
+                "completed" or "delivered" => "delivered",
                 "cancelled" => "cancelled",
                 "shipping" => "shipping",
                 "confirmed" => "confirmed",
+                "return_requested" => "return_requested",
+                "returned" => "returned",
+                "refunded" => "refunded",
                 _ => "pending"
             };
         }
