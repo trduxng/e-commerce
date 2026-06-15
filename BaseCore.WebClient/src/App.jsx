@@ -287,6 +287,16 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/settings"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <MainLayout>
+                            <Settings />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
@@ -296,21 +306,23 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <Router>
-                <ThemeProvider>
-                    <ToastProvider>
-                        <AuthProvider>
-                            <CartProvider>
-                                <FavoriteProvider>
-                                    <ErrorBoundary>
-                                        <Suspense fallback={<div className="route-loading skeleton-block" aria-label="Loading page"></div>}>
-                                            <AppRoutes />
-                                        </Suspense>
-                                    </ErrorBoundary>
-                                </FavoriteProvider>
-                            </CartProvider>
-                        </AuthProvider>
-                    </ToastProvider>
-                </ThemeProvider>
+                <SettingsProvider>
+                    <ThemeProvider>
+                        <ToastProvider>
+                            <AuthProvider>
+                                <CartProvider>
+                                    <FavoriteProvider>
+                                        <ErrorBoundary>
+                                            <Suspense fallback={<div className="route-loading skeleton-block" aria-label="Loading page"></div>}>
+                                                <AppRoutes />
+                                            </Suspense>
+                                        </ErrorBoundary>
+                                    </FavoriteProvider>
+                                </CartProvider>
+                            </AuthProvider>
+                        </ToastProvider>
+                    </ThemeProvider>
+                </SettingsProvider>
             </Router>
         </QueryClientProvider>
     );

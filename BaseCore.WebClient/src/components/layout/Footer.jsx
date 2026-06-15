@@ -1,9 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSettings } from "../../contexts/SettingsContext";
 
 const Footer = () => {
   const { isAuthenticated, isAdmin } = useAuth();
+  const { settings } = useSettings();
 
   return (
     <div className="container-fluid storefront-footer pt-5">
@@ -76,6 +78,16 @@ const Footer = () => {
           <p className="mb-md-0 text-center text-md-left text-secondary">
             &copy; 2026 BaseCore WebClient. All rights reserved.
           </p>
+        </div>
+        <div className="col-md-6 px-xl-0 text-center text-md-end">
+          <img className="img-fluid" src="/img/payments.png" alt="Payment methods" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Footer;
         </div>
         <div className="col-md-6 px-xl-0 text-center text-md-end">
           <img className="img-fluid" src="/img/payments.png" alt="Payment methods" />

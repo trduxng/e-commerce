@@ -137,6 +137,11 @@ export const orderApi = {
     delete: (id) => api.delete(`/orders/${id}`),
 };
 
+export const settingApi = {
+    get: () => api.get('/settings'),
+    update: (data) => api.post('/settings', data),
+};
+
 export const adminCartsApi = {
     getActiveCarts: (params) => api.get('/adminCarts', { params }),
 };

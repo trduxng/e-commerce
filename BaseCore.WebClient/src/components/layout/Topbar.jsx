@@ -55,9 +55,13 @@ const Topbar = () => {
       <div className="row px-xl-5">
         <div className="col-12">
           <nav className="navbar navbar-expand-xl compact-storefront-navbar px-0">
-            <Link to="/" className="storefront-brand text-decoration-none">
-              <span className="brand-mark"><i className="fas fa-bag-shopping"></i></span>
-              <span>BaseShop</span>
+            <Link to="/" className="storefront-brand text-decoration-none d-flex align-items-center">
+              {settings.logoUrl ? (
+                 <img src={settings.logoUrl} alt={settings.storeName} style={{ height: '30px', marginRight: '10px' }} />
+              ) : (
+                 <span className="brand-mark"><i className="fas fa-bag-shopping"></i></span>
+              )}
+              <span>{settings.storeName}</span>
             </Link>
 
             <button

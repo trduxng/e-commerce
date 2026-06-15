@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 const MainLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout, isAdmin } = useAuth();
+    const { settings } = useSettings();
 
     const handleLogout = () => {
         logout();
@@ -44,9 +46,14 @@ const MainLayout = ({ children }) => {
 
             {/* Sidebar */}
             <aside className="main-sidebar sidebar-dark-primary elevation-4">
-                <Link to="/" className="brand-link">
+                <Link to="/dashboard" className="brand-link">
+                    {settings.logoUrl ? (
+                        <img src={settings.logoUrl} alt={settings.storeName} className="brand-image img-circle elevation-3" style={{ opacity: '.8' }} />
+                    ) : (
+                        <i className="fas fa-store brand-image mt-1 ml-3" style={{ opacity: '.8' }}></i>
+                    )}
                     <span className="brand-text font-weight-light ml-3">
-                        <b>Store</b> Sales
+                        <b>{settings.storeName}</b>
                     </span>
                 </Link>
 
@@ -134,6 +141,12 @@ const MainLayout = ({ children }) => {
                                         <Link to="/current-carts" className={`nav-link ${isActive('/current-carts')}`}>
                                             <i className="nav-icon fas fa-shopping-cart"></i>
                                             <p>Current Carts</p>
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link to="/settings" className={`nav-link ${isActive('/settings')}`}>
+                                            <i className="nav-icon fas fa-cogs"></i>
+                                            <p>Settings</p>
                                         </Link>
                                     </li>
                                 </>
