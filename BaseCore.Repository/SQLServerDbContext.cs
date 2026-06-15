@@ -22,6 +22,8 @@ namespace BaseCore.Repository
         public DbSet<Manufacturer> Manufacturers { get; set; }
         public DbSet<SpecificationAttribute> SpecificationAttributes { get; set; }
         public DbSet<ProductSpecification> ProductSpecifications { get; set; }
+        public DbSet<CheckoutAttribute> CheckoutAttributes { get; set; }
+        public DbSet<CheckoutAttributeValue> CheckoutAttributeValues { get; set; }
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Cart> Carts { get; set; }
