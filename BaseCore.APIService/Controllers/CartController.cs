@@ -161,6 +161,21 @@ namespace BaseCore.APIService.Controllers
             if (cart.Items.Count == 0)
                 return BadRequest(new { message = "Your cart is empty." });
 
+            var selectedItemKeys = dto.SelectedItemKeys?
+                .Where(itemKey => itemKey > 0)
+                .Distinct()
+                .ToHashSet();
+            var checkoutItems = selectedItemKeys is { Count: > 0 }
+                ? cart.Items.Where(item =>
+                        selectedItemKeys.Contains(item.Id) ||
+                        selectedItemKeys.Contains(item.ProductVariantId) ||
+                        (item.ProductVariant?.ProductId != null && selectedItemKeys.Contains(item.ProductVariant.ProductId)))
+                    .ToList()
+                : cart.Items.ToList();
+
+            if (checkoutItems.Count == 0)
+                return BadRequest(new { message = "Please select at least one product to checkout." });
+
             await using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
@@ -168,7 +183,7 @@ namespace BaseCore.APIService.Controllers
                 decimal subtotal = 0;
                 var orderDetails = new List<OrderDetail>();
 
-                foreach (var item in cart.Items)
+                foreach (var item in checkoutItems)
                 {
                     var variant = await _db.ProductVariants
                         .Include(v => v.Product)
@@ -229,7 +244,7 @@ namespace BaseCore.APIService.Controllers
                 };
 
                 _db.Orders.Add(order);
-                _db.CartItems.RemoveRange(cart.Items);
+                _db.CartItems.RemoveRange(checkoutItems);
                 cart.UpdatedAt = DateTime.Now;
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -408,5 +423,6 @@ namespace BaseCore.APIService.Controllers
         public string? ShippingMethod { get; set; }
         public string? CouponCode { get; set; }
         public string? Note { get; set; }
+        public List<long>? SelectedItemKeys { get; set; }
     }
 }

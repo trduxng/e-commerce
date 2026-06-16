@@ -6,10 +6,56 @@ import { useToast } from "../contexts/ToastContext";
 import { formatCurrency } from "../data/shopData";
 
 const Cart = () => {
-  const { items, loading, subtotal, shipping, total, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { items, loading, shipping, updateQuantity, removeFromCart, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
   const toast = useToast();
   const [quantityDrafts, setQuantityDrafts] = React.useState({});
+  const [selectedItemKeys, setSelectedItemKeys] = React.useState(new Set());
+  const selectionInitializedRef = React.useRef(false);
+  const previousItemKeysRef = React.useRef(new Set());
+
+  const getItemKey = (item) => String(item.cartItemId ?? item.productVariantId ?? item.id);
+  const itemKeys = React.useMemo(() => items.map(getItemKey), [items]);
+
+  React.useEffect(() => {
+    if (itemKeys.length === 0) {
+      selectionInitializedRef.current = false;
+      previousItemKeysRef.current = new Set();
+      setSelectedItemKeys(new Set());
+      return;
+    }
+
+    const previousItemKeys = previousItemKeysRef.current;
+    setSelectedItemKeys((current) => {
+      if (!selectionInitializedRef.current) {
+        selectionInitializedRef.current = true;
+        return new Set(itemKeys);
+      }
+
+      const validKeys = new Set(itemKeys);
+      const nextSelected = new Set([...current].filter((key) => validKeys.has(key)));
+      itemKeys.forEach((key) => {
+        if (!previousItemKeys.has(key)) {
+          nextSelected.add(key);
+        }
+      });
+      return nextSelected;
+    });
+    previousItemKeysRef.current = new Set(itemKeys);
+  }, [itemKeys]);
+
+  const selectedItems = React.useMemo(
+    () => items.filter((item) => selectedItemKeys.has(getItemKey(item))),
+    [items, selectedItemKeys]
+  );
+  const selectedSubtotal = selectedItems.reduce(
+    (sum, item) => sum + Number(item.lineTotal ?? Number(item.price || 0) * Number(item.quantity || 0)),
+    0
+  );
+  const selectedShipping = selectedSubtotal > 0 ? shipping : 0;
+  const selectedTotal = selectedSubtotal + selectedShipping;
+  const selectedCount = selectedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const allSelected = itemKeys.length > 0 && itemKeys.every((key) => selectedItemKeys.has(key));
 
   const changeQuantity = async (item, quantity) => {
     const result = await updateQuantity(item.productVariantId ?? item.cartItemId ?? item.id, quantity);
@@ -30,8 +76,6 @@ const Cart = () => {
     changeQuantity(item, nextQuantity);
   };
 
-  const getItemKey = (item) => item.productVariantId ?? item.cartItemId ?? item.id;
-
   const removeItem = async (item) => {
     const result = await removeFromCart(item.productVariantId ?? item.cartItemId ?? item.id);
     if (result?.message) {
@@ -49,6 +93,33 @@ const Cart = () => {
     } else {
       toast.success("Cart cleared.");
     }
+  };
+
+  const toggleItemSelection = (item) => {
+    const key = getItemKey(item);
+    setSelectedItemKeys((current) => {
+      const nextSelected = new Set(current);
+      if (nextSelected.has(key)) {
+        nextSelected.delete(key);
+      } else {
+        nextSelected.add(key);
+      }
+      return nextSelected;
+    });
+  };
+
+  const toggleAllSelection = () => {
+    setSelectedItemKeys(allSelected ? new Set() : new Set(itemKeys));
+  };
+
+  const handleCheckoutClick = (event) => {
+    if (items.length === 0 || selectedItemKeys.size === 0) {
+      event.preventDefault();
+      toast.warning("Please select at least one product to checkout.");
+      return;
+    }
+
+    sessionStorage.setItem("baseShopCheckoutItemKeys", JSON.stringify([...selectedItemKeys]));
   };
 
   return (
@@ -87,15 +158,35 @@ const Cart = () => {
                     <h4>Shopping Cart</h4>
                     <span>{items.length} product lines</span>
                   </div>
-                  <button className="btn btn-outline-dark" type="button" onClick={clearAllItems}>
-                    <i className="fa fa-trash me-1"></i>
-                    Clear
-                  </button>
+                  <div className="cart-panel-actions">
+                    <label className="cart-select-all" htmlFor="select-all-cart-items">
+                      <input
+                        type="checkbox"
+                        id="select-all-cart-items"
+                        checked={allSelected}
+                        onChange={toggleAllSelection}
+                      />
+                      <span>Select all</span>
+                    </label>
+                    <button className="btn btn-outline-dark" type="button" onClick={clearAllItems}>
+                      <i className="fa fa-trash me-1"></i>
+                      Clear
+                    </button>
+                  </div>
                 </div>
 
                 <div className="cart-line-list">
                   {items.map((item) => (
                     <article key={getItemKey(item)} className="cart-line-item">
+                      <label className="cart-line-select" htmlFor={`cart-item-${getItemKey(item)}`}>
+                        <input
+                          type="checkbox"
+                          id={`cart-item-${getItemKey(item)}`}
+                          checked={selectedItemKeys.has(getItemKey(item))}
+                          onChange={() => toggleItemSelection(item)}
+                          aria-label={`Select ${item.name} for checkout`}
+                        />
+                      </label>
                       <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
                       <div className="cart-line-info">
                         <Link to={`/product/${item.productId || item.id}`}>{item.name}</Link>
@@ -179,22 +270,29 @@ const Cart = () => {
             <div className="bg-light p-30 mb-5">
               <div className="border-bottom pb-2">
                 <div className="d-flex justify-content-between mb-3">
-                  <h6>Subtotal</h6>
-                  <h6>{formatCurrency(subtotal)}</h6>
+                  <h6>Selected subtotal</h6>
+                  <h6>{formatCurrency(selectedSubtotal)}</h6>
                 </div>
                 <div className="d-flex justify-content-between">
                   <h6 className="fw-medium">Shipping</h6>
-                  <h6 className="fw-medium">{formatCurrency(shipping)}</h6>
+                  <h6 className="fw-medium">{formatCurrency(selectedShipping)}</h6>
                 </div>
               </div>
               <div className="pt-2">
                 <div className="d-flex justify-content-between mt-2">
+                  <span>Selected items</span>
+                  <strong>{selectedCount}</strong>
+                </div>
+                <div className="d-flex justify-content-between mt-2">
                   <h5>Total</h5>
-                  <h5>{formatCurrency(total)}</h5>
+                  <h5>{formatCurrency(selectedTotal)}</h5>
                 </div>
                 <Link
                   to={isAuthenticated ? "/checkout" : "/login?returnUrl=/checkout"}
-                  className={`btn w-100 btn-primary fw-bold my-3 py-3 ${items.length === 0 ? "disabled" : ""}`}
+                  state={{ selectedCartItemKeys: [...selectedItemKeys] }}
+                  className={`btn w-100 btn-primary fw-bold my-3 py-3 ${items.length === 0 || selectedItemKeys.size === 0 ? "disabled" : ""}`}
+                  aria-disabled={items.length === 0 || selectedItemKeys.size === 0}
+                  onClick={handleCheckoutClick}
                 >
                   {isAuthenticated ? "Proceed To Checkout" : "Login To Checkout"}
                 </Link>

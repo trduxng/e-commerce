@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -36,6 +36,21 @@ const paymentOptions = [
   ["paypal", "Paypal", "Pay securely with Paypal", "fa-wallet"],
 ];
 
+const checkoutStorageKey = "baseShopCheckoutItemKeys";
+
+const normalizeSelectedKeys = (keys) =>
+  Array.isArray(keys)
+    ? keys.map((key) => String(key)).filter(Boolean)
+    : [];
+
+const readStoredSelectedKeys = () => {
+  try {
+    return normalizeSelectedKeys(JSON.parse(sessionStorage.getItem(checkoutStorageKey) || "[]"));
+  } catch {
+    return [];
+  }
+};
+
 const createInitialBillingData = (user = {}) => ({
   receiverName: user?.name || "",
   email: user?.email || "",
@@ -63,10 +78,16 @@ const sortAddresses = (addresses) =>
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, subtotal, reloadCart } = useCart();
+  const location = useLocation();
+  const { items, reloadCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
   const loadingToastRef = useRef(null);
+  const [selectedCartItemKeys, setSelectedCartItemKeys] = useState(() =>
+    normalizeSelectedKeys(location.state?.selectedCartItemKeys).length > 0
+      ? normalizeSelectedKeys(location.state?.selectedCartItemKeys)
+      : readStoredSelectedKeys()
+  );
   const [billingData, setBillingData] = useState(() => createInitialBillingData(user));
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState("new");
@@ -87,6 +108,13 @@ const Checkout = () => {
       phone: current.phone || user?.phone || "",
     }));
   }, [user?.name, user?.email, user?.phone]);
+
+  useEffect(() => {
+    const routeSelectedKeys = normalizeSelectedKeys(location.state?.selectedCartItemKeys);
+    if (routeSelectedKeys.length > 0) {
+      setSelectedCartItemKeys(routeSelectedKeys);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     let isMounted = true;
@@ -138,9 +166,19 @@ const Checkout = () => {
     () => shippingOptions.find((option) => option.id === shippingMethod) || shippingOptions[0],
     [shippingMethod]
   );
-  const shippingFee = items.length > 0 ? selectedShipping.fee : 0;
-  const total = subtotal + shippingFee;
-  const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const getItemKey = (item, index) =>
+    String(item.cartItemId ?? item.productVariantId ?? item.id ?? `${item.name}-${index}`);
+  const selectedKeySet = useMemo(() => new Set(selectedCartItemKeys), [selectedCartItemKeys]);
+  const checkoutItems = selectedCartItemKeys.length > 0
+    ? items.filter((item, index) => selectedKeySet.has(getItemKey(item, index)))
+    : items;
+  const checkoutSubtotal = checkoutItems.reduce(
+    (sum, item) => sum + Number(item.lineTotal ?? Number(item.price || 0) * Number(item.quantity || 0)),
+    0
+  );
+  const shippingFee = checkoutItems.length > 0 ? selectedShipping.fee : 0;
+  const total = checkoutSubtotal + shippingFee;
+  const itemCount = checkoutItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const selectedAddress = savedAddresses.find((address) => String(address.id) === String(selectedAddressId));
   const activeAddress = addressMode === "saved" && selectedAddress ? selectedAddress : billingData;
   const receiverName = activeAddress.receiverName?.trim() || "";
@@ -247,6 +285,12 @@ const Checkout = () => {
       return;
     }
 
+    if (checkoutItems.length === 0) {
+      toast.warning("Please select at least one available product to checkout.");
+      navigate("/cart");
+      return;
+    }
+
     const validationMessage = validateAddress(activeAddress);
     if (validationMessage) {
       toast.warning(validationMessage);
@@ -263,11 +307,15 @@ const Checkout = () => {
       paymentMethod,
       note: billingData.note,
       shippingMethod,
+      selectedItemKeys: checkoutItems
+        .map((item, index) => Number(getItemKey(item, index)))
+        .filter((key) => Number.isFinite(key) && key > 0),
     };
 
     try {
       const response = await cartApi.checkout(payload);
       const orderId = response.data?.order?.id || response.data?.id;
+      sessionStorage.removeItem(checkoutStorageKey);
       await reloadCart();
       if (loadingToastRef.current) {
         toast.dismissToast(loadingToastRef.current);
@@ -289,9 +337,6 @@ const Checkout = () => {
       setSubmitting(false);
     }
   };
-
-  const getItemKey = (item, index) =>
-    item.productVariantId ?? item.cartItemId ?? item.id ?? `${item.name}-${index}`;
 
   return (
     <>
@@ -468,9 +513,15 @@ const Checkout = () => {
                   <p>Add products before checkout.</p>
                   <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
                 </div>
+              ) : checkoutItems.length === 0 ? (
+                <div className="checkout-empty">
+                  <h5>No selected products</h5>
+                  <p>Select products from your cart before checkout.</p>
+                  <Link to="/cart" className="btn btn-primary">Back To Cart</Link>
+                </div>
               ) : (
                 <div className="checkout-items">
-                  {items.map((item, index) => (
+                  {checkoutItems.map((item, index) => (
                     <div key={getItemKey(item, index)} className="checkout-item">
                       <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
                       <div className="checkout-item-info">
@@ -583,7 +634,7 @@ const Checkout = () => {
 
                 <div className="checkout-summary-row">
                   <span>Merchandise subtotal</span>
-                  <strong>{formatCurrency(subtotal)}</strong>
+                  <strong>{formatCurrency(checkoutSubtotal)}</strong>
                 </div>
                 <div className="checkout-summary-row">
                   <span>Shipping fee</span>
@@ -602,7 +653,7 @@ const Checkout = () => {
                 <button
                   className="btn w-100 btn-primary checkout-submit"
                   type="submit"
-                  disabled={submitting || items.length === 0}
+                  disabled={submitting || checkoutItems.length === 0}
                 >
                   {submitting ? "Placing Order..." : "Place Order"}
                 </button>
