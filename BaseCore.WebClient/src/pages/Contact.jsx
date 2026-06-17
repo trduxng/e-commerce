@@ -83,7 +83,7 @@ const Contact = () => {
                 <div className="control-group mb-3">
                   <textarea
                     className="form-control"
-                    rows="8"
+                    rows={8}
                     placeholder="Message"
                     name="message"
                     value={formData.message}
@@ -104,7 +104,7 @@ const Contact = () => {
                 title="BaseShop location"
                 style={{ width: "100%", height: "315px", border: 0 }}
                 src="https://www.google.com/maps?q=Ho%20Chi%20Minh%20City%2C%20Vietnam&output=embed"
-                allowFullScreen=""
+                allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               ></iframe>

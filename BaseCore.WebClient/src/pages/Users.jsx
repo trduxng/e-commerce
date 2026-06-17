@@ -94,7 +94,7 @@ const Users = () => {
                     email: formData.email,
                     phone: formData.phone,
                     position: formData.position,
-                    userType: parseInt(formData.userType),
+                    userType: Number(formData.userType),
                     isActive: formData.isActive,
                 };
                 if (formData.password) {
@@ -113,7 +113,7 @@ const Users = () => {
                     email: formData.email,
                     phone: formData.phone,
                     position: formData.position,
-                    userType: parseInt(formData.userType),
+                    userType: Number(formData.userType),
                 });
             }
 
@@ -207,7 +207,7 @@ const Users = () => {
                                         <tbody>
                                             {users.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="7" className="text-center">
+                                                    <td colSpan={7} className="text-center">
                                                         No users found
                                                     </td>
                                                 </tr>
@@ -275,7 +275,7 @@ const Users = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+                <div className="modal fade show" style={{ display: 'block' }} tabIndex={-1}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -351,7 +351,7 @@ const Users = () => {
                                         <select
                                             className="form-control"
                                             value={formData.userType}
-                                            onChange={(e) => setFormData({ ...formData, userType: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, userType: Number(e.target.value) })}
                                         >
                                             <option value="0">User</option>
                                             <option value="1">Admin</option>

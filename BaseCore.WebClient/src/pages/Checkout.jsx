@@ -481,7 +481,7 @@ const Checkout = () => {
                   <label>Order Note</label>
                   <textarea
                     className="form-control"
-                    rows="4"
+                    rows={4}
                     name="note"
                     placeholder="Delivery instructions"
                     value={billingData.note}

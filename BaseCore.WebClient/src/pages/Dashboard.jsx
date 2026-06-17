@@ -314,7 +314,7 @@ const Dashboard = () => {
                                             <tbody>
                                                 {recentOrders.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="7" className="text-center py-4">No purchase data yet.</td>
+                                                        <td colSpan={7} className="text-center py-4">No purchase data yet.</td>
                                                     </tr>
                                                 ) : (
                                                     recentOrders.map((order) => (
@@ -385,7 +385,7 @@ const Dashboard = () => {
                                         <tbody>
                                             {myOrders.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="8" className="text-center py-4">No orders found</td>
+                                                    <td colSpan={8} className="text-center py-4">No orders found</td>
                                                 </tr>
                                             ) : (
                                                 myOrders.map((order) => (
@@ -490,7 +490,7 @@ const Dashboard = () => {
                                                 <label>Note</label>
                                                 <textarea
                                                     className="form-control"
-                                                    rows="3"
+                                                    rows={3}
                                                     value={orderForm.note}
                                                     onChange={(event) => setOrderField('note', event.target.value)}
                                                 ></textarea>

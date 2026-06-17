@@ -443,6 +443,11 @@ namespace BaseCore.APIService.Controllers
         public List<ProductVariantDto>? Variants { get; set; }
         public bool? IsActive { get; set; }
         public bool? IsFeatured { get; set; }
+        public bool? IsDigital { get; set; }
+        public string? DownloadUrl { get; set; }
+        public bool? IsRental { get; set; }
+        public int? RentalPriceLength { get; set; }
+        public string? RentalPricePeriod { get; set; }
     }
 
     public class ProductVariantDto
@@ -463,10 +468,6 @@ namespace BaseCore.APIService.Controllers
     {
         public int AttributeId { get; set; }
         public string Value { get; set; } = "";
-        public int SortOrder { get; set; }
-    }
-}
-     public string Value { get; set; } = "";
         public int SortOrder { get; set; }
     }
 }

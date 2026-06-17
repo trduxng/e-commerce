@@ -249,7 +249,7 @@ const MyOrders = () => {
 
       {selectedOrder && (
         <>
-          <div className="modal fade show" style={{ display: "block" }} tabIndex="-1" role="dialog" aria-modal="true">
+          <div className="modal fade show" style={{ display: "block" }} tabIndex={-1} role="dialog" aria-modal="true">
             <div className="modal-dialog modal-lg modal-dialog-scrollable">
               <div className="modal-content order-detail-modal">
                 <div className="modal-header">

@@ -186,7 +186,7 @@ const Orders = () => {
                                         <tbody>
                                             {orders.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="8" className="text-center py-4">
+                                                    <td colSpan={8} className="text-center py-4">
                                                         {(keyword || statusFilter) ? 'No orders match your search' : 'No orders found'}
                                                     </td>
                                                 </tr>

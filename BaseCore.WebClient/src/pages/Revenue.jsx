@@ -221,7 +221,7 @@ const Revenue = () => {
                                         <tbody>
                                             {Object.keys(summary.byStatus || {}).length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="2" className="text-center py-4">No revenue data</td>
+                                                    <td colSpan={2} className="text-center py-4">No revenue data</td>
                                                 </tr>
                                             ) : (
                                                 Object.entries(summary.byStatus).map(([status, count]) => (
@@ -256,7 +256,7 @@ const Revenue = () => {
                                         <tbody>
                                             {orders.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="7" className="text-center py-4">
+                                                    <td colSpan={7} className="text-center py-4">
                                                         {(keyword || statusFilter) ? 'No revenue orders match your search' : 'No revenue data'}
                                                     </td>
                                                 </tr>

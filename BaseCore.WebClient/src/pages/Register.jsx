@@ -83,11 +83,11 @@ const Register = () => {
                                 <div className="input-group-text"><span className="fas fa-phone"></span></div>
                             </div>
                             <div className="input-group mb-3">
-                                <input className="form-control" type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required minLength="6" />
+                                <input className="form-control" type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required minLength={6} />
                                 <div className="input-group-text"><span className="fas fa-lock"></span></div>
                             </div>
                             <div className="input-group mb-3">
-                                <input className="form-control" type="password" name="confirmPassword" placeholder="Confirm password" value={formData.confirmPassword} onChange={handleChange} required minLength="6" />
+                                <input className="form-control" type="password" name="confirmPassword" placeholder="Confirm password" value={formData.confirmPassword} onChange={handleChange} required minLength={6} />
                                 <div className="input-group-text"><span className="fas fa-lock"></span></div>
                             </div>
                             <button type="submit" className="btn btn-primary w-100" disabled={loading}>

@@ -57,7 +57,17 @@ const Coupons = () => {
             });
         } else {
             setEditingCoupon(null);
-            setFormData({ code: '', type: 'percent', value: 0, minOrderValue: 0, startDate: '', endDate: '', isActive: true });
+            setFormData({
+                code: '',
+                type: 'percent',
+                value: 0,
+                minOrderValue: 0,
+                maxDiscountAmount: 0,
+                usageLimit: '',
+                startDate: '',
+                endDate: '',
+                isActive: true
+            });
         }
         setShowModal(true);
     };
@@ -132,7 +142,7 @@ const Coupons = () => {
                                     </div>
                                     <div className="form-group">
                                         <label>Value</label>
-                                        <input type="number" className="form-control" required value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} />
+                                        <input type="number" className="form-control" required value={formData.value} onChange={e => setFormData({...formData, value: Number(e.target.value)})} />
                                     </div>
                                     <div className="form-group">
                                         <label>Start Date</label>

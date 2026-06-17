@@ -31,9 +31,10 @@ const Reviews = lazy(() => import('./pages/Reviews'));
 const Coupons = lazy(() => import('./pages/Coupons'));
 const Manufacturers = lazy(() => import('./pages/Manufacturers'));
 const SpecificationAttributes = lazy(() => import('./pages/SpecificationAttributes'));
+const CheckoutAttributes = lazy(() => import('./pages/CheckoutAttributes'));
 
 const queryClient = new QueryClient();
-const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes'];
+const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes', '/checkout-attributes'];
 const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
 // Wrapper to redirect authenticated users away from login
