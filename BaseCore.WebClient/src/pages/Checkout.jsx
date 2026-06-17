@@ -63,7 +63,7 @@ const sortAddresses = (addresses) =>
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, subtotal, reloadCart } = useCart();
+  const { items, selectedItems, selectedSubtotal, selectedCartItemIds, reloadCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
   const loadingToastRef = useRef(null);
@@ -166,14 +166,21 @@ const Checkout = () => {
     return adjustment;
   }, [selectedAttributes, checkoutAttributes]);
 
-  const shippingFee = items.length > 0 ? selectedShipping.fee : 0;
-  const total = Math.max(0, subtotal + shippingFee + attrAdjustment - discountAmount);
-  const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const checkoutItems = selectedItems;
+  const checkoutSubtotal = selectedSubtotal;
+  const shippingFee = checkoutItems.length > 0 ? selectedShipping.fee : 0;
+  const total = Math.max(0, checkoutSubtotal + shippingFee + attrAdjustment - discountAmount);
+  const itemCount = checkoutItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const selectedAddress = savedAddresses.find((address) => String(address.id) === String(selectedAddressId));
   const activeAddress = addressMode === "saved" && selectedAddress ? selectedAddress : billingData;
   const receiverName = activeAddress.receiverName?.trim() || "";
   const receiverPhone = activeAddress.phone?.trim() || "";
   const addressPreview = getAddressText(activeAddress);
+
+  useEffect(() => {
+    setDiscountAmount(0);
+    setVoucherMessage("");
+  }, [checkoutSubtotal]);
 
   const handleInputChange = (event) => {
     const { checked, name, type, value } = event.target;
@@ -257,6 +264,11 @@ const Checkout = () => {
   };
 
   const handleVoucher = async () => {
+    if (checkoutItems.length === 0) {
+      toast.warning("Please select at least one product before applying a voucher.");
+      return;
+    }
+
     if (!voucherCode.trim()) {
       toast.warning("Please enter a voucher code.");
       return;
@@ -264,7 +276,7 @@ const Checkout = () => {
 
     setVoucherMessage("Applying...");
     try {
-      const response = await couponApi.apply(voucherCode, subtotal);
+      const response = await couponApi.apply(voucherCode, checkoutSubtotal);
       setDiscountAmount(response.data.discountAmount);
       setVoucherMessage(`Voucher applied! Discount: ${formatCurrency(response.data.discountAmount)}`);
       toast.success("Voucher applied successfully.");
@@ -277,8 +289,8 @@ const Checkout = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (items.length === 0) {
-      toast.warning("Your cart is empty.");
+    if (checkoutItems.length === 0) {
+      toast.warning(items.length === 0 ? "Your cart is empty." : "Please select at least one product to checkout.");
       return;
     }
 
@@ -299,6 +311,7 @@ const Checkout = () => {
       note: billingData.note,
       shippingMethod,
       couponCode: discountAmount > 0 ? voucherCode : null,
+      cartItemIds: selectedCartItemIds,
       discountAmount: discountAmount,
       checkoutAttributes: selectedAttributes
     };
@@ -481,7 +494,7 @@ const Checkout = () => {
                   <label>Order Note</label>
                   <textarea
                     className="form-control"
-                    rows="4"
+                    rows={4}
                     name="note"
                     placeholder="Delivery instructions"
                     value={billingData.note}
@@ -530,14 +543,16 @@ const Checkout = () => {
                 <span className="checkout-count">{itemCount} items</span>
               </div>
 
-              {items.length === 0 ? (
+              {checkoutItems.length === 0 ? (
                 <div className="checkout-empty">
-                  <h5>Your cart is empty</h5>
-                  <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
+                  <h5>{items.length === 0 ? "Your cart is empty" : "No products selected"}</h5>
+                  <Link to={items.length === 0 ? "/shop" : "/cart"} className="btn btn-primary">
+                    {items.length === 0 ? "Continue Shopping" : "Select Products"}
+                  </Link>
                 </div>
               ) : (
                 <div className="checkout-items">
-                  {items.map((item, index) => (
+                  {checkoutItems.map((item, index) => (
                     <div key={getItemKey(item, index)} className="checkout-item">
                       <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
                       <div className="checkout-item-info">
@@ -647,7 +662,7 @@ const Checkout = () => {
                 </div>
                 <div className="checkout-summary-row">
                   <span>Subtotal</span>
-                  <strong>{formatCurrency(subtotal)}</strong>
+                  <strong>{formatCurrency(checkoutSubtotal)}</strong>
                 </div>
                 <div className="checkout-summary-row">
                   <span>Shipping</span>
@@ -672,7 +687,7 @@ const Checkout = () => {
                 <button
                   className="btn w-100 btn-primary checkout-submit mt-3"
                   type="submit"
-                  disabled={submitting || items.length === 0}
+                  disabled={submitting || checkoutItems.length === 0}
                 >
                   {submitting ? "Placing Order..." : "Place Order"}
                 </button>

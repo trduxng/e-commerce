@@ -6,10 +6,37 @@ import { useToast } from "../contexts/ToastContext";
 import { formatCurrency } from "../data/shopData";
 
 const Cart = () => {
-  const { items, loading, subtotal, shipping, total, updateQuantity, removeFromCart, clearCart } = useCart();
+  const {
+    items,
+    loading,
+    selectedItems,
+    selectedCartItemIds,
+    selectedSubtotal,
+    selectedShipping,
+    selectedTotal,
+    hasSelectedAllCartItems,
+    toggleCartItemSelection,
+    selectAllCartItems,
+    clearCartSelection,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
   const { isAuthenticated } = useAuth();
   const toast = useToast();
   const [quantityDrafts, setQuantityDrafts] = React.useState({});
+  const selectAllRef = React.useRef(null);
+  const selectedIdSet = React.useMemo(
+    () => new Set(selectedCartItemIds.map((id) => String(id))),
+    [selectedCartItemIds]
+  );
+  const selectedLineCount = selectedItems.length;
+
+  React.useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = selectedLineCount > 0 && selectedLineCount < items.length;
+    }
+  }, [items.length, selectedLineCount]);
 
   const changeQuantity = async (item, quantity) => {
     const result = await updateQuantity(item.productVariantId ?? item.cartItemId ?? item.id, quantity);
@@ -31,6 +58,7 @@ const Cart = () => {
   };
 
   const getItemKey = (item) => item.productVariantId ?? item.cartItemId ?? item.id;
+  const getCartItemId = (item) => item.cartItemId;
 
   const removeItem = async (item) => {
     const result = await removeFromCart(item.productVariantId ?? item.cartItemId ?? item.id);
@@ -49,6 +77,20 @@ const Cart = () => {
     } else {
       toast.success("Cart cleared.");
     }
+  };
+
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      selectAllCartItems();
+    } else {
+      clearCartSelection();
+    }
+  };
+
+  const handleCheckoutClick = (event) => {
+    if (selectedLineCount > 0) return;
+    event.preventDefault();
+    toast.warning("Please select at least one product to checkout.");
   };
 
   return (
@@ -85,8 +127,17 @@ const Cart = () => {
                 <div className="cart-panel-header">
                   <div>
                     <h4>Shopping Cart</h4>
-                    <span>{items.length} product lines</span>
+                    <span>{selectedLineCount} of {items.length} product lines selected</span>
                   </div>
+                  <label className="cart-select-all">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={hasSelectedAllCartItems}
+                      onChange={handleSelectAll}
+                    />
+                    <span>Select all</span>
+                  </label>
                   <button className="btn btn-outline-dark" type="button" onClick={clearAllItems}>
                     <i className="fa fa-trash me-1"></i>
                     Clear
@@ -95,7 +146,16 @@ const Cart = () => {
 
                 <div className="cart-line-list">
                   {items.map((item) => (
-                    <article key={getItemKey(item)} className="cart-line-item">
+                    <article key={getItemKey(item)} className={`cart-line-item ${selectedIdSet.has(String(getCartItemId(item))) ? "is-selected" : ""}`}>
+                      <label className="cart-line-select" htmlFor={`cart-line-select-${getItemKey(item)}`}>
+                        <input
+                          type="checkbox"
+                          id={`cart-line-select-${getItemKey(item)}`}
+                          checked={selectedIdSet.has(String(getCartItemId(item)))}
+                          onChange={(event) => toggleCartItemSelection(getCartItemId(item), event.target.checked)}
+                        />
+                        <span className="visually-hidden">Select {item.name}</span>
+                      </label>
                       <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
                       <div className="cart-line-info">
                         <Link to={`/product/${item.productId || item.id}`}>{item.name}</Link>
@@ -179,24 +239,25 @@ const Cart = () => {
             <div className="bg-light p-30 mb-5">
               <div className="border-bottom pb-2">
                 <div className="d-flex justify-content-between mb-3">
-                  <h6>Subtotal</h6>
-                  <h6>{formatCurrency(subtotal)}</h6>
+                  <h6>Selected Subtotal</h6>
+                  <h6>{formatCurrency(selectedSubtotal)}</h6>
                 </div>
                 <div className="d-flex justify-content-between">
                   <h6 className="fw-medium">Shipping</h6>
-                  <h6 className="fw-medium">{formatCurrency(shipping)}</h6>
+                  <h6 className="fw-medium">{formatCurrency(selectedShipping)}</h6>
                 </div>
               </div>
               <div className="pt-2">
                 <div className="d-flex justify-content-between mt-2">
                   <h5>Total</h5>
-                  <h5>{formatCurrency(total)}</h5>
+                  <h5>{formatCurrency(selectedTotal)}</h5>
                 </div>
                 <Link
                   to={isAuthenticated ? "/checkout" : "/login?returnUrl=/checkout"}
-                  className={`btn w-100 btn-primary fw-bold my-3 py-3 ${items.length === 0 ? "disabled" : ""}`}
+                  className={`btn w-100 btn-primary fw-bold my-3 py-3 ${selectedLineCount === 0 ? "disabled" : ""}`}
+                  onClick={handleCheckoutClick}
                 >
-                  {isAuthenticated ? "Proceed To Checkout" : "Login To Checkout"}
+                  {isAuthenticated ? `Checkout Selected (${selectedLineCount})` : "Login To Checkout"}
                 </Link>
               </div>
             </div>

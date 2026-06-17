@@ -1,15 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { couponApi } from '../services/api';
 
+const emptyCouponForm = {
+    code: '',
+    type: 'percent',
+    value: '',
+    minOrderValue: '0',
+    maxDiscountAmount: '',
+    usageLimit: '',
+    startDate: '',
+    endDate: '',
+    isActive: true,
+};
+
+const toDateInputValue = (value) => value ? String(value).split('T')[0] : '';
+
+const toNullableNumber = (value) => {
+    if (value === '' || value === null || value === undefined) return null;
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
+};
+
 const Coupons = () => {
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingCoupon, setEditingCoupon] = useState(null);
-    const [formData, setFormData] = useState({
-        code: '', type: 'percent', value: 0, minOrderValue: 0, maxDiscountAmount: 0,
-        usageLimit: '', startDate: '', endDate: '', isActive: true
-    });
+    const [formData, setFormData] = useState(emptyCouponForm);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
@@ -34,11 +51,24 @@ const Coupons = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        const payload = {
+            code: formData.code.trim(),
+            type: formData.type,
+            value: Number(formData.value),
+            minOrderValue: Number(formData.minOrderValue) || 0,
+            maxDiscountAmount: toNullableNumber(formData.maxDiscountAmount),
+            usageLimit: toNullableNumber(formData.usageLimit),
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+            isActive: formData.isActive,
+            usedCount: editingCoupon?.usedCount || 0,
+        };
+
         try {
             if (editingCoupon) {
-                await couponApi.update(editingCoupon.id, { ...formData, id: editingCoupon.id });
+                await couponApi.update(editingCoupon.id, { ...payload, id: editingCoupon.id });
             } else {
-                await couponApi.create(formData);
+                await couponApi.create(payload);
             }
             setShowModal(false);
             loadCoupons();
@@ -58,13 +88,19 @@ const Coupons = () => {
         if (coupon) {
             setEditingCoupon(coupon);
             setFormData({
-                ...coupon,
-                startDate: coupon.startDate ? coupon.startDate.split('T')[0] : '',
-                endDate: coupon.endDate ? coupon.endDate.split('T')[0] : ''
+                code: coupon.code || '',
+                type: coupon.type || 'percent',
+                value: coupon.value ?? '',
+                minOrderValue: String(coupon.minOrderValue ?? 0),
+                maxDiscountAmount: coupon.maxDiscountAmount || '',
+                usageLimit: coupon.usageLimit || '',
+                startDate: toDateInputValue(coupon.startDate),
+                endDate: toDateInputValue(coupon.endDate),
+                isActive: coupon.isActive !== false,
             });
         } else {
             setEditingCoupon(null);
-            setFormData({ code: '', type: 'percent', value: 0, minOrderValue: 0, startDate: '', endDate: '', isActive: true });
+            setFormData(emptyCouponForm);
         }
         setShowModal(true);
     };
@@ -91,6 +127,8 @@ const Coupons = () => {
                                             <th>Type</th>
                                             <th>Value</th>
                                             <th>Min Order</th>
+                                            <th>Limit</th>
+                                            <th>Used</th>
                                             <th>Active</th>
                                             <th>Actions</th>
                                         </tr>
@@ -102,6 +140,8 @@ const Coupons = () => {
                                                 <td>{c.type}</td>
                                                 <td>{c.value}</td>
                                                 <td>{c.minOrderValue}</td>
+                                                <td>{c.usageLimit || 'Unlimited'}</td>
+                                                <td>{c.usedCount || 0}</td>
                                                 <td>{c.isActive ? 'Yes' : 'No'}</td>
                                                 <td>
                                                     <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(c)}>Edit</button>
@@ -160,7 +200,53 @@ const Coupons = () => {
                                     </div>
                                     <div className="form-group">
                                         <label>Value</label>
-                                        <input type="number" className="form-control" required value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} />
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            min="0"
+                                            step="0.01"
+                                            required
+                                            value={formData.value}
+                                            onChange={e => setFormData({...formData, value: e.target.value})}
+                                        />
+                                        <small className="text-muted">
+                                            Percent type uses 1-100. Fixed type uses currency amount.
+                                        </small>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Minimum Order Value</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            min="0"
+                                            step="0.01"
+                                            value={formData.minOrderValue}
+                                            onChange={e => setFormData({...formData, minOrderValue: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Maximum Discount Amount</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="Leave blank for no cap"
+                                            value={formData.maxDiscountAmount}
+                                            onChange={e => setFormData({...formData, maxDiscountAmount: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Usage Limit</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            min="1"
+                                            step="1"
+                                            placeholder="Leave blank for unlimited"
+                                            value={formData.usageLimit}
+                                            onChange={e => setFormData({...formData, usageLimit: e.target.value})}
+                                        />
                                     </div>
                                     <div className="form-group">
                                         <label>Start Date</label>

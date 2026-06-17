@@ -4,6 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoriteContext";
 import { useSettings } from "../../contexts/SettingsContext";
+import ThemeToggle from "../ThemeToggle";
 
 const Topbar = () => {
   const [keyword, setKeyword] = useState("");
@@ -107,6 +108,7 @@ const Topbar = () => {
               </form>
 
               <div className="compact-header-actions">
+                <ThemeToggle />
                 {isAuthenticated && (
                   <Link to="/favorites" className="cart-button" aria-label="Favorite products">
                     <i className="fas fa-heart"></i>

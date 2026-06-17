@@ -196,7 +196,16 @@ export const getProductGallery = (product) => {
     ...getProductVariants(product).map((variant) => variant?.imageUrl || variant?.image).filter(Boolean),
   ];
 
-  return Array.from(new Set(images.filter(Boolean)));
+  const seen = new Set();
+  return images
+    .map((image) => String(image || "").trim())
+    .filter((image) => {
+      if (!image) return false;
+      const key = image.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 };
 
 export const getProductRating = (product) => {
