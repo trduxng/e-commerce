@@ -9,7 +9,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
-import MainLayout from './components/MainLayout';
+import AdminLayout from './components/AdminLayout';
 import ShopLayout from './components/ShopLayout';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -173,9 +173,9 @@ function AppRoutes() {
                 path="/dashboard"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Dashboard />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -183,9 +183,9 @@ function AppRoutes() {
                 path="/products"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Products />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -193,9 +193,9 @@ function AppRoutes() {
                 path="/categories"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Categories />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -203,9 +203,9 @@ function AppRoutes() {
                 path="/orders"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Orders />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -213,9 +213,9 @@ function AppRoutes() {
                 path="/revenue"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Revenue />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -223,9 +223,9 @@ function AppRoutes() {
                 path="/users"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Users />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -233,9 +233,9 @@ function AppRoutes() {
                 path="/reviews"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Reviews />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -243,9 +243,9 @@ function AppRoutes() {
                 path="/coupons"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Coupons />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -253,9 +253,9 @@ function AppRoutes() {
                 path="/manufacturers"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Manufacturers />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -263,9 +263,9 @@ function AppRoutes() {
                 path="/specification-attributes"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <SpecificationAttributes />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -273,9 +273,9 @@ function AppRoutes() {
                 path="/checkout-attributes"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <CheckoutAttributes />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -283,9 +283,9 @@ function AppRoutes() {
                 path="/current-carts"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <CurrentCarts />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />
@@ -293,9 +293,9 @@ function AppRoutes() {
                 path="/settings"
                 element={
                     <ProtectedRoute adminOnly={true}>
-                        <MainLayout>
+                        <AdminLayout>
                             <Settings />
-                        </MainLayout>
+                        </AdminLayout>
                     </ProtectedRoute>
                 }
             />

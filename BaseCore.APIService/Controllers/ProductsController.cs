@@ -32,7 +32,10 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetAll(
             [FromQuery] string? keyword,
             [FromQuery] int? categoryId,
+            [FromQuery] bool searchIncludeSubCategories,
             [FromQuery] int? manufacturerId,
+            [FromQuery] int? publishedId,
+            [FromQuery] string? goDirectlyToSku,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
             [FromQuery] int page = 1,
@@ -51,7 +54,10 @@ namespace BaseCore.APIService.Controllers
             var (products, totalCount) = await _productRepository.SearchAsync(
                 keyword, 
                 categoryId, 
+                searchIncludeSubCategories,
                 manufacturerId, 
+                publishedId,
+                goDirectlyToSku,
                 specFilters.Any() ? specFilters : null,
                 minPrice, 
                 maxPrice, 

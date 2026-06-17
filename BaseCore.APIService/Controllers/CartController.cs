@@ -203,7 +203,44 @@ namespace BaseCore.APIService.Controllers
                     return BadRequest(new { message = validationMessage });
 
                 var shippingFee = GetShippingFee(dto.ShippingMethod);
-                const decimal discountAmount = 0;
+                
+                decimal discountAmount = 0;
+                Coupon? coupon = null;
+                if (!string.IsNullOrWhiteSpace(dto.CouponCode))
+                {
+                    var code = dto.CouponCode.Trim();
+                    coupon = await _db.Coupons.FirstOrDefaultAsync(c => c.Code == code);
+                    if (coupon == null || !coupon.IsActive || coupon.StartDate > DateTime.Now || coupon.EndDate < DateTime.Now)
+                    {
+                        return BadRequest(new { message = "Invalid or expired coupon code" });
+                    }
+
+                    if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit.Value)
+                    {
+                        return BadRequest(new { message = "Coupon usage limit reached" });
+                    }
+
+                    if (subtotal < coupon.MinOrderValue)
+                    {
+                        return BadRequest(new { message = $"Minimum order value of {coupon.MinOrderValue} required" });
+                    }
+
+                    if (coupon.Type == "fixed")
+                    {
+                        discountAmount = coupon.Value;
+                    }
+                    else if (coupon.Type == "percent")
+                    {
+                        discountAmount = subtotal * (coupon.Value / 100);
+                        if (coupon.MaxDiscountAmount.HasValue && discountAmount > coupon.MaxDiscountAmount.Value)
+                        {
+                            discountAmount = coupon.MaxDiscountAmount.Value;
+                        }
+                    }
+
+                    coupon.UsedCount += 1;
+                }
+
                 const decimal taxAmount = 0;
                 var order = new Order
                 {
@@ -219,11 +256,11 @@ namespace BaseCore.APIService.Controllers
                     ShippingFee = shippingFee,
                     DiscountAmount = discountAmount,
                     TaxAmount = taxAmount,
-                    TotalAmount = subtotal + shippingFee,
+                    TotalAmount = Math.Max(0, subtotal + shippingFee - discountAmount),
                     PaymentMethod = dto.PaymentMethod!.Trim().ToLowerInvariant(),
                     PaymentStatus = "pending",
                     OrderStatus = "pending",
-                    CouponCode = null,
+                    CouponCode = coupon?.Code,
                     Note = dto.Note,
                     OrderDetails = orderDetails
                 };
@@ -336,9 +373,6 @@ namespace BaseCore.APIService.Controllers
             var paymentMethod = dto.PaymentMethod?.Trim().ToLowerInvariant();
             if (paymentMethod is not ("cod" or "banktransfer" or "paypal"))
                 return "Payment method is not supported.";
-
-            if (!string.IsNullOrWhiteSpace(dto.CouponCode))
-                return "Voucher code is not valid.";
 
             return null;
         }

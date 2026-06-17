@@ -1,4 +1,4 @@
-﻿using BaseCore.Common;
+using BaseCore.Common;
 using BaseCore.Entities;
 using BaseCore.Repository.Authen;
 using System;
@@ -15,7 +15,22 @@ namespace BaseCore.Services.Authen
         Task<User> Create(User user, string password);
         Task Update(User user, string password = null);
         Task Delete(string id);
-        Task<(List<User> Users, int TotalCount)> Search(string keyword, int page, int pageSize);
+        Task<(List<User> Users, int TotalCount)> Search(
+            string keyword,
+            string email,
+            string username,
+            string firstName,
+            string lastName,
+            string phone,
+            string company,
+            string ipAddress,
+            string zipPostalCode,
+            bool? isActive,
+            int[] userTypes,
+            DateTime? registrationFrom,
+            DateTime? registrationTo,
+            int page, 
+            int pageSize);
     }
 
     public class UserService : IUserService
@@ -87,9 +102,26 @@ namespace BaseCore.Services.Authen
             await _userRepository.DeleteAsync(id);
         }
 
-        public async Task<(List<User> Users, int TotalCount)> Search(string keyword, int page, int pageSize)
+        public async Task<(List<User> Users, int TotalCount)> Search(
+            string keyword,
+            string email,
+            string username,
+            string firstName,
+            string lastName,
+            string phone,
+            string company,
+            string ipAddress,
+            string zipPostalCode,
+            bool? isActive,
+            int[] userTypes,
+            DateTime? registrationFrom,
+            DateTime? registrationTo,
+            int page, 
+            int pageSize)
         {
-            return await _userRepository.SearchAsync(keyword, page, pageSize);
+            return await _userRepository.SearchAsync(
+                keyword, email, username, firstName, lastName, phone, company, ipAddress, zipPostalCode, 
+                isActive, userTypes, registrationFrom, registrationTo, page, pageSize);
         }
     }
 }

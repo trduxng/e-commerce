@@ -60,5 +60,12 @@ namespace BaseCore.Entities
             get => Role == "admin" ? 1 : Role == "staff" ? 2 : 0;
             set => Role = value == 1 ? "admin" : value == 2 ? "staff" : "customer";
         }
+
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Company { get; set; }
+        public string? ZipPostalCode { get; set; }
+        public string? IpAddress { get; set; }
     }
 }

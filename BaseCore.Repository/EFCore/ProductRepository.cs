@@ -11,7 +11,10 @@ namespace BaseCore.Repository.EFCore
         Task<(List<Product> Products, int TotalCount)> SearchAsync(
             string? keyword,
             int? categoryId,
+            bool searchIncludeSubCategories,
             int? manufacturerId,
+            int? publishedId,
+            string? goDirectlyToSku,
             Dictionary<int, List<string>>? specificationFilters,
             decimal? minPrice,
             decimal? maxPrice,
@@ -31,7 +34,10 @@ namespace BaseCore.Repository.EFCore
         public async Task<(List<Product> Products, int TotalCount)> SearchAsync(
             string? keyword,
             int? categoryId,
+            bool searchIncludeSubCategories,
             int? manufacturerId,
+            int? publishedId,
+            string? goDirectlyToSku,
             Dictionary<int, List<string>>? specificationFilters,
             decimal? minPrice,
             decimal? maxPrice,
@@ -43,25 +49,39 @@ namespace BaseCore.Repository.EFCore
                 .Include(p => p.Manufacturer)
                 .Include(p => p.ProductVariants)
                 .Include(p => p.ProductSpecifications)
-                .Where(p => p.DeletedAt == null && p.IsActive)
+                .Where(p => p.DeletedAt == null)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(keyword))
+            if (!string.IsNullOrEmpty(goDirectlyToSku))
             {
-                keyword = keyword.ToLower();
-                query = query.Where(p =>
-                    p.Name.ToLower().Contains(keyword) ||
-                    (p.Description != null && p.Description.ToLower().Contains(keyword)));
+                var sku = goDirectlyToSku.ToLower();
+                query = query.Where(p => p.ProductVariants.Any(v => v.Sku.ToLower() == sku));
             }
-
-            if (categoryId.HasValue && categoryId > 0)
+            else
             {
-                query = query.Where(p => p.CategoryId == categoryId);
-            }
+                if (!string.IsNullOrEmpty(keyword))
+                {
+                    keyword = keyword.ToLower();
+                    query = query.Where(p =>
+                        p.Name.ToLower().Contains(keyword) ||
+                        (p.Description != null && p.Description.ToLower().Contains(keyword)));
+                }
 
-            if (manufacturerId.HasValue && manufacturerId > 0)
-            {
-                query = query.Where(p => p.ManufacturerId == manufacturerId);
+                if (categoryId.HasValue && categoryId > 0)
+                {
+                    query = query.Where(p => p.CategoryId == categoryId);
+                }
+
+                if (manufacturerId.HasValue && manufacturerId > 0)
+                {
+                    query = query.Where(p => p.ManufacturerId == manufacturerId);
+                }
+
+                if (publishedId.HasValue && publishedId > 0)
+                {
+                    if (publishedId == 1) query = query.Where(p => p.IsActive);
+                    else if (publishedId == 2) query = query.Where(p => !p.IsActive);
+                }
             }
 
             if (specificationFilters != null && specificationFilters.Any())

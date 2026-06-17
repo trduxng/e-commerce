@@ -11,7 +11,11 @@ namespace BaseCore.Repository.EFCore
         Task<List<Order>> GetByUserAsync(long userId);
         Task<List<Order>> GetAllWithDetailsAsync();
         Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(string? keyword, string? status, int page, int pageSize);
-        Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(string? keyword, string? status, DateTime? fromDate, DateTime? toDate, int page, int pageSize);
+        Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
+            string? keyword, string? status, string? paymentStatus, string? shippingStatus, 
+            DateTime? fromDate, DateTime? toDate, 
+            string? billingEmail, string? billingLastName, string? billingPhone, string? orderCode,
+            int page, int pageSize);
         Task<Order?> GetWithDetailsAsync(long orderId);
     }
 
@@ -58,14 +62,20 @@ namespace BaseCore.Repository.EFCore
             int page,
             int pageSize)
         {
-            return await SearchAllWithDetailsAsync(keyword, status, null, null, page, pageSize);
+            return await SearchAllWithDetailsAsync(keyword, status, null, null, null, null, null, null, null, null, page, pageSize);
         }
 
         public async Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
             string? keyword,
             string? status,
+            string? paymentStatus,
+            string? shippingStatus,
             DateTime? fromDate,
             DateTime? toDate,
+            string? billingEmail,
+            string? billingLastName,
+            string? billingPhone,
+            string? orderCode,
             int page,
             int pageSize)
         {
@@ -94,6 +104,53 @@ namespace BaseCore.Repository.EFCore
             {
                 var normalizedStatus = status.Trim().ToLower();
                 query = query.Where(o => o.OrderStatus.ToLower() == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(paymentStatus))
+            {
+                var normalizedStatus = paymentStatus.Trim().ToLower();
+                query = query.Where(o => o.PaymentStatus.ToLower() == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(shippingStatus)) // using OrderStatus to infer shipping status as there is no separate shipping status in the DB
+            {
+                var normalizedStatus = shippingStatus.Trim().ToLower();
+                if (normalizedStatus == "not_yet_shipped")
+                {
+                    query = query.Where(o => o.OrderStatus.ToLower() != "shipping" && o.OrderStatus.ToLower() != "delivered");
+                }
+                else if (normalizedStatus == "shipped")
+                {
+                    query = query.Where(o => o.OrderStatus.ToLower() == "shipping" || o.OrderStatus.ToLower() == "delivered");
+                }
+                else if (normalizedStatus == "delivered")
+                {
+                    query = query.Where(o => o.OrderStatus.ToLower() == "delivered");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(orderCode))
+            {
+                var normalizedCode = orderCode.Trim().ToLower();
+                query = query.Where(o => o.OrderCode.ToLower() == normalizedCode);
+            }
+
+            if (!string.IsNullOrWhiteSpace(billingEmail))
+            {
+                var normalizedEmail = billingEmail.Trim().ToLower();
+                query = query.Where(o => o.GuestEmail != null && o.GuestEmail.ToLower().Contains(normalizedEmail));
+            }
+
+            if (!string.IsNullOrWhiteSpace(billingPhone))
+            {
+                var normalizedPhone = billingPhone.Trim().ToLower();
+                query = query.Where(o => o.ReceiverPhone.ToLower().Contains(normalizedPhone));
+            }
+
+            if (!string.IsNullOrWhiteSpace(billingLastName))
+            {
+                var normalizedName = billingLastName.Trim().ToLower();
+                query = query.Where(o => o.ReceiverName.ToLower().Contains(normalizedName));
             }
 
             if (!string.IsNullOrWhiteSpace(keyword))

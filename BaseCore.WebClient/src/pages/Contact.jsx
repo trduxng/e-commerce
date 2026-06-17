@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useSettings } from "../contexts/SettingsContext";
 
 const Contact = () => {
+  const { settings } = useSettings();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -112,15 +114,15 @@ const Contact = () => {
             <div className="bg-light p-30 mb-3">
               <p className="mb-2">
                 <i className="fa fa-map-marker-alt text-primary me-3"></i>
-                Ho Chi Minh City, Vietnam
+                {settings.address}
               </p>
               <p className="mb-2">
                 <i className="fa fa-envelope text-primary me-3"></i>
-                support@baseshop.local
+                {settings.contactEmail}
               </p>
               <p className="mb-2">
                 <i className="fa fa-phone-alt text-primary me-3"></i>
-                +84 909 123 456
+                {settings.contactPhone}
               </p>
             </div>
           </div>

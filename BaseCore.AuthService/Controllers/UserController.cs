@@ -22,9 +22,26 @@ namespace BaseCore.AuthService.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAll([FromQuery] string keyword = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string keyword = "",
+            [FromQuery] string email = "",
+            [FromQuery] string username = "",
+            [FromQuery] string firstName = "",
+            [FromQuery] string lastName = "",
+            [FromQuery] string phone = "",
+            [FromQuery] string company = "",
+            [FromQuery] string ipAddress = "",
+            [FromQuery] string zipPostalCode = "",
+            [FromQuery] bool? isActive = null,
+            [FromQuery] int[] userType = null,
+            [FromQuery] DateTime? registrationFrom = null,
+            [FromQuery] DateTime? registrationTo = null,
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 10)
         {
-            var (users, totalCount) = await _userService.Search(keyword, page, pageSize);
+            var (users, totalCount) = await _userService.Search(
+                keyword, email, username, firstName, lastName, phone, company, ipAddress, zipPostalCode, 
+                isActive, userType, registrationFrom, registrationTo, page, pageSize);
 
             var result = users.Select(u => new UserResponse
             {

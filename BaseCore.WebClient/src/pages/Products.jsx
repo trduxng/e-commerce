@@ -134,7 +134,11 @@ const Products = () => {
         try {
             const response = await productApi.search({
                 keyword,
-                categoryId: categoryId || undefined,
+                categoryId: categoryId && categoryId !== '0' ? categoryId : undefined,
+                searchIncludeSubCategories,
+                manufacturerId: manufacturerId && manufacturerId !== '0' ? manufacturerId : undefined,
+                publishedId: publishedId && publishedId !== '0' ? publishedId : undefined,
+                goDirectlyToSku: goDirectlyToSku || undefined,
                 page,
                 pageSize,
             });
@@ -417,69 +421,231 @@ const Products = () => {
         return pages;
     };
 
+    const [searchIncludeSubCategories, setSearchIncludeSubCategories] = useState(false);
+    const [manufacturerId, setManufacturerId] = useState('');
+    const [publishedId, setPublishedId] = useState('0'); // 0: All, 1: Published, 2: Unpublished
+    const [goDirectlyToSku, setGoDirectlyToSku] = useState('');
+    const [searchOpen, setSearchOpen] = useState(true);
+    const [selectedIds, setSelectedIds] = useState([]);
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedIds(products.map(p => p.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelectRow = (id) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
     return (
         <div className="content-wrapper">
-            <div className="content-header">
-                <div className="container-fluid">
-                    <h1 className="m-0">Products Management</h1>
+            <div className="content-header clearfix">
+                <h1 className="float-left">
+                    Products
+                </h1>
+                <div className="float-right">
+                    {isAdmin() && (
+                        <button className="btn btn-primary mr-1" onClick={() => openModal()}>
+                            <i className="fas fa-plus-square"></i> Add new
+                        </button>
+                    )}
+                    <button className="btn bg-info mr-1">
+                        <i className="fas fa-download"></i> Download catalog as PDF
+                    </button>
+                    <button className="btn btn-success mr-1">
+                        <i className="fas fa-file-export"></i> Export
+                    </button>
+                    <button className="btn bg-olive mr-1">
+                        <i className="fas fa-upload"></i> Import
+                    </button>
+                    <button className="btn btn-danger" onClick={() => {
+                        if (selectedIds.length === 0) alert('Please select at least one product to delete.');
+                        else if (window.confirm('Are you sure you want to delete selected products?')) alert('Delete selected logic here');
+                    }}>
+                        <i className="far fa-trash-alt"></i> Delete (selected)
+                    </button>
                 </div>
             </div>
 
             <section className="content">
                 <div className="container-fluid">
-                    <div className="card">
-                        <div className="card-header">
-                            <div className="row">
-                                <div className="col-md-8">
-                                    <form onSubmit={handleSearch} className="form-inline">
-                                        <input type="text" className="form-control mr-2" placeholder="Search..." value={keyword} onChange={e => setKeyword(e.target.value)} />
-                                        <select className="form-control mr-2" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-                                            <option value="">All Categories</option>
-                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                        <button type="submit" className="btn btn-primary"><i className="fas fa-search"></i></button>
-                                    </form>
-                                </div>
-                                <div className="col-md-4 text-right">
-                                    {isAdmin() && <button className="btn btn-success" onClick={() => openModal()}><i className="fas fa-plus"></i> Add Product</button>}
+                    <div className="form-horizontal">
+                        <div className="cards-group">
+                            
+                            {/* Search Card */}
+                            <div className="card card-default card-search">
+                                <div className="card-body">
+                                    <div className="row search-row opened" onClick={() => setSearchOpen(!searchOpen)} style={{ cursor: 'pointer' }}>
+                                        <div className="search-text">Search</div>
+                                        <div className="icon-search"><i className="fas fa-search" aria-hidden="true"></i></div>
+                                        <div className="icon-collapse"><i className={`far fa-angle-${searchOpen ? 'up' : 'down'}`} aria-hidden="true"></i></div>
+                                    </div>
+
+                                    {searchOpen && (
+                                        <div className="search-body">
+                                            <div className="row">
+                                                <div className="col-md-5">
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Product name</label>
+                                                        </div>
+                                                        <div className="col-md-8">
+                                                            <input type="text" className="form-control text-box single-line" value={keyword} onChange={e => setKeyword(e.target.value)} />
+                                                        </div>
+                                                    </div>
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Category</label>
+                                                        </div>
+                                                        <div className="col-md-8">
+                                                            <select className="form-control" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+                                                                <option value="0">All</option>
+                                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Search subcategories</label>
+                                                        </div>
+                                                        <div className="col-md-8">
+                                                            <input type="checkbox" checked={searchIncludeSubCategories} onChange={e => setSearchIncludeSubCategories(e.target.checked)} />
+                                                        </div>
+                                                    </div>
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Manufacturer</label>
+                                                        </div>
+                                                        <div className="col-md-8">
+                                                            <select className="form-control" value={manufacturerId} onChange={e => setManufacturerId(e.target.value)}>
+                                                                <option value="0">All</option>
+                                                                {manufacturers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-7">
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Published</label>
+                                                        </div>
+                                                        <div className="col-md-8">
+                                                            <select className="form-control" value={publishedId} onChange={e => setPublishedId(e.target.value)}>
+                                                                <option value="0">All</option>
+                                                                <option value="1">Published only</option>
+                                                                <option value="2">Unpublished only</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Go directly to product SKU</label>
+                                                        </div>
+                                                        <div className="col-md-8">
+                                                            <div className="input-group input-group-short">
+                                                                <input type="text" className="form-control text-box single-line" value={goDirectlyToSku} onChange={e => setGoDirectlyToSku(e.target.value)} />
+                                                                <span className="input-group-append">
+                                                                    <button type="button" className="btn btn-info btn-flat">Go</button>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="row">
+                                                <div className="text-center col-12">
+                                                    <button type="button" id="search-products" className="btn btn-primary btn-search" onClick={handleSearch}>
+                                                        <i className="fas fa-search"></i> Search
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        </div>
-                        <div className="card-body p-0">
-                            {loading ? <div className="text-center p-5">Loading...</div> : (
-                                <table className="table table-hover table-striped mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Image</th>
-                                            <th>Name</th>
-                                            <th>Category</th>
-                                            <th>Price</th>
-                                            <th>Stock</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {products.map(p => (
-                                            <tr key={p.id}>
-                                                <td><img src={getVariantPreviewImage(firstVariant(p), getProductImage(p))} style={{width: 50}} /></td>
-                                                <td><strong>{p.name}</strong> {p.manufacturer?.name && <span className="badge badge-info">{p.manufacturer.name}</span>}</td>
-                                                <td>{p.category?.name}</td>
-                                                <td>{formatCurrency(p.price)}</td>
-                                                <td>{p.stock}</td>
-                                                <td><span className={`badge badge-${p.isActive ? 'success' : 'secondary'}`}>{p.isActive ? 'Selling' : 'Hidden'}</span></td>
-                                                <td>
-                                                    <button className="btn btn-sm btn-info mr-1" onClick={() => openModal(p)}><i className="fas fa-edit"></i></button>
-                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}><i className="fas fa-trash"></i></button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                        <div className="card-footer">
-                            <ul className="pagination pagination-sm m-0 float-right">{renderPagination()}</ul>
+
+                            {/* Data Grid Card */}
+                            <div className="card card-default">
+                                <div className="card-body">
+                                    <div className="dataTables_wrapper dt-bootstrap4">
+                                        <div className="row">
+                                            <div className="col-sm-12">
+                                                {loading ? <div className="text-center p-5"><i className="fas fa-circle-notch fa-spin fa-2x"></i></div> : (
+                                                    <table className="table table-bordered table-hover table-striped dataTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th className="text-center" style={{ width: 50 }}>
+                                                                    <input type="checkbox" checked={selectedIds.length === products.length && products.length > 0} onChange={handleSelectAll} />
+                                                                </th>
+                                                                <th className="text-center" style={{ width: 100 }}>Picture</th>
+                                                                <th>Product name</th>
+                                                                <th style={{ width: 150 }}>SKU</th>
+                                                                <th style={{ width: 150 }}>Price</th>
+                                                                <th style={{ width: 100 }}>Stock quantity</th>
+                                                                <th className="text-center" style={{ width: 100 }}>Published</th>
+                                                                <th className="text-center" style={{ width: 100 }}>Edit</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {products.length === 0 ? (
+                                                                <tr><td colSpan="8" className="text-center">No records</td></tr>
+                                                            ) : products.map(p => {
+                                                                const isChecked = selectedIds.includes(p.id);
+                                                                return (
+                                                                    <tr key={p.id}>
+                                                                        <td className="text-center">
+                                                                            <input type="checkbox" checked={isChecked} onChange={() => handleSelectRow(p.id)} />
+                                                                        </td>
+                                                                        <td className="text-center">
+                                                                            <img src={getVariantPreviewImage(firstVariant(p), getProductImage(p))} style={{ width: 75 }} alt={p.name} />
+                                                                        </td>
+                                                                        <td>
+                                                                            {p.name}
+                                                                            {p.manufacturer?.name && <div className="text-muted text-sm">{p.manufacturer.name}</div>}
+                                                                        </td>
+                                                                        <td>{firstVariant(p).sku || p.sku}</td>
+                                                                        <td>{formatCurrency(p.price)}</td>
+                                                                        <td>{p.stock}</td>
+                                                                        <td className="text-center">
+                                                                            {p.isActive ? (
+                                                                                <i className="fas fa-check true-icon text-success"></i>
+                                                                            ) : (
+                                                                                <i className="fas fa-times false-icon text-danger"></i>
+                                                                            )}
+                                                                        </td>
+                                                                        <td className="text-center">
+                                                                            <button className="btn btn-default btn-sm" onClick={() => openModal(p)}>
+                                                                                <i className="fas fa-pencil-alt"></i> Edit
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="row mt-3">
+                                            <div className="col-sm-12 col-md-5">
+                                                <div className="dataTables_info">
+                                                    Showing {products.length > 0 ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, totalCount)} of {totalCount} entries
+                                                </div>
+                                            </div>
+                                            <div className="col-sm-12 col-md-7">
+                                                <div className="dataTables_paginate paging_simple_numbers float-right">
+                                                    <ul className="pagination pagination-sm m-0">
+                                                        {renderPagination()}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
