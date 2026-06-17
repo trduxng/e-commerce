@@ -10,16 +10,23 @@ const Coupons = () => {
         code: '', type: 'percent', value: 0, minOrderValue: 0, maxDiscountAmount: 0,
         usageLimit: '', startDate: '', endDate: '', isActive: true
     });
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(0);
+    const [error, setError] = useState('');
 
-    useEffect(() => { loadCoupons(); }, []);
+    useEffect(() => { loadCoupons(); }, [page]);
 
     const loadCoupons = async () => {
         setLoading(true);
         try {
-            const response = await couponApi.getAll({ page: 1, pageSize: 50 });
+            const response = await couponApi.getAll({ page, pageSize });
             setCoupons(response.data.items || []);
+            setTotalPages(response.data.totalPages || 0);
+            setError('');
         } catch (err) {
             console.error(err);
+            setError('Failed to load coupons.');
         } finally {
             setLoading(false);
         }
@@ -52,8 +59,8 @@ const Coupons = () => {
             setEditingCoupon(coupon);
             setFormData({
                 ...coupon,
-                startDate: coupon.startDate.split('T')[0],
-                endDate: coupon.endDate.split('T')[0]
+                startDate: coupon.startDate ? coupon.startDate.split('T')[0] : '',
+                endDate: coupon.endDate ? coupon.endDate.split('T')[0] : ''
             });
         } else {
             setEditingCoupon(null);
@@ -75,6 +82,7 @@ const Coupons = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-body table-responsive p-0">
+                            {error && <div className="alert alert-danger m-3">{error}</div>}
                             {loading ? <div className="p-4">Loading...</div> : (
                                 <table className="table table-hover text-nowrap">
                                     <thead>
@@ -105,6 +113,26 @@ const Coupons = () => {
                                 </table>
                             )}
                         </div>
+                        {totalPages > 1 && (
+                            <div className="card-footer d-flex justify-content-between align-items-center">
+                                <span className="text-muted">Page {page} of {totalPages}</span>
+                                <nav>
+                                    <ul className="pagination pagination-sm m-0 float-right">
+                                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Previous</button>
+                                        </li>
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
+                                                <button className="page-link" type="button" onClick={() => setPage(i + 1)}>{i + 1}</button>
+                                            </li>
+                                        ))}
+                                        <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Next</button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

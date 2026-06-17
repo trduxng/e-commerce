@@ -46,8 +46,8 @@ namespace BaseCore.APIService.Controllers
                     r.Status,
                     r.CreatedAt,
                     r.IsVerifiedPurchase,
-                    User = new { r.User.Id, r.User.Name, r.User.Email },
-                    Product = new { r.Product.Id, r.Product.Name, r.Product.ImageUrl }
+                    User = r.User != null ? new { r.User.Id, r.User.Name, r.User.Email } : null,
+                    Product = r.Product != null ? new { r.Product.Id, r.Product.Name, r.Product.ImageUrl } : null
                 })
                 .ToListAsync();
 

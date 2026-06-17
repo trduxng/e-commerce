@@ -6,6 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import { FavoriteProvider } from './contexts/FavoriteContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
@@ -33,6 +34,7 @@ const Manufacturers = lazy(() => import('./pages/Manufacturers'));
 const SpecificationAttributes = lazy(() => import('./pages/SpecificationAttributes'));
 const CheckoutAttributes = lazy(() => import('./pages/CheckoutAttributes'));
 const CurrentCarts = lazy(() => import('./pages/CurrentCarts'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 const queryClient = new QueryClient();
 const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes', '/checkout-attributes', '/current-carts'];

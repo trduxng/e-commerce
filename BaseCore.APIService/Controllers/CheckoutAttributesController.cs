@@ -43,7 +43,48 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> UpdateAttribute(int id, CheckoutAttribute attribute)
         {
             if (id != attribute.Id) return BadRequest();
-            _context.Entry(attribute).State = EntityState.Modified;
+
+            var existingAttribute = await _context.CheckoutAttributes
+                .Include(x => x.Values)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (existingAttribute == null)
+            {
+                return NotFound();
+            }
+
+            // Update parent properties
+            _context.Entry(existingAttribute).CurrentValues.SetValues(attribute);
+
+            // Synchronize child values
+            // 1. Remove deleted values
+            var incomingIds = attribute.Values.Select(v => v.Id).ToList();
+            var toRemove = existingAttribute.Values.Where(v => !incomingIds.Contains(v.Id)).ToList();
+            foreach (var val in toRemove)
+            {
+                _context.CheckoutAttributeValues.Remove(val);
+            }
+
+            // 2. Add or update incoming values
+            foreach (var val in attribute.Values)
+            {
+                var existingVal = existingAttribute.Values.FirstOrDefault(v => v.Id == val.Id && val.Id != 0);
+                if (existingVal != null)
+                {
+                    _context.Entry(existingVal).CurrentValues.SetValues(val);
+                }
+                else
+                {
+                    existingAttribute.Values.Add(new CheckoutAttributeValue
+                    {
+                        Name = val.Name,
+                        PriceAdjustment = val.PriceAdjustment,
+                        IsPreSelected = val.IsPreSelected,
+                        SortOrder = val.SortOrder
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync();
             return NoContent();
         }

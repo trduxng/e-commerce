@@ -17,22 +17,23 @@ export const SettingsProvider = ({ children }) => {
         instagramLink: '#'
     });
 
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const response = await settingApi.get();
-                if (response.data) {
-                    setSettings(response.data);
-                }
-            } catch (error) {
-                console.error("Failed to load settings", error);
+    const loadSettings = async () => {
+        try {
+            const response = await settingApi.get();
+            if (response.data) {
+                setSettings(response.data);
             }
-        };
+        } catch (error) {
+            console.error("Failed to load settings", error);
+        }
+    };
+
+    useEffect(() => {
         loadSettings();
     }, []);
 
     return (
-        <SettingsContext.Provider value={{ settings }}>
+        <SettingsContext.Provider value={{ settings, reloadSettings: loadSettings }}>
             {children}
         </SettingsContext.Provider>
     );

@@ -26,7 +26,7 @@ namespace BaseCore.APIService.Controllers
                 .Include(c => c.User)
                 .Include(c => c.Items)
                     .ThenInclude(i => i.ProductVariant)
-                        .ThenInclude(v => v.Product)
+                        .ThenInclude(v => v!.Product)
                 .Where(c => c.Items.Any())
                 .AsQueryable();
 
@@ -39,16 +39,16 @@ namespace BaseCore.APIService.Controllers
                 {
                     c.Id,
                     c.UpdatedAt,
-                    User = new { c.User.Id, c.User.Name, c.User.Email },
+                    User = c.User != null ? new { c.User.Id, c.User.Name, c.User.Email } : null,
                     ItemCount = c.Items.Count,
-                    TotalValue = c.Items.Sum(i => (i.ProductVariant.SalePrice ?? i.ProductVariant.Price) * i.Quantity),
+                    TotalValue = c.Items.Sum(i => (i.ProductVariant != null ? (i.ProductVariant.SalePrice ?? i.ProductVariant.Price) : 0) * i.Quantity),
                     Items = c.Items.Select(i => new {
                         i.Id,
-                        ProductName = i.ProductVariant.Product.Name,
-                        i.ProductVariant.Size,
-                        i.ProductVariant.Color,
+                        ProductName = i.ProductVariant != null && i.ProductVariant.Product != null ? i.ProductVariant.Product.Name : "Unknown Product",
+                        Size = i.ProductVariant != null ? i.ProductVariant.Size : null,
+                        Color = i.ProductVariant != null ? i.ProductVariant.Color : null,
                         i.Quantity,
-                        Price = i.ProductVariant.SalePrice ?? i.ProductVariant.Price
+                        Price = i.ProductVariant != null ? (i.ProductVariant.SalePrice ?? i.ProductVariant.Price) : 0
                     })
                 })
                 .ToListAsync();

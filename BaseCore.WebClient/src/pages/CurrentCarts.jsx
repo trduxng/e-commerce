@@ -6,8 +6,9 @@ const CurrentCarts = () => {
     const [carts, setCarts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    const [pageSize] = useState(20);
+    const [pageSize, setPageSize] = useState(20);
     const [totalCount, setTotalCount] = useState(0);
+    const [error, setError] = useState('');
 
     useEffect(() => { loadCarts(); }, [page]);
 
@@ -17,12 +18,16 @@ const CurrentCarts = () => {
             const response = await adminCartsApi.getActiveCarts({ page, pageSize });
             setCarts(response.data.items || []);
             setTotalCount(response.data.totalCount || 0);
+            setError('');
         } catch (err) {
             console.error(err);
+            setError('Failed to load shopping carts.');
         } finally {
             setLoading(false);
         }
     };
+
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     return (
         <div className="content-wrapper">
@@ -36,6 +41,7 @@ const CurrentCarts = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-body table-responsive p-0">
+                            {error && <div className="alert alert-danger m-3">{error}</div>}
                             {loading ? <div className="p-4 text-center">Loading carts...</div> : (
                                 <table className="table table-hover">
                                     <thead>
@@ -59,11 +65,14 @@ const CurrentCarts = () => {
                                                 <td>{formatCurrency(cart.totalValue)}</td>
                                                 <td>
                                                     <ul className="list-unstyled mb-0 small">
-                                                        {cart.items.map(item => (
-                                                            <li key={item.id}>
-                                                                {item.productName} ({item.size}/{item.color}) x{item.quantity}
-                                                            </li>
-                                                        ))}
+                                                        {cart.items?.map(item => {
+                                                            const details = [item.size, item.color].filter(Boolean).join('/');
+                                                            return (
+                                                                <li key={item.id}>
+                                                                    {item.productName} {details ? `(${details})` : ''} x{item.quantity}
+                                                                </li>
+                                                            );
+                                                        })}
                                                     </ul>
                                                 </td>
                                             </tr>
@@ -75,6 +84,26 @@ const CurrentCarts = () => {
                                 </table>
                             )}
                         </div>
+                        {totalPages > 1 && (
+                            <div className="card-footer d-flex justify-content-between align-items-center">
+                                <span className="text-muted">Showing page {page} of {totalPages} ({totalCount} total carts)</span>
+                                <nav>
+                                    <ul className="pagination pagination-sm m-0 float-right">
+                                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Previous</button>
+                                        </li>
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
+                                                <button className="page-link" type="button" onClick={() => setPage(i + 1)}>{i + 1}</button>
+                                            </li>
+                                        ))}
+                                        <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Next</button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

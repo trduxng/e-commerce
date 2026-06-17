@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { manufacturerApi } from '../services/api';
 
+
+
 const Manufacturers = () => {
     const [manufacturers, setManufacturers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -119,8 +121,31 @@ const Manufacturers = () => {
                                         <input className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Logo URL (optional)</label>
-                                        <input className="form-control" value={formData.pictureUrl || ''} onChange={e => setFormData({...formData, pictureUrl: e.target.value})} />
+                                        <label>Logo (optional)</label>
+                                        <div className="input-group">
+                                            <input 
+                                                className="form-control" 
+                                                value={formData.pictureUrl || ''} 
+                                                onChange={e => setFormData({...formData, pictureUrl: e.target.value})} 
+                                                placeholder="/img/vendor-1.jpg or custom URL"
+                                            />
+                                            <div className="input-group-append">
+                                                <label className="btn btn-secondary m-0 d-flex align-items-center">
+                                                    Browse...
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*" 
+                                                        style={{ display: 'none' }} 
+                                                        onChange={e => {
+                                                            const file = e.target.files[0];
+                                                            if (file) {
+                                                                setFormData({...formData, pictureUrl: `/img/${file.name}`});
+                                                            }
+                                                        }} 
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label>Sort Order</label>

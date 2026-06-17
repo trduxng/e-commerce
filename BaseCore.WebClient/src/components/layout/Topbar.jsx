@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoriteContext";
+import { useSettings } from "../../contexts/SettingsContext";
 
 const Topbar = () => {
   const [keyword, setKeyword] = useState("");
@@ -12,6 +13,7 @@ const Topbar = () => {
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const { count } = useCart();
   const { count: favoriteCount } = useFavorites();
+  const { settings } = useSettings();
 
   useEffect(() => {
     if (location.pathname === "/shop") {

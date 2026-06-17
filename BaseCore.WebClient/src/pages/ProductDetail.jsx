@@ -17,7 +17,6 @@ import {
   getProductStock,
   normalizeProductList,
   sampleProducts,
-  shippingOptions,
 } from "../data/shopData";
 
 const ProductDetail = () => {
@@ -365,7 +364,7 @@ const ProductDetail = () => {
                         {reviewAccessMessage && <p className="review-access-note">{reviewAccessMessage}</p>}
                         <div className="review-rating-control">
                           {[1, 2, 3, 4, 5].map((value) => (
-                            <button key={value} type="button" className={value <= Number(review.rating) ? "is-active" : ""} disabled={!reviewData.canWriteReview} onClick={() => setReview((c) => ({ ...current, rating: String(value) }))}><i className="fa fa-star"></i></button>
+                            <button key={value} type="button" className={value <= Number(review.rating) ? "is-active" : ""} disabled={!reviewData.canWriteReview} onClick={() => setReview((c) => ({ ...c, rating: String(value) }))}><i className="fa fa-star"></i></button>
                           ))}
                         </div>
                         <textarea className="form-control" rows="4" placeholder="Share your experience" value={review.comment} onChange={(e) => setReview((c) => ({ ...c, comment: e.target.value }))} required disabled={!reviewData.canWriteReview} />

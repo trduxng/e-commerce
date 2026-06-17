@@ -142,7 +142,39 @@ const Account = () => {
                 ["phone", "Phone", "tel"],
                 ["avatarUrl", "Avatar URL", "url"],
               ].map(([name, label, type]) => (
-                <label key={name}>{label}<input className="form-control" name={name} type={type} value={profile[name] || ""} onChange={(event) => setProfile((current) => ({ ...current, [name]: event.target.value }))} required={name === "name" || name === "email"} /></label>
+                <div key={name} className="form-group mb-3">
+                  <label className="d-block mb-1">{label}</label>
+                  {name === "avatarUrl" ? (
+                    <div className="input-group">
+                      <input 
+                        className="form-control" 
+                        name={name} 
+                        type={type} 
+                        value={profile[name] || ""} 
+                        onChange={(event) => setProfile((current) => ({ ...current, [name]: event.target.value }))} 
+                        placeholder="/img/avatar.png or custom URL"
+                      />
+                      <div className="input-group-append">
+                        <label className="btn btn-secondary m-0 d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                          Browse...
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            style={{ display: "none" }} 
+                            onChange={(event) => {
+                              const file = event.target.files[0];
+                              if (file) {
+                                setProfile((current) => ({ ...current, avatarUrl: `/img/${file.name}` }));
+                              }
+                            }} 
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <input className="form-control" name={name} type={type} value={profile[name] || ""} onChange={(event) => setProfile((current) => ({ ...current, [name]: event.target.value }))} required={name === "name" || name === "email"} />
+                  )}
+                </div>
               ))}
               <button className="btn btn-primary" disabled={saving}>Save profile</button>
             </form>

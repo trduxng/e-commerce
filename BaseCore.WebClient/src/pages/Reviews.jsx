@@ -84,31 +84,57 @@ const Reviews = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reviews.map(review => (
-                                            <tr key={review.id}>
-                                                <td>{review.product?.name}</td>
-                                                <td>{review.user?.email}</td>
-                                                <td>{renderStars(review.rating)}</td>
-                                                <td className="text-wrap" style={{maxWidth: '300px'}}>{review.content}</td>
-                                                <td>
-                                                    <span className={`badge badge-${review.status === 'approved' ? 'success' : review.status === 'rejected' ? 'danger' : 'warning'}`}>
-                                                        {review.status}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {review.status !== 'approved' && (
-                                                        <button className="btn btn-sm btn-success mr-2" onClick={() => handleStatusChange(review.id, 'approved')}>Approve</button>
-                                                    )}
-                                                    {review.status !== 'rejected' && (
-                                                        <button className="btn btn-sm btn-danger" onClick={() => handleStatusChange(review.id, 'rejected')}>Reject</button>
-                                                    )}
-                                                </td>
+                                        {reviews.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="text-center py-4">No reviews found</td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            reviews.map(review => (
+                                                <tr key={review.id}>
+                                                    <td>{review.product?.name}</td>
+                                                    <td>{review.user?.email}</td>
+                                                    <td>{renderStars(review.rating)}</td>
+                                                    <td className="text-wrap" style={{maxWidth: '300px'}}>{review.content}</td>
+                                                    <td>
+                                                        <span className={`badge badge-${review.status === 'approved' ? 'success' : review.status === 'rejected' ? 'danger' : 'warning'}`}>
+                                                            {review.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {review.status !== 'approved' && (
+                                                            <button className="btn btn-sm btn-success mr-2" onClick={() => handleStatusChange(review.id, 'approved')}>Approve</button>
+                                                        )}
+                                                        {review.status !== 'rejected' && (
+                                                            <button className="btn btn-sm btn-danger" onClick={() => handleStatusChange(review.id, 'rejected')}>Reject</button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             )}
                         </div>
+                        {totalPages > 1 && (
+                            <div className="card-footer d-flex justify-content-between align-items-center">
+                                <span className="text-muted">Page {page} of {totalPages}</span>
+                                <nav>
+                                    <ul className="pagination pagination-sm m-0 float-right">
+                                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Previous</button>
+                                        </li>
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
+                                                <button className="page-link" type="button" onClick={() => setPage(i + 1)}>{i + 1}</button>
+                                            </li>
+                                        ))}
+                                        <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Next</button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

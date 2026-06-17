@@ -12,15 +12,15 @@ const Footer = () => {
       <div className="row px-xl-5 pt-5">
         <div className="col-lg-4 col-md-12 mb-5 pe-3 pe-xl-5">
           <h5 className="text-uppercase mb-4">Get In Touch</h5>
-          <p className="mb-4">BaseShop is the public storefront for BaseCore WebClient with product browsing, cart and checkout flows.</p>
+          <p className="mb-4">{settings.storeName} is the public storefront for BaseCore WebClient with product browsing, cart and checkout flows.</p>
           <p className="mb-2">
-            <i className="fa fa-map-marker-alt text-primary me-3"></i>Ho Chi Minh City, Vietnam
+            <i className="fa fa-map-marker-alt text-primary me-3"></i>{settings.address}
           </p>
           <p className="mb-2">
-            <i className="fa fa-envelope text-primary me-3"></i>support@baseshop.local
+            <i className="fa fa-envelope text-primary me-3"></i>{settings.contactEmail}
           </p>
           <p className="mb-0">
-            <i className="fa fa-phone-alt text-primary me-3"></i>+84 909 123 456
+            <i className="fa fa-phone-alt text-primary me-3"></i>{settings.contactPhone}
           </p>
         </div>
 
@@ -58,15 +58,15 @@ const Footer = () => {
               <form>
                 <div className="input-group">
                   <input type="email" className="form-control" placeholder="Your Email Address" />
-                  <button className="btn btn-primary" type="submit">Sign Up</button>
+                  <button className="btn btn-primary" type="submit" onClick={(e) => e.preventDefault()}>Sign Up</button>
                 </div>
               </form>
               <h6 className="text-uppercase mt-4 mb-3">Follow Us</h6>
               <div className="d-flex">
-                <a className="btn btn-primary btn-square me-2" href="#twitter" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-                <a className="btn btn-primary btn-square me-2" href="#facebook" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+                {settings.twitterLink && settings.twitterLink !== '#' && <a className="btn btn-primary btn-square me-2" href={settings.twitterLink} target="_blank" rel="noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>}
+                {settings.facebookLink && settings.facebookLink !== '#' && <a className="btn btn-primary btn-square me-2" href={settings.facebookLink} target="_blank" rel="noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>}
                 <a className="btn btn-primary btn-square me-2" href="#linkedin" aria-label="LinkedIn"><i className="fab fa-linkedin-in"></i></a>
-                <a className="btn btn-primary btn-square" href="#instagram" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+                {settings.instagramLink && settings.instagramLink !== '#' && <a className="btn btn-primary btn-square" href={settings.instagramLink} target="_blank" rel="noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>}
               </div>
             </div>
           </div>
@@ -76,18 +76,8 @@ const Footer = () => {
       <div className="row border-top mx-xl-5 py-4" style={{ borderColor: "rgba(256, 256, 256, .1)" }}>
         <div className="col-md-6 px-xl-0">
           <p className="mb-md-0 text-center text-md-left text-secondary">
-            &copy; 2026 BaseCore WebClient. All rights reserved.
+            &copy; {new Date().getFullYear()} {settings.storeName}. All rights reserved.
           </p>
-        </div>
-        <div className="col-md-6 px-xl-0 text-center text-md-end">
-          <img className="img-fluid" src="/img/payments.png" alt="Payment methods" />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Footer;
         </div>
         <div className="col-md-6 px-xl-0 text-center text-md-end">
           <img className="img-fluid" src="/img/payments.png" alt="Payment methods" />

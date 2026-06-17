@@ -44,6 +44,8 @@ const normalizeList = (data) => {
     return [];
 };
 
+
+
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -520,7 +522,34 @@ const Products = () => {
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
-                                                <div className="form-group"><label>Image URL</label><input className="form-control" value={formData.imageUrl} onChange={e => setField('imageUrl', e.target.value)} /></div>
+                                                <div className="form-group">
+                                                    <label>Image URL</label>
+                                                    <div className="input-group">
+                                                        <input 
+                                                            type="text" 
+                                                            className="form-control" 
+                                                            value={formData.imageUrl} 
+                                                            onChange={e => setField('imageUrl', e.target.value)} 
+                                                            placeholder="/img/product-1.jpg or custom URL"
+                                                        />
+                                                        <div className="input-group-append">
+                                                            <label className="btn btn-secondary m-0 d-flex align-items-center">
+                                                                Browse...
+                                                                <input 
+                                                                    type="file" 
+                                                                    accept="image/*" 
+                                                                    style={{ display: 'none' }} 
+                                                                    onChange={e => {
+                                                                        const file = e.target.files[0];
+                                                                        if (file) {
+                                                                            setField('imageUrl', `/img/${file.name}`);
+                                                                        }
+                                                                    }} 
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div className="custom-control custom-switch mt-4"><input type="checkbox" className="custom-control-input" id="sw1" checked={formData.isActive} onChange={e => setField('isActive', e.target.checked)} /><label className="custom-control-label" htmlFor="sw1">Is Active</label></div>
                                                 <div className="custom-control custom-switch mt-2"><input type="checkbox" className="custom-control-input" id="sw2" checked={formData.isFeatured} onChange={e => setField('isFeatured', e.target.checked)} /><label className="custom-control-label" htmlFor="sw2">Is Featured</label></div>
                                             </div>
@@ -552,34 +581,6 @@ const Products = () => {
                                         <table className="table table-sm table-bordered">
                                             <thead><tr><th>Attribute</th><th>Value</th><th>Order</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addSpec}>+</button></th></tr></thead>
                                             <tbody>
-                                                {formData.specifications.map((s, i) => (
-                                                    <tr key={i}>
-                                                        <td><select className="form-control form-control-sm" value={s.attributeId} onChange={e => setSpecField(i, 'attributeId', e.target.value)}><option value="">Select</option>{specAttributes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></td>
-                                                        <td><input className="form-control form-control-sm" value={s.value} onChange={e => setSpecField(i, 'value', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={s.sortOrder} onChange={e => setSpecField(i, 'sortOrder', e.target.value)} /></td>
-                                                        <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeSpec(i)}>x</button></td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    )}
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                                    <button type="submit" className="btn btn-primary">Save Product</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {showModal && <div className="modal-backdrop fade show"></div>}
-        </div>
-    );
-};
-
-export default Products;
-                    <tbody>
                                                 {formData.specifications.map((s, i) => (
                                                     <tr key={i}>
                                                         <td><select className="form-control form-control-sm" value={s.attributeId} onChange={e => setSpecField(i, 'attributeId', e.target.value)}><option value="">Select</option>{specAttributes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></td>

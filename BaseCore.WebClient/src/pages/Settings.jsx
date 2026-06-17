@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { settingApi } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 const Settings = () => {
     const [settings, setSettings] = useState({
@@ -16,6 +17,7 @@ const Settings = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const toast = useToast();
+    const { reloadSettings } = useSettings();
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -42,8 +44,9 @@ const Settings = () => {
         try {
             await settingApi.update(settings);
             toast.success('Settings updated successfully!');
-            // Refresh to apply changes if any public components rely on window reload, 
-            // but ideally they should use a context. For now, a toast is good.
+            if (reloadSettings) {
+                await reloadSettings();
+            }
         } catch (error) {
             toast.error('Failed to update settings');
         } finally {
@@ -76,7 +79,31 @@ const Settings = () => {
                                     </div>
                                     <div className="col-md-6 form-group">
                                         <label>Logo URL</label>
-                                        <input className="form-control" name="logoUrl" value={settings.logoUrl} onChange={handleChange} placeholder="/img/logo.png or http..." />
+                                        <div className="input-group">
+                                            <input 
+                                                className="form-control" 
+                                                name="logoUrl" 
+                                                value={settings.logoUrl} 
+                                                onChange={handleChange} 
+                                                placeholder="/img/logo.png or custom URL" 
+                                            />
+                                            <div className="input-group-append">
+                                                <label className="btn btn-secondary m-0 d-flex align-items-center">
+                                                    Browse...
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*" 
+                                                        style={{ display: 'none' }} 
+                                                        onChange={e => {
+                                                            const file = e.target.files[0];
+                                                            if (file) {
+                                                                setSettings(prev => ({ ...prev, logoUrl: `/img/${file.name}` }));
+                                                            }
+                                                        }} 
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
