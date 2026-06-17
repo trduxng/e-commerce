@@ -9,7 +9,7 @@ namespace BaseCore.Repository.EFCore
     public interface ICategoryRepositoryEF : IRepository<Category>
     {
         Task<Category?> GetByNameAsync(string name);
-        Task<(List<Category> Categories, int TotalCount)> SearchAsync(string? keyword, int page, int pageSize);
+        Task<(List<Category> Categories, int TotalCount)> SearchAsync(string? keyword, int page, int pageSize, string? sortField = null, string? sortDir = null);
     }
 
     public class CategoryRepositoryEF : Repository<Category>, ICategoryRepositoryEF
@@ -23,7 +23,7 @@ namespace BaseCore.Repository.EFCore
             return await _dbSet.FirstOrDefaultAsync(c => c.Name.ToLower() == name.ToLower());
         }
 
-        public async Task<(List<Category> Categories, int TotalCount)> SearchAsync(string? keyword, int page, int pageSize)
+        public async Task<(List<Category> Categories, int TotalCount)> SearchAsync(string? keyword, int page, int pageSize, string? sortField = null, string? sortDir = null)
         {
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 100);
@@ -42,9 +42,17 @@ namespace BaseCore.Repository.EFCore
 
             var totalCount = await query.CountAsync();
 
+            var isAscending = string.Equals(sortDir, "asc", StringComparison.OrdinalIgnoreCase);
+
+            query = (sortField?.ToLower()) switch
+            {
+                "name" => isAscending ? query.OrderBy(c => c.Name) : query.OrderByDescending(c => c.Name),
+                "created" => isAscending ? query.OrderBy(c => c.Id) : query.OrderByDescending(c => c.Id),
+                "order" => isAscending ? query.OrderBy(c => c.SortOrder) : query.OrderByDescending(c => c.SortOrder),
+                _ => query.OrderBy(c => c.SortOrder).ThenBy(c => c.Name)
+            };
+
             var categories = await query
-                .OrderBy(c => c.SortOrder)
-                .ThenBy(c => c.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

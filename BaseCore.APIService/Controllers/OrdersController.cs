@@ -68,14 +68,16 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] string? billingPhone,
             [FromQuery] string? orderCode,
             [FromQuery] int? page,
-            [FromQuery] int? pageSize)
+            [FromQuery] int? pageSize,
+            [FromQuery] string? sortField,
+            [FromQuery] string? sortDir)
         {
-            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status) || !string.IsNullOrWhiteSpace(paymentStatus) || !string.IsNullOrWhiteSpace(shippingStatus) || startDate.HasValue || endDate.HasValue || !string.IsNullOrWhiteSpace(billingEmail) || !string.IsNullOrWhiteSpace(billingLastName) || !string.IsNullOrWhiteSpace(billingPhone) || !string.IsNullOrWhiteSpace(orderCode))
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status) || !string.IsNullOrWhiteSpace(paymentStatus) || !string.IsNullOrWhiteSpace(shippingStatus) || startDate.HasValue || endDate.HasValue || !string.IsNullOrWhiteSpace(billingEmail) || !string.IsNullOrWhiteSpace(billingLastName) || !string.IsNullOrWhiteSpace(billingPhone) || !string.IsNullOrWhiteSpace(orderCode) || !string.IsNullOrWhiteSpace(sortField) || !string.IsNullOrWhiteSpace(sortDir))
             {
                 var safePage = Math.Max(1, page ?? 1);
                 var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
                 var (items, totalCount, summary) = await _orderRepository.SearchAllWithDetailsAsync(
-                    keyword, status, paymentStatus, shippingStatus, startDate, endDate, billingEmail, billingLastName, billingPhone, orderCode, safePage, safePageSize);
+                    keyword, status, paymentStatus, shippingStatus, startDate, endDate, billingEmail, billingLastName, billingPhone, orderCode, safePage, safePageSize, sortField, sortDir);
 
                 return Ok(new
                 {

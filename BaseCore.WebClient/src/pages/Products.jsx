@@ -58,6 +58,9 @@ const Products = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
+    const [sortField, setSortField] = useState('created');
+    const [sortDir, setSortDir] = useState('desc');
+    const [savingProduct, setSavingProduct] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalTab, setModalTab] = useState('info'); // 'info', 'variants', 'specs'
     const [editingProduct, setEditingProduct] = useState(null);
@@ -76,7 +79,7 @@ const Products = () => {
 
     useEffect(() => {
         loadProducts();
-    }, [page, keyword, categoryId]);
+    }, [page, keyword, categoryId, sortField, sortDir]);
 
     const firstVariant = (product) => product?.productVariants?.[0] || {};
 
@@ -139,6 +142,8 @@ const Products = () => {
                 manufacturerId: manufacturerId && manufacturerId !== '0' ? manufacturerId : undefined,
                 publishedId: publishedId && publishedId !== '0' ? publishedId : undefined,
                 goDirectlyToSku: goDirectlyToSku || undefined,
+                sortField,
+                sortDir,
                 page,
                 pageSize,
             });
@@ -329,6 +334,7 @@ const Products = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
+        setSavingProduct(true);
 
         if (!formData.categoryId) {
             setError('Please select a category.');
@@ -396,6 +402,8 @@ const Products = () => {
             loadProducts();
         } catch (error) {
             setError(error.response?.data?.message || 'Operation failed');
+        } finally {
+            setSavingProduct(false);
         }
     };
 
@@ -553,12 +561,33 @@ const Products = () => {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Sort by</label>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
+                                                                <option value="created">Created date</option>
+                                                                <option value="name">Product name</option>
+                                                                <option value="price">Price</option>
+                                                                <option value="category">Category</option>
+                                                                <option value="manufacturer">Manufacturer</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
+                                                                <option value="desc">Descending</option>
+                                                                <option value="asc">Ascending</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="row">
                                                 <div className="text-center col-12">
-                                                    <button type="button" id="search-products" className="btn btn-primary btn-search" onClick={handleSearch}>
-                                                        <i className="fas fa-search"></i> Search
+                                                    <button type="button" id="search-products" className="btn btn-primary btn-search" disabled={loading} onClick={handleSearch}>
+                                                        {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                                        Search
                                                     </button>
                                                 </div>
                                             </div>
@@ -760,8 +789,10 @@ const Products = () => {
                                     )}
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                                    <button type="submit" className="btn btn-primary">Save Product</button>
+                                    <button type="button" className="btn btn-secondary" disabled={savingProduct} onClick={closeModal}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary" disabled={savingProduct}>
+                                        {savingProduct ? <><i className="fas fa-spinner fa-spin mr-1"></i>Saving...</> : 'Save Product'}
+                                    </button>
                                 </div>
                             </form>
                         </div>

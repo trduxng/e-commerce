@@ -19,6 +19,10 @@ const Users = () => {
     const [searchRegistrationDateTo, setSearchRegistrationDateTo] = useState('');
     const [selectedCustomerRoleIds, setSelectedCustomerRoleIds] = useState([]); // 1: Admin, 2: Staff, 0: Customer
     
+    // Sort states
+    const [sortField, setSortField] = useState('created');
+    const [sortDir, setSortDir] = useState('desc');
+    
     // Pagination states
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(15);
@@ -38,6 +42,8 @@ const Users = () => {
             const params = new URLSearchParams();
             params.append('page', page);
             params.append('pageSize', pageSize);
+            params.append('sortField', sortField);
+            params.append('sortDir', sortDir);
             if (searchEmail) params.append('email', searchEmail);
             if (searchUsername) params.append('username', searchUsername);
             if (searchFirstName) params.append('firstName', searchFirstName);
@@ -268,13 +274,32 @@ const Users = () => {
                                                         <small className="form-text text-muted">Hold Ctrl to select multiple roles</small>
                                                     </div>
                                                 </div>
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <label className="col-form-label">Sort by</label>
+                                                    </div>
+                                                    <div className="col-md-4">
+                                                        <select className="form-control" value={sortField} onChange={(e) => setSortField(e.target.value)}>
+                                                            <option value="created">Registration date</option>
+                                                            <option value="name">Name</option>
+                                                            <option value="email">Email</option>
+                                                            <option value="role">Role</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="col-md-4">
+                                                        <select className="form-control" value={sortDir} onChange={(e) => setSortDir(e.target.value)}>
+                                                            <option value="desc">Descending</option>
+                                                            <option value="asc">Ascending</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="row">
                                             <div className="text-center col-12">
-                                                <button type="button" onClick={handleSearch} className="btn btn-primary btn-search">
-                                                    <i className="fas fa-search"></i>
-                                                    {' '}Search
+                                                <button type="button" onClick={handleSearch} disabled={loading} className="btn btn-primary btn-search">
+                                                    {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                                    Search
                                                 </button>
                                             </div>
                                         </div>
@@ -334,7 +359,7 @@ const Users = () => {
                                                                         <i className={`fas ${user.isActive ? 'fa-check text-success' : 'fa-times text-danger'}`}></i>
                                                                     </td>
                                                                     <td className="text-center">
-                                                                        <button type="button" className="btn btn-default" onClick={() => alert('Edit User ' + user.id)}>
+                                                                        <button type="button" className="btn btn-default" disabled={loading} onClick={() => alert('Edit User ' + user.id)}>
                                                                             <i className="fas fa-pencil-alt"></i>
                                                                             {' '}Edit
                                                                         </button>

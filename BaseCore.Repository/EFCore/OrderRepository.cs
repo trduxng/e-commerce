@@ -10,12 +10,12 @@ namespace BaseCore.Repository.EFCore
     {
         Task<List<Order>> GetByUserAsync(long userId);
         Task<List<Order>> GetAllWithDetailsAsync();
-        Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(string? keyword, string? status, int page, int pageSize);
+        Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(string? keyword, string? status, int page, int pageSize, string? sortField = null, string? sortDir = null);
         Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
             string? keyword, string? status, string? paymentStatus, string? shippingStatus, 
             DateTime? fromDate, DateTime? toDate, 
             string? billingEmail, string? billingLastName, string? billingPhone, string? orderCode,
-            int page, int pageSize);
+            int page, int pageSize, string? sortField = null, string? sortDir = null);
         Task<Order?> GetWithDetailsAsync(long orderId);
     }
 
@@ -60,9 +60,11 @@ namespace BaseCore.Repository.EFCore
             string? keyword,
             string? status,
             int page,
-            int pageSize)
+            int pageSize,
+            string? sortField = null,
+            string? sortDir = null)
         {
-            return await SearchAllWithDetailsAsync(keyword, status, null, null, null, null, null, null, null, null, page, pageSize);
+            return await SearchAllWithDetailsAsync(keyword, status, null, null, null, null, null, null, null, null, page, pageSize, sortField, sortDir);
         }
 
         public async Task<(List<Order> Orders, int TotalCount, OrderSearchSummary Summary)> SearchAllWithDetailsAsync(
@@ -77,7 +79,9 @@ namespace BaseCore.Repository.EFCore
             string? billingPhone,
             string? orderCode,
             int page,
-            int pageSize)
+            int pageSize,
+            string? sortField = null,
+            string? sortDir = null)
         {
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 100);
@@ -190,8 +194,17 @@ namespace BaseCore.Repository.EFCore
                 ByStatus = byStatus
             };
 
+            var isAscending = string.Equals(sortDir, "asc", StringComparison.OrdinalIgnoreCase);
+
+            query = (sortField?.ToLower()) switch
+            {
+                "total" => isAscending ? query.OrderBy(o => o.TotalAmount) : query.OrderByDescending(o => o.TotalAmount),
+                "ordercode" => isAscending ? query.OrderBy(o => o.OrderCode) : query.OrderByDescending(o => o.OrderCode),
+                "created" => isAscending ? query.OrderBy(o => o.CreatedAt) : query.OrderByDescending(o => o.CreatedAt),
+                _ => query.OrderByDescending(o => o.CreatedAt)
+            };
+
             var orders = await query
-                .OrderByDescending(o => o.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

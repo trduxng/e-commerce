@@ -34,12 +34,14 @@ const Orders = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
+    const [sortField, setSortField] = useState('created');
+    const [sortDir, setSortDir] = useState('desc');
     const [selectedIds, setSelectedIds] = useState([]);
     const [isSearchOpen, setIsSearchOpen] = useState(true);
 
     useEffect(() => {
         loadOrders();
-    }, [page, pageSize]);
+    }, [page, pageSize, sortField, sortDir]);
 
     const loadOrders = async () => {
         setLoading(true);
@@ -51,6 +53,8 @@ const Orders = () => {
                 keyword: billingEmail || billingPhone || billingLastName || undefined, // Temp mapping
                 status: orderStatusIds || undefined,
                 orderCode: goDirectlyToCustomOrderNumber || undefined,
+                sortField,
+                sortDir,
                 page,
                 pageSize,
             });
@@ -273,17 +277,36 @@ const Orders = () => {
                                                         <div className="input-group input-group-short">
                                                             <input type="text" className="form-control" value={goDirectlyToCustomOrderNumber} onChange={e => setGoDirectlyToCustomOrderNumber(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') handleSearch(e); }} />
                                                             <span className="input-group-append">
-                                                                <button type="button" className="btn btn-info btn-flat" onClick={handleSearch}>Go</button>
+                                                                <button type="button" className="btn btn-info btn-flat" disabled={loading} onClick={handleSearch}>Go</button>
                                                             </span>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">Sort by</label></div>
+                                                    </div>
+                                                    <div className="col-md-4">
+                                                        <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
+                                                            <option value="created">Created date</option>
+                                                            <option value="total">Order total</option>
+                                                            <option value="ordercode">Order #</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="col-md-4">
+                                                        <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
+                                                            <option value="desc">Descending</option>
+                                                            <option value="asc">Ascending</option>
+                                                        </select>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="row">
                                             <div className="text-center col-12">
-                                                <button type="button" id="search-orders" className="btn btn-primary btn-search" onClick={handleSearch}>
-                                                    <i className="fas fa-search"></i> Search
+                                                <button type="button" id="search-orders" className="btn btn-primary btn-search" disabled={loading} onClick={handleSearch}>
+                                                    {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                                    Search
                                                 </button>
                                             </div>
                                         </div>

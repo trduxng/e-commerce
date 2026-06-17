@@ -27,13 +27,15 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetAll(
             [FromQuery] string? keyword,
             [FromQuery] int? page,
-            [FromQuery] int? pageSize)
+            [FromQuery] int? pageSize,
+            [FromQuery] string? sortField,
+            [FromQuery] string? sortDir)
         {
-            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword))
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(sortField) || !string.IsNullOrWhiteSpace(sortDir))
             {
                 var safePage = Math.Max(1, page ?? 1);
                 var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
-                var (items, totalCount) = await _categoryRepository.SearchAsync(keyword, safePage, safePageSize);
+                var (items, totalCount) = await _categoryRepository.SearchAsync(keyword, safePage, safePageSize, sortField, sortDir);
 
                 return Ok(new
                 {

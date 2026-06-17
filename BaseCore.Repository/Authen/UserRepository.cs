@@ -30,6 +30,8 @@ namespace BaseCore.Repository.Authen
             int[] userTypes,
             DateTime? registrationFrom,
             DateTime? registrationTo,
+            string sortField,
+            string sortDir,
             int page,
             int pageSize);
     }
@@ -99,7 +101,7 @@ namespace BaseCore.Repository.Authen
 
         public async Task<(List<User> Users, int TotalCount)> SearchAsync(string keyword, int page, int pageSize)
         {
-            return await SearchAsync(keyword, null, null, null, null, null, null, null, null, null, null, null, null, page, pageSize);
+            return await SearchAsync(keyword, null, null, null, null, null, null, null, null, null, null, null, null, "created", "desc", page, pageSize);
         }
 
         public async Task<(List<User> Users, int TotalCount)> SearchAsync(
@@ -116,6 +118,8 @@ namespace BaseCore.Repository.Authen
             int[] userTypes,
             DateTime? registrationFrom,
             DateTime? registrationTo,
+            string sortField,
+            string sortDir,
             int page,
             int pageSize)
         {
@@ -205,8 +209,18 @@ namespace BaseCore.Repository.Authen
 
             var totalCount = await query.CountAsync();
 
+            bool isAsc = string.Equals(sortDir, "asc", StringComparison.OrdinalIgnoreCase);
+
+            query = sortField?.ToLower() switch
+            {
+                "name" => isAsc ? query.OrderBy(u => u.Name) : query.OrderByDescending(u => u.Name),
+                "email" => isAsc ? query.OrderBy(u => u.Email) : query.OrderByDescending(u => u.Email),
+                "role" => isAsc ? query.OrderBy(u => u.Role) : query.OrderByDescending(u => u.Role),
+                "created" => isAsc ? query.OrderBy(u => u.Created) : query.OrderByDescending(u => u.Created),
+                _ => query.OrderByDescending(u => u.Created)
+            };
+
             var users = await query
-                .OrderByDescending(u => u.Created)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

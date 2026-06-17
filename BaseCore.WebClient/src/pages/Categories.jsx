@@ -14,6 +14,9 @@ const Categories = () => {
     const [keyword, setKeyword] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
+    const [sortField, setSortField] = useState('order');
+    const [sortDir, setSortDir] = useState('asc');
+    const [savingCategory, setSavingCategory] = useState(false);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [error, setError] = useState('');
@@ -21,12 +24,12 @@ const Categories = () => {
 
     useEffect(() => {
         loadCategories();
-    }, [keyword, page]);
+    }, [keyword, page, sortField, sortDir]);
 
     const loadCategories = async () => {
         setLoading(true);
         try {
-            const response = await categoryApi.getAll({ keyword, page, pageSize });
+            const response = await categoryApi.getAll({ keyword, page, pageSize, sortField, sortDir });
             const items = Array.isArray(response.data?.items)
                 ? response.data.items
                 : Array.isArray(response.data)
@@ -83,6 +86,7 @@ const Categories = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSavingCategory(true);
 
         try {
             if (editingCategory) {
@@ -98,6 +102,8 @@ const Categories = () => {
             loadCategories();
         } catch (error) {
             setError(error.response?.data?.message || 'Operation failed');
+        } finally {
+            setSavingCategory(false);
         }
     };
 
@@ -152,8 +158,9 @@ const Categories = () => {
                                         />
                                         {keyword && (
                                             <button
-                                                className="btn btn-outline-secondary"
+                                                className="btn btn-outline-secondary mr-2"
                                                 type="button"
+                                                disabled={loading}
                                                 onClick={() => {
                                                     setKeyword('');
                                                     setPage(1);
@@ -162,6 +169,19 @@ const Categories = () => {
                                                 Clear
                                             </button>
                                         )}
+                                        <select className="form-control mr-2" value={sortField} onChange={e => setSortField(e.target.value)}>
+                                            <option value="order">Sort Order</option>
+                                            <option value="name">Name</option>
+                                            <option value="created">Created Date</option>
+                                        </select>
+                                        <select className="form-control mr-2" value={sortDir} onChange={e => setSortDir(e.target.value)}>
+                                            <option value="asc">Ascending</option>
+                                            <option value="desc">Descending</option>
+                                        </select>
+                                        <button className="btn btn-primary" type="button" disabled={loading} onClick={() => loadCategories()}>
+                                            {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                            Search
+                                        </button>
                                     </form>
                                 </div>
                                 <div className="col-md-5 text-right">
@@ -287,11 +307,11 @@ const Categories = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                                    <button type="button" className="btn btn-secondary" disabled={savingCategory} onClick={closeModal}>
                                         Cancel
                                     </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        {editingCategory ? 'Update' : 'Create'}
+                                    <button type="submit" className="btn btn-primary" disabled={savingCategory}>
+                                        {savingCategory ? <><i className="fas fa-spinner fa-spin mr-1"></i>Saving...</> : (editingCategory ? 'Update' : 'Create')}
                                     </button>
                                 </div>
                             </form>
