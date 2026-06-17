@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 using BaseCore.Repository;
+using BaseCore.APIService.Services;
 using System.Security.Claims;
 
 using Microsoft.EntityFrameworkCore;
@@ -161,6 +162,13 @@ namespace BaseCore.APIService.Controllers
                 await _productRepository.UpdateAsync(product);
             }
 
+            var shippingFee = GetShippingFee(dto.ShippingMethod);
+            var couponApplication = await CouponDiscountCalculator.ApplyAsync(_db, dto.CouponCode, totalAmount);
+            if (couponApplication.ErrorMessage != null)
+                return BadRequest(new { message = couponApplication.ErrorMessage });
+
+            var discountAmount = couponApplication.DiscountAmount;
+            const decimal taxAmount = 0;
             var order = new Order
             {
                 OrderCode = $"ORD-{DateTime.Now:yyyy}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
@@ -172,16 +180,19 @@ namespace BaseCore.APIService.Controllers
                 ReceiverPhone = dto.ReceiverPhone ?? "0000000000",
                 ShippingAddressFull = dto.ShippingAddress ?? "",
                 Subtotal = totalAmount,
-                ShippingFee = GetShippingFee(dto.ShippingMethod),
-                DiscountAmount = 0,
-                TaxAmount = 0,
-                TotalAmount = totalAmount + GetShippingFee(dto.ShippingMethod),
+                ShippingFee = shippingFee,
+                DiscountAmount = discountAmount,
+                TaxAmount = taxAmount,
+                TotalAmount = Math.Max(0, totalAmount - discountAmount) + shippingFee + taxAmount,
                 PaymentMethod = dto.PaymentMethod!.Trim().ToLowerInvariant(),
                 PaymentStatus = "pending",
                 OrderStatus = "pending",
-                CouponCode = null,
+                CouponCode = couponApplication.Code,
                 Note = dto.Note
             };
+
+            if (couponApplication.Coupon != null)
+                couponApplication.Coupon.UsedCount += 1;
 
             await _orderRepository.AddAsync(order);
 
@@ -193,7 +204,14 @@ namespace BaseCore.APIService.Controllers
             }
 
             await transaction.CommitAsync();
-            return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order, details = orderDetails });
+            return CreatedAtAction(nameof(GetById), new { id = order.Id }, new
+            {
+                order,
+                details = orderDetails,
+                coupon = couponApplication.Code == null
+                    ? null
+                    : new { code = couponApplication.Code, discountAmount }
+            });
 
         }
 
@@ -386,9 +404,6 @@ namespace BaseCore.APIService.Controllers
             var paymentMethod = dto.PaymentMethod?.Trim().ToLowerInvariant();
             if (paymentMethod is not ("cod" or "banktransfer" or "paypal"))
                 return "Payment method is not supported.";
-
-            if (!string.IsNullOrWhiteSpace(dto.CouponCode))
-                return "Voucher code is not valid.";
 
             return null;
         }

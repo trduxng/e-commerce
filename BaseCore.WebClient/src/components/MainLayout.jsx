@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 const MainLayout = ({ children }) => {
     const location = useLocation();
@@ -30,6 +31,9 @@ const MainLayout = ({ children }) => {
                 </ul>
 
                 <ul className="navbar-nav ml-auto">
+                    <li className="nav-item d-flex align-items-center">
+                        <ThemeToggle className="admin-theme-toggle" />
+                    </li>
                     <li className="nav-item d-flex align-items-center">
                         <span className="nav-link">
                             <i className="far fa-user mr-1"></i>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BaseCore.Entities;
 using BaseCore.Repository;
+using BaseCore.APIService.Services;
 using System.Security.Claims;
 
 namespace BaseCore.APIService.Controllers
@@ -161,6 +162,10 @@ namespace BaseCore.APIService.Controllers
             if (cart.Items.Count == 0)
                 return BadRequest(new { message = "Your cart is empty." });
 
+            var checkoutItems = GetCheckoutItems(cart, dto.CartItemIds, out var selectionMessage);
+            if (selectionMessage != null)
+                return BadRequest(new { message = selectionMessage });
+
             await using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
@@ -168,7 +173,7 @@ namespace BaseCore.APIService.Controllers
                 decimal subtotal = 0;
                 var orderDetails = new List<OrderDetail>();
 
-                foreach (var item in cart.Items)
+                foreach (var item in checkoutItems)
                 {
                     var variant = await _db.ProductVariants
                         .Include(v => v.Product)
@@ -203,7 +208,11 @@ namespace BaseCore.APIService.Controllers
                     return BadRequest(new { message = validationMessage });
 
                 var shippingFee = GetShippingFee(dto.ShippingMethod);
-                const decimal discountAmount = 0;
+                var couponApplication = await CouponDiscountCalculator.ApplyAsync(_db, dto.CouponCode, subtotal);
+                if (couponApplication.ErrorMessage != null)
+                    return BadRequest(new { message = couponApplication.ErrorMessage });
+
+                var discountAmount = couponApplication.DiscountAmount;
                 const decimal taxAmount = 0;
                 var order = new Order
                 {
@@ -219,28 +228,69 @@ namespace BaseCore.APIService.Controllers
                     ShippingFee = shippingFee,
                     DiscountAmount = discountAmount,
                     TaxAmount = taxAmount,
-                    TotalAmount = subtotal + shippingFee,
+                    TotalAmount = Math.Max(0, subtotal - discountAmount) + shippingFee + taxAmount,
                     PaymentMethod = dto.PaymentMethod!.Trim().ToLowerInvariant(),
                     PaymentStatus = "pending",
                     OrderStatus = "pending",
-                    CouponCode = null,
+                    CouponCode = couponApplication.Code,
                     Note = dto.Note,
                     OrderDetails = orderDetails
                 };
 
+                if (couponApplication.Coupon != null)
+                    couponApplication.Coupon.UsedCount += 1;
+
                 _db.Orders.Add(order);
-                _db.CartItems.RemoveRange(cart.Items);
+                _db.CartItems.RemoveRange(checkoutItems);
                 cart.UpdatedAt = DateTime.Now;
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Created($"/api/orders/{order.Id}", new { order, details = orderDetails, cart = BuildCartResponse(await GetOrCreateCart(userId)) });
+                return Created($"/api/orders/{order.Id}", new
+                {
+                    order,
+                    details = orderDetails,
+                    coupon = couponApplication.Code == null
+                        ? null
+                        : new { code = couponApplication.Code, discountAmount },
+                    cart = BuildCartResponse(await GetOrCreateCart(userId))
+                });
             }
             catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        private static List<CartItem> GetCheckoutItems(Cart cart, List<long>? cartItemIds, out string? selectionMessage)
+        {
+            selectionMessage = null;
+            if (cartItemIds == null)
+                return cart.Items.ToList();
+
+            var selectedIds = cartItemIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToHashSet();
+
+            if (selectedIds.Count == 0)
+            {
+                selectionMessage = "Please select at least one product to checkout.";
+                return new List<CartItem>();
+            }
+
+            var checkoutItems = cart.Items
+                .Where(item => selectedIds.Contains(item.Id))
+                .ToList();
+
+            if (checkoutItems.Count != selectedIds.Count)
+            {
+                selectionMessage = "One or more selected cart items were not found.";
+                return new List<CartItem>();
+            }
+
+            return checkoutItems;
         }
 
         private async Task<Cart> GetOrCreateCart(long userId)
@@ -337,9 +387,6 @@ namespace BaseCore.APIService.Controllers
             if (paymentMethod is not ("cod" or "banktransfer" or "paypal"))
                 return "Payment method is not supported.";
 
-            if (!string.IsNullOrWhiteSpace(dto.CouponCode))
-                return "Voucher code is not valid.";
-
             return null;
         }
 
@@ -407,6 +454,8 @@ namespace BaseCore.APIService.Controllers
         public string? PaymentMethod { get; set; }
         public string? ShippingMethod { get; set; }
         public string? CouponCode { get; set; }
+        public List<long>? CartItemIds { get; set; }
         public string? Note { get; set; }
     }
+
 }

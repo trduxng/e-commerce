@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoriteContext";
+import ThemeToggle from "../ThemeToggle";
 
 const Topbar = () => {
   const [keyword, setKeyword] = useState("");
@@ -101,6 +102,7 @@ const Topbar = () => {
               </form>
 
               <div className="compact-header-actions">
+                <ThemeToggle />
                 {isAuthenticated && (
                   <Link to="/favorites" className="cart-button" aria-label="Favorite products">
                     <i className="fas fa-heart"></i>
