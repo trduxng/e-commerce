@@ -41,10 +41,10 @@ const features = [
 ];
 
 const categoryImages = [
-  "/img/cat-1.jpg",
-  "/img/product-6.jpg",
-  "/img/cat-2.jpg",
-  "/img/product-3.jpg",
+  "/img/sg-11134301-82253-mhfmag7x8sncbb.webp",
+  "/img/product-4.jpg",
+  "/img/vn-11134207-81ztc-mm5wbr3xuqro8b.webp",
+  "/img/vn-11134207-81ztc-mp3p9dzmknwte0.webp",
   "/img/cat-4.jpg",
   "/img/product-8.jpg",
 ];
@@ -53,6 +53,7 @@ const Home = () => {
   const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -60,21 +61,33 @@ const Home = () => {
     const loadHomeData = async () => {
       setLoading(true);
       try {
-        const [categoriesResponse, productsResponse] = await Promise.all([
+        const [categoriesResponse, productsResponse, featuredProductsResponse] = await Promise.all([
           categoryApi.getAll(),
-          productApi.getAll({ page: 1, pageSize: 12 }),
+          productApi.getAll({ publishedId: 1, page: 1, pageSize: 12 }),
+          productApi.getAll({
+            publishedId: 1,
+            isFeatured: true,
+            sortField: "id",
+            sortDir: "desc",
+            page: 1,
+            pageSize: 8,
+          }),
         ]);
 
         const apiCategories = normalizeCategoryList(categoriesResponse.data);
-
         const apiProducts = normalizeProductList(productsResponse.data);
+        const apiFeaturedProducts = normalizeProductList(featuredProductsResponse.data)
+          .filter((product) => product.isFeatured && product.isActive !== false)
+          .slice(0, 8);
 
         setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
         setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
+        setFeaturedProducts(apiFeaturedProducts);
         setError("");
       } catch {
         setCategories(sampleCategories);
         setProducts(sampleProducts);
+        setFeaturedProducts(sampleProducts.slice(0, 8));
         setError(
           "Không thể kết nối API, cửa hàng đang hiển thị sản phẩm mẫu."
         );
@@ -89,10 +102,6 @@ const Home = () => {
     loadHomeData();
   }, [toast]);
 
-  const featuredProducts = useMemo(() => {
-    const featured = products.filter((product) => product.isFeatured);
-    return (featured.length > 0 ? featured : products).slice(0, 8);
-  }, [products]);
   const newProducts = useMemo(
     () =>
       [...products]

@@ -104,6 +104,7 @@ const Shop = () => {
           manufacturerApi.getAll({ pageSize: 100 }),
           specificationAttributeApi.getAll(),
           productApi.search({
+            publishedId: 1,
             keyword: keyword || undefined,
             categoryId: categoryId || undefined,
             manufacturerId: manufacturerId || undefined,
@@ -123,12 +124,12 @@ const Shop = () => {
         setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
         setManufacturers(apiManufacturers);
         setSpecAttributes(apiSpecAttrs);
-        setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
+        setProducts(apiProducts.filter((product) => product.isActive !== false));
         
         const apiTotalCount = Number(productsResponse.data?.totalCount);
         const apiTotalPages = Number(productsResponse.data?.totalPages);
-        setTotalCount(productsResponse.data?.totalCount !== undefined && apiProducts.length > 0 ? apiTotalCount : sampleProducts.length);
-        setTotalPages(Number.isFinite(apiTotalPages) && apiProducts.length > 0 ? apiTotalPages : Math.ceil(sampleProducts.length / pageSize));
+        setTotalCount(Number.isFinite(apiTotalCount) ? apiTotalCount : apiProducts.length);
+        setTotalPages(Number.isFinite(apiTotalPages) ? apiTotalPages : Math.ceil(apiProducts.length / pageSize));
         setError("");
       } catch {
         const filteredProducts = sampleProducts.filter((product) => {

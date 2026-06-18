@@ -255,7 +255,7 @@ const Products = () => {
         if (product) {
             let fullProduct = product;
             try {
-                const response = await productApi.getById(product.id);
+                const response = await productApi.getById(product.id, { includeInactive: true });
                 fullProduct = response.data;
             } catch {
                 fullProduct = product;

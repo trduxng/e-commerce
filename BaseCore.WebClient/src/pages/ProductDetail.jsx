@@ -52,12 +52,26 @@ const ProductDetail = () => {
         setError("");
 
         const relatedResponse = await productApi.search({
+          publishedId: 1,
           categoryId: loadedProduct.categoryId || loadedProduct.category?.id || undefined,
           page: 1,
           pageSize: 5,
         });
-        setRelatedProducts(normalizeProductList(relatedResponse.data).filter((item) => Number(item.id) !== Number(id)).slice(0, 4));
-      } catch {
+        setRelatedProducts(
+          normalizeProductList(relatedResponse.data)
+            .filter((item) => item.isActive !== false && Number(item.id) !== Number(id))
+            .slice(0, 4)
+        );
+      } catch (requestError) {
+        if (requestError.response?.status === 404) {
+          setProduct(null);
+          setRelatedProducts([]);
+          setSelectedVariantId(null);
+          setActiveImage("");
+          setError("Sản phẩm không tồn tại hoặc hiện đã ngừng bán.");
+          return;
+        }
+
         const demoProduct = sampleProducts.find((item) => Number(item.id) === Number(id)) || sampleProducts[0];
         setProduct(demoProduct);
         setRelatedProducts(sampleProducts.filter((item) => Number(item.id) !== Number(demoProduct.id)).slice(0, 4));
@@ -240,7 +254,7 @@ const ProductDetail = () => {
   }
 
   if (!product) {
-    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">Không tìm thấy sản phẩm.</div></div>;
+    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">{error || "Không tìm thấy sản phẩm."}</div></div>;
   }
 
   return (
