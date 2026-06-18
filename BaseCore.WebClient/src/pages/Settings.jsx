@@ -38,6 +38,7 @@ const Settings = () => {
         setSettings(prev => ({ ...prev, [name]: value }));
     };
 
+    // Lưu cấu hình cửa hàng rồi yêu cầu SettingsContext tải lại cho toàn bộ website.
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);

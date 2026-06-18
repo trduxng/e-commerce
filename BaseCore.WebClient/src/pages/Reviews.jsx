@@ -29,6 +29,7 @@ const Reviews = () => {
         }
     };
 
+    // Duyệt/ẩn review ở backend rồi cập nhật trạng thái ngay trên bảng.
     const handleStatusChange = async (id, newStatus) => {
         try {
             await reviewApi.updateStatus(id, newStatus);

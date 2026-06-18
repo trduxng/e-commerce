@@ -34,6 +34,7 @@ const Revenue = () => {
         loadOrders();
     }, [keyword, statusFilter, page]);
 
+    // Trang doanh thu tái sử dụng API tìm kiếm đơn và summary đã tính ở backend.
     const loadOrders = async () => {
         setLoading(true);
         setError('');

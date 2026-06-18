@@ -15,6 +15,7 @@ const Login = () => {
     const adminPaths = ['/admin'];
     const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
+    // AuthContext lưu token/user; PublicRoute sẽ điều hướng tới returnUrl phù hợp.
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');

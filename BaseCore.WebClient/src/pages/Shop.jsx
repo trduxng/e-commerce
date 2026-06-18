@@ -32,6 +32,7 @@ const normalizePrice = (value) => {
 };
 
 const buildPageItems = (currentPage, totalPages) => {
+  // Chỉ hiển thị các trang gần trang hiện tại và chèn dấu ... cho khoảng bị rút gọn.
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
 
   const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
@@ -87,6 +88,7 @@ const Shop = () => {
       : "";
 
   useEffect(() => {
+    // Đồng bộ ô nhập giá với URL để nút Back/Forward của trình duyệt hoạt động đúng.
     setPriceDraft({ min: minPrice, max: maxPrice });
   }, [minPrice, maxPrice]);
 
@@ -99,6 +101,7 @@ const Shop = () => {
             if (key.startsWith('s_')) specFilters[key] = value;
         });
 
+        // Tải metadata bộ lọc và danh sách sản phẩm song song để giảm thời gian chờ.
         const [categoriesResponse, manufacturersResponse, specAttrResponse, productsResponse] = await Promise.all([
           categoryApi.getAll(),
           manufacturerApi.getAll({ pageSize: 100 }),
@@ -132,6 +135,7 @@ const Shop = () => {
         setTotalPages(Number.isFinite(apiTotalPages) ? apiTotalPages : Math.ceil(apiProducts.length / pageSize));
         setError("");
       } catch {
+        // Dùng dữ liệu mẫu để trang vẫn sử dụng được khi API tạm thời không kết nối.
         const filteredProducts = sampleProducts.filter((product) => {
           const productName = String(product.name || "").toLowerCase();
           const productDescription = String(product.description || "").toLowerCase();
@@ -161,6 +165,7 @@ const Shop = () => {
   }, [keyword, categoryId, manufacturerId, searchParams, minPrice, maxPrice, page, toast]);
 
   const visibleProducts = useMemo(() => {
+    // Sort phía client chỉ áp dụng trên trang sản phẩm hiện tại đã nhận từ server.
     return [...products].sort((first, second) => {
       if (sort === "price-asc") return getProductPrice(first) - getProductPrice(second);
       if (sort === "price-desc") return getProductPrice(second) - getProductPrice(first);
@@ -173,6 +178,7 @@ const Shop = () => {
   }, [products, sort]);
 
   const updateParams = (updates) => {
+    // URL là nguồn trạng thái cho bộ lọc/phân trang, giúp chia sẻ hoặc tải lại đúng kết quả.
     const params = new URLSearchParams(searchParams);
     Object.entries(updates).forEach(([key, value]) => {
       if (value === undefined || value === null || value === "") params.delete(key);
@@ -198,6 +204,7 @@ const Shop = () => {
   };
 
   const updateSpecification = (attrId, value) => {
+    // Mỗi thuộc tính được lưu dạng s_{id}=value1,value2 để backend dựng specificationFilters.
     const params = new URLSearchParams(searchParams);
     const key = `s_${attrId}`;
     const currentValues = params.get(key)?.split(',') || [];

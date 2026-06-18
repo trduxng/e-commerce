@@ -45,6 +45,7 @@ const MyOrders = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
+    // orderId trên URL cho phép tự mở đơn vừa tạo sau khi checkout thành công.
     loadOrders(searchParams.get("orderId"));
   }, []);
 
@@ -75,6 +76,7 @@ const MyOrders = () => {
     setSearchParams(nextParams, { replace: true });
   };
 
+  // Tải lại chi tiết để có đầy đủ OrderDetail và trạng thái đánh giá mới nhất.
   const loadOrderDetail = async (order) => {
     setSelectedOrder(order);
     setDetailLoading(true);
@@ -115,6 +117,7 @@ const MyOrders = () => {
     }
   };
 
+  // Hủy đơn cập nhật đồng thời danh sách và modal đang mở mà không tải lại toàn trang.
   const cancelOrder = async (order) => {
     if (!window.confirm(`Bạn có chắc muốn hủy đơn hàng ${order.orderCode} không?`)) return;
 
@@ -141,6 +144,7 @@ const MyOrders = () => {
     }
   };
 
+  // Chỉ đơn đã giao mới được backend chấp nhận yêu cầu trả hàng.
   const requestReturn = async (order) => {
     if (!window.confirm(`Bạn có chắc muốn yêu cầu trả đơn hàng ${order.orderCode} không?`)) return;
 
@@ -164,6 +168,7 @@ const MyOrders = () => {
     }
   };
 
+  // Review gắn với OrderDetail để mỗi sản phẩm đã mua chỉ được đánh giá một lần.
   const openReview = (order, detail) => {
     if (detail.isReviewed) {
       toast.info("Bạn đã đánh giá đơn hàng này rồi.");
@@ -193,6 +198,7 @@ const MyOrders = () => {
     setReviewTarget(null);
   };
 
+  // Đánh dấu local ngay sau khi gửi thành công để nút đánh giá biến mất tức thì.
   const markDetailReviewed = (order, orderId, billDetailId, reviewId) => {
     if (!order || Number(order.id) !== Number(orderId)) return order;
 

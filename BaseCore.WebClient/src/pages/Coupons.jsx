@@ -49,6 +49,7 @@ const Coupons = () => {
         }
     };
 
+    // Chuẩn hóa number/date trước khi gửi để backend kiểm tra quy tắc coupon.
     const handleSave = async (e) => {
         e.preventDefault();
         const payload = {
@@ -84,6 +85,7 @@ const Coupons = () => {
         }
     };
 
+    // Chuyển ngày ISO từ API về định dạng yyyy-MM-dd mà input date hiểu được.
     const openModal = (coupon = null) => {
         if (coupon) {
             setEditingCoupon(coupon);

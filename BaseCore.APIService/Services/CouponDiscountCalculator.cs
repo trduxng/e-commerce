@@ -12,6 +12,7 @@ namespace BaseCore.APIService.Services
             decimal orderValue,
             bool requireCode = false)
         {
+            // Dùng chung cho API xem trước và hai luồng tạo đơn để tránh lệch cách tính.
             var code = couponCode?.Trim();
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -57,6 +58,7 @@ namespace BaseCore.APIService.Services
                 _ => 0
             };
 
+            // Giới hạn trần giảm giá và không bao giờ giảm vượt quá giá trị đơn.
             if (coupon.MaxDiscountAmount.HasValue && coupon.MaxDiscountAmount.Value > 0)
                 discount = Math.Min(discount, coupon.MaxDiscountAmount.Value);
 

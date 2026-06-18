@@ -12,6 +12,7 @@ const CurrentCarts = () => {
 
     useEffect(() => { loadCarts(); }, [page]);
 
+    // Màn hình chỉ dành cho admin để quan sát các giỏ đang còn sản phẩm.
     const loadCarts = async () => {
         setLoading(true);
         try {

@@ -126,6 +126,7 @@ namespace BaseCore.APIService.Controllers
             if (category == null)
                 return NotFound(new { message = "Category not found" });
 
+            // Vô hiệu hóa thay vì xóa vật lý để sản phẩm/lịch sử vẫn giữ quan hệ danh mục.
             category.IsActive = false;
             await _categoryRepository.UpdateAsync(category);
             return Ok(new { message = "Category deleted successfully" });
@@ -133,6 +134,7 @@ namespace BaseCore.APIService.Controllers
 
         private static string Slugify(string value)
         {
+            // Slug mặc định được sinh từ tên khi client không cung cấp.
             var slug = new string(value.Trim().ToLowerInvariant()
                 .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
                 .ToArray());

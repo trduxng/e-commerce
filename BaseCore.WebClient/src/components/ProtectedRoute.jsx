@@ -17,10 +17,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     }
 
     if (!isAuthenticated) {
+        // Ghi nhớ trang hiện tại để quay lại đúng luồng sau khi đăng nhập.
         const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
         return <Navigate to={`/login?returnUrl=${returnUrl}`} replace />;
     }
 
+    // Route quản trị được bảo vệ thêm bằng role, không chỉ trạng thái đăng nhập.
     if (adminOnly && !isAdmin()) {
         return <Navigate to="/" replace />;
     }

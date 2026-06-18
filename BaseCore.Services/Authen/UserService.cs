@@ -54,7 +54,7 @@ namespace BaseCore.Services.Authen
             if (user == null)
                 return null;
 
-            // 🔥 So sánh trực tiếp (bỏ hash)
+            // SECURITY TODO: dự án hiện so sánh mật khẩu plain text; production phải dùng password hash.
             if (user.Password != password)
             {
                 Console.WriteLine($"Login fail: {username}");
@@ -77,8 +77,9 @@ namespace BaseCore.Services.Authen
 
         public async Task<User> Create(User user, string password)
         {
-            user.Password = password; // lưu plain text
-            user.Salt = null;         // không dùng salt nữa
+            // SECURITY TODO: hiện lưu plain text để tương thích dữ liệu cũ; cần chuyển sang hash + salt.
+            user.Password = password;
+            user.Salt = null;
 
             user.Created = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
@@ -92,7 +93,8 @@ namespace BaseCore.Services.Authen
         {
             if (!string.IsNullOrEmpty(password))
             {
-                user.Password = password; // lưu trực tiếp
+                // Chỉ thay mật khẩu khi admin thực sự gửi giá trị mới.
+                user.Password = password;
                 user.Salt = null;
             }
 

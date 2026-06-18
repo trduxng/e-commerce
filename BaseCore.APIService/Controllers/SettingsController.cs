@@ -18,6 +18,7 @@ namespace BaseCore.APIService.Controllers
         [HttpGet]
         public IActionResult GetSettings()
         {
+            // Cấu hình cửa hàng lưu bằng JSON; thiếu/hỏng file thì trả về giá trị mặc định.
             if (!System.IO.File.Exists(_settingsFilePath))
             {
                 return Ok(new StoreSettingsDto());
@@ -39,6 +40,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult UpdateSettings([FromBody] StoreSettingsDto settings)
         {
+            // Ghi đè toàn bộ file vì frontend luôn gửi trạng thái cấu hình hoàn chỉnh.
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
             System.IO.File.WriteAllText(_settingsFilePath, json);
             return Ok(settings);

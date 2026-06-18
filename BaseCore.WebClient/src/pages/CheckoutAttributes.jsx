@@ -22,6 +22,7 @@ const CheckoutAttributes = () => {
         }
     };
 
+    // Cấu hình dịch vụ bổ sung và các mức phụ phí hiển thị tại checkout.
     const handleSave = async (e) => {
         e.preventDefault();
         try {

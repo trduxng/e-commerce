@@ -57,6 +57,7 @@ const Dashboard = () => {
         return getListCount(data);
     };
 
+    // Dashboard gom nhiều endpoint độc lập và tải song song để dựng số liệu tổng quan.
     const loadStats = async () => {
         try {
             const [productsRes, categoriesRes] = await Promise.all([
@@ -111,6 +112,7 @@ const Dashboard = () => {
 
     const canModifyOrder = (order) => order.orderStatus === 'pending';
 
+    // Chỉ thông tin giao nhận của đơn pending được phép chỉnh sửa.
     const startEditOrder = (order) => {
         setOrderError('');
         setEditingOrder(order);
@@ -159,6 +161,7 @@ const Dashboard = () => {
         }
     };
 
+    // Backend quyết định trạng thái nào được xóa và có cần hoàn tồn kho hay không.
     const deleteOrder = async (order) => {
         if (!window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.orderCode}?`)) return;
 
@@ -173,6 +176,7 @@ const Dashboard = () => {
         }
     };
 
+    // Thao tác quản trị thay đổi vòng đời đơn hàng.
     const updateOrderStatus = async (orderId, status) => {
         setUpdatingStatusId(orderId);
         setOrderError('');

@@ -29,6 +29,7 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const cartItemIdsRef = useRef(new Set());
 
+  // Áp dụng response mới nhưng vẫn giữ lựa chọn cũ; sản phẩm mới thêm được tự động chọn.
   const applyCartResponse = (data) => {
     const nextItems = normalizeItems(data);
     const nextIds = nextItems
@@ -47,6 +48,7 @@ export const CartProvider = ({ children }) => {
     cartItemIdsRef.current = new Set(nextIds.map(toSelectionKey));
   };
 
+  // Giỏ hàng chỉ tồn tại với user đăng nhập; đổi user sẽ tải lại đúng giỏ từ backend.
   const reloadCart = async () => {
     if (authLoading) return;
     if (!user) {
@@ -73,6 +75,7 @@ export const CartProvider = ({ children }) => {
     reloadCart();
   }, [authLoading, user?.userId, user?.id, user?.username, user?.email]);
 
+  // Thêm đúng biến thể sản phẩm; backend sẽ kiểm tra lại trạng thái và tồn kho.
   const addToCart = async (product, quantity = 1, productVariantId = null) => {
     if (!user) {
       return { success: false, message: "Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ hàng." };
@@ -100,6 +103,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Cập nhật server trước rồi dùng response làm nguồn dữ liệu mới cho toàn bộ giỏ.
   const updateQuantity = async (id, quantity) => {
     const safeQuantity = Number(quantity);
     if (!Number.isFinite(safeQuantity) || safeQuantity < 1) {
@@ -151,6 +155,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Các tổng tiền ở context phục vụ hiển thị nhanh; backend vẫn tính lại khi checkout.
   const totals = useMemo(() => {
     const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
     const shipping = subtotal > 0 ? 30000 : 0;
@@ -174,6 +179,7 @@ export const CartProvider = ({ children }) => {
     [selectedCartItemIds]
   );
 
+  // Tách riêng danh sách/tổng tiền được chọn để hỗ trợ thanh toán một phần giỏ hàng.
   const selectedItems = useMemo(
     () => items.filter((item) => selectedCartItemIdSet.has(toSelectionKey(getCartItemId(item)))),
     [items, selectedCartItemIdSet]
@@ -193,6 +199,7 @@ export const CartProvider = ({ children }) => {
     };
   }, [selectedItems]);
 
+  // Selection chỉ lưu cartItemId vì đây là ID backend yêu cầu khi checkout.
   const toggleCartItemSelection = (cartItemId, checked) => {
     if (cartItemId === null || cartItemId === undefined) return;
     setSelectedCartItemIds((currentIds) => {

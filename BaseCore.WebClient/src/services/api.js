@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = '/api';
 
-// Create axios instance
+// Axios dùng chung cho toàn bộ frontend; ApiGateway xử lý tiền tố /api.
 const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -10,7 +10,7 @@ const api = axios.create({
     },
 });
 
-// Add token to requests
+// Tự động đính kèm JWT cho mọi request cần xác thực.
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -22,7 +22,7 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Handle response errors
+// GET được thử lại tối đa hai lần khi lỗi mạng/server; lỗi 401 sẽ kết thúc phiên đăng nhập.
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -34,6 +34,7 @@ api.interceptors.response.use(
             (config.__retryCount || 0) < 2;
 
         if (shouldRetry) {
+            // Tăng thời gian chờ nhẹ giữa các lần thử để tránh gọi dồn dập.
             config.__retryCount = (config.__retryCount || 0) + 1;
             await new Promise((resolve) => setTimeout(resolve, 300 * config.__retryCount));
             return api(config);

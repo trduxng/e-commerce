@@ -22,6 +22,7 @@ namespace BaseCore.APIService.Controllers
         [HttpGet]
         public async Task<ActionResult<object>> GetActiveCarts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
+            // Chỉ lấy giỏ còn item và tính giá trị theo giá variant hiện tại để admin theo dõi.
             var query = _context.Carts
                 .Include(c => c.User)
                 .Include(c => c.Items)

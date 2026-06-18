@@ -44,11 +44,13 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
+            // Khách hàng luôn chỉ thấy sản phẩm active; chỉ Admin được lọc cả sản phẩm ẩn.
             if (!User.IsInRole("Admin"))
             {
                 publishedId = 1;
             }
 
+            // Query dạng s_{attributeId}=value1,value2 được chuyển thành bộ lọc thông số động.
             var specFilters = new Dictionary<int, List<string>>();
             foreach (var key in Request.Query.Keys)
             {
@@ -113,6 +115,7 @@ namespace BaseCore.APIService.Controllers
             if (category == null)
                 return BadRequest(new { message = "Category not found" });
 
+            // Luôn chuẩn hóa về danh sách variant, kể cả form cũ chỉ gửi một SKU/stock.
             var variants = BuildCreateVariants(dto, out var validationError);
             if (validationError != null)
                 return BadRequest(new { message = validationError });
@@ -173,6 +176,7 @@ namespace BaseCore.APIService.Controllers
 
             if (dto.Variants != null)
             {
+                // Payload variant mới có thể thêm, sửa và vô hiệu hóa variant cũ trong một lần cập nhật.
                 var validationError = ApplyVariantUpdates(product, dto);
                 if (validationError != null)
                     return BadRequest(new { message = validationError });
@@ -221,6 +225,7 @@ namespace BaseCore.APIService.Controllers
             if (product == null)
                 return NotFound(new { message = "Product not found" });
 
+            // Soft-delete để OrderDetail cũ vẫn truy xuất được ProductVariant liên quan.
             product.IsActive = false;
             product.DeletedAt = DateTime.Now;
             await _productRepository.UpdateAsync(product);
@@ -247,10 +252,10 @@ namespace BaseCore.APIService.Controllers
 
             if (product == null) return NotFound();
 
-            // Remove existing specs
+            // Thay toàn bộ danh sách giúp frontend gửi đúng trạng thái cuối của form.
             _context.ProductSpecifications.RemoveRange(product.ProductSpecifications);
 
-            // Add new specs
+            // Tạo lại các specification được người quản trị giữ lại/chỉnh sửa.
             if (specs != null)
             {
                 foreach (var spec in specs)
@@ -282,6 +287,7 @@ namespace BaseCore.APIService.Controllers
 
         private static List<ProductVariant> BuildCreateVariants(ProductCreateDto dto, out string? validationError)
         {
+            // Hỗ trợ cả DTO mới nhiều variant và DTO cũ một variant.
             var variantDtos = dto.Variants?.Count > 0
                 ? dto.Variants
                 : new List<ProductVariantDto>
@@ -332,6 +338,7 @@ namespace BaseCore.APIService.Controllers
             if (validationError != null)
                 return validationError;
 
+            // ID variant phải thuộc product hiện tại; variant bị bỏ khỏi payload sẽ được vô hiệu hóa.
             var existingById = product.ProductVariants.ToDictionary(variant => variant.Id);
             var postedExistingIds = new HashSet<long>();
 
@@ -380,6 +387,7 @@ namespace BaseCore.APIService.Controllers
             bool requireActiveVariant,
             out List<ProductVariantDto> normalizedVariants)
         {
+            // Kiểm tra invariant quan trọng trước khi EF thay đổi entity graph.
             normalizedVariants = variantDtos;
             if (variantDtos.Count == 0)
                 return "Product must contain at least one variant.";

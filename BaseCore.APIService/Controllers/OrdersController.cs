@@ -126,6 +126,7 @@ namespace BaseCore.APIService.Controllers
             if (validationMessage != null)
                 return BadRequest(new { message = validationMessage });
 
+            // Luồng Mua ngay tạo đơn trực tiếp, nhưng vẫn phải bảo vệ trừ kho và tạo chi tiết bằng transaction.
             await using var transaction = await _db.Database.BeginTransactionAsync();
 
             // Validate products and calculate total
@@ -137,6 +138,7 @@ namespace BaseCore.APIService.Controllers
                 if (item.Quantity <= 0)
                     return BadRequest(new { message = "Quantity must be greater than zero" });
 
+                // Lấy dữ liệu catalog hiện tại thay vì tin giá/tồn kho từ payload frontend.
                 var product = await _productRepository.GetProductWithVariantsAsync(item.ProductId);
                 if (product == null)
                     return BadRequest(new { message = $"Product {item.ProductId} not found" });
@@ -168,12 +170,14 @@ namespace BaseCore.APIService.Controllers
                     TotalPrice = unitPrice * item.Quantity
                 });
 
+                // Giữ tồn kho và SoldCount đồng bộ với từng dòng đơn.
                 variant.StockQuantity -= item.Quantity;
                 product.SoldCount += item.Quantity;
                 await _productRepository.UpdateAsync(product);
             }
 
             var shippingFee = GetShippingFee(dto.ShippingMethod);
+            // Coupon được tính lại trên tổng tiền thật của các variant đã xác thực.
             var couponApplication = await CouponDiscountCalculator.ApplyAsync(_db, dto.CouponCode, totalAmount);
             if (couponApplication.ErrorMessage != null)
                 return BadRequest(new { message = couponApplication.ErrorMessage });
@@ -307,6 +311,7 @@ namespace BaseCore.APIService.Controllers
             if (currentStatus == "cancelled")
                 return Ok(new { message = "Order already cancelled", order });
 
+            // Hủy đơn hoàn lại tồn kho và giảm SoldCount theo các OrderDetail đã lưu.
             await RestoreOrderStock(id);
 
             order.OrderStatus = "cancelled";
@@ -351,6 +356,7 @@ namespace BaseCore.APIService.Controllers
 
         private async Task PopulateReviewStatus(IEnumerable<Order> orders)
         {
+            // Ghép review theo OrderDetail để frontend biết dòng nào đã được đánh giá.
             var details = orders
                 .SelectMany(order => order.OrderDetails)
                 .ToList();
@@ -383,11 +389,13 @@ namespace BaseCore.APIService.Controllers
 
         private bool CanAccessOrder(Order order)
         {
+            // Admin xem được mọi đơn; customer chỉ được thao tác trên đơn của chính mình.
             return IsAdmin() || (TryGetCurrentUserId(out var userId) && order.UserId == userId);
         }
 
         private async Task RestoreOrderStock(long orderId)
         {
+            // Dùng snapshot số lượng trong OrderDetail để hoàn kho chính xác.
             var details = await _orderDetailRepository.GetByOrderAsync(orderId);
             foreach (var detail in details)
             {

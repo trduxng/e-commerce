@@ -29,6 +29,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
   const categoryName = product.category?.name || product.categoryName || "BaseShop";
   const favorite = isFavorite(product.id);
 
+  // Yêu thích yêu cầu đăng nhập; giữ returnUrl để người dùng quay lại đúng trang.
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
@@ -46,6 +47,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
     }
   };
 
+  // Card thêm số lượng mặc định là 1; chọn biến thể chi tiết được xử lý ở ProductDetail.
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);

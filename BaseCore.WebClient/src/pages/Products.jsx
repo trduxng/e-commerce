@@ -86,6 +86,7 @@ const Products = () => {
     const getVariantPreviewImage = (variant, fallback = '') =>
         variant?.imageUrl || fallback || '/img/product-1.jpg';
 
+    // Metadata này dùng để dựng form thông số kỹ thuật động cho sản phẩm.
     const loadSpecAttributes = async () => {
         try {
             const response = await specificationAttributeApi.getAll();
@@ -132,6 +133,7 @@ const Products = () => {
         }
     };
 
+    // Bộ lọc và phân trang được gửi lên backend; frontend chỉ giữ dữ liệu của trang hiện tại.
     const loadProducts = async () => {
         setLoading(true);
         try {
@@ -248,6 +250,7 @@ const Products = () => {
         }
     };
 
+    // Cùng một modal phục vụ tạo mới và chỉnh sửa, đồng thời chuẩn hóa variant/specification vào form.
     const openModal = async (product = null) => {
         setError('');
         const availableCategories = categories.length > 0 ? categories : await loadCategories();
@@ -331,6 +334,7 @@ const Products = () => {
         setError('');
     };
 
+    // Chuyển dữ liệu chuỗi từ input thành kiểu số/null đúng với DTO backend.
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
@@ -407,6 +411,7 @@ const Products = () => {
         }
     };
 
+    // Backend thực hiện soft-delete để giữ liên kết với lịch sử đơn hàng.
     const handleDelete = async (id) => {
         if (!window.confirm('Stop selling this product?')) return;
         try {

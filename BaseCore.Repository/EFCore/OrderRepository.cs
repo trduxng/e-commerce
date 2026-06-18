@@ -83,6 +83,7 @@ namespace BaseCore.Repository.EFCore
             string? sortField = null,
             string? sortDir = null)
         {
+            // Cùng một query filter được dùng cho bảng và summary để các con số luôn khớp nhau.
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 100);
 
@@ -177,6 +178,7 @@ namespace BaseCore.Repository.EFCore
             var today = DateTime.Today;
             var tomorrow = today.AddDays(1);
 
+            // Doanh thu loại đơn đã hủy nhưng vẫn giữ chúng trong tổng số/báo cáo trạng thái.
             var validOrdersQuery = query.Where(o => o.OrderStatus != "cancelled");
             var byStatus = await query
                 .GroupBy(o => o.OrderStatus)

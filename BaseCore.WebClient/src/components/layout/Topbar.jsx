@@ -49,6 +49,7 @@ const Topbar = () => {
     }, 500);
   };
 
+  // Đưa từ khóa lên URL của Shop để trang danh mục thực hiện tìm kiếm.
   const handleSearch = (event) => {
     event.preventDefault();
     if (timeoutRef.current) {

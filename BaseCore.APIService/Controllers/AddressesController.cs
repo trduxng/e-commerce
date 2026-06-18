@@ -44,6 +44,7 @@ namespace BaseCore.APIService.Controllers
             if (validationMessage != null)
                 return BadRequest(new { message = validationMessage });
 
+            // Địa chỉ đầu tiên tự động trở thành mặc định.
             var hasExistingAddress = await _db.UserAddresses.AnyAsync(address => address.UserId == userId);
             var shouldSetDefault = dto.IsDefault || !hasExistingAddress;
 
@@ -137,6 +138,7 @@ namespace BaseCore.APIService.Controllers
 
             if (wasDefault)
             {
+                // Nếu xóa địa chỉ mặc định, chọn địa chỉ còn lại mới nhất làm mặc định mới.
                 var nextAddress = await _db.UserAddresses
                     .Where(item => item.UserId == userId)
                     .OrderByDescending(item => item.CreatedAt)
@@ -154,6 +156,7 @@ namespace BaseCore.APIService.Controllers
 
         private async Task ClearDefaultAddress(long userId)
         {
+            // Bảo đảm tại một thời điểm user chỉ có tối đa một địa chỉ mặc định.
             var defaultAddresses = await _db.UserAddresses
                 .Where(address => address.UserId == userId && address.IsDefault)
                 .ToListAsync();

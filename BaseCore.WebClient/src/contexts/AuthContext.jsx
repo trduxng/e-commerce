@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check for stored user on mount
+        // Khôi phục phiên đăng nhập từ localStorage khi ứng dụng được tải lại.
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
         if (storedUser && token) {
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true, user: userData };
         } catch (error) {
-            // Fallback mock login for development / demo when backend is down
+            // Tài khoản mock chỉ phục vụ demo khi backend không hoạt động.
             if ((username === 'admin' && password === 'admin123') || (username === 'admin@gmail.com' && password === '123')) {
                 const mockUserData = {
                     id: 1,
@@ -69,12 +69,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
+        // Xóa đồng thời token và dữ liệu user để các context phụ thuộc tự reset.
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
     };
 
     const updateStoredUser = (updates) => {
+        // Đồng bộ thay đổi hồ sơ vào cả React state và localStorage.
         setUser((current) => {
             const nextUser = { ...current, ...updates };
             localStorage.setItem('user', JSON.stringify(nextUser));

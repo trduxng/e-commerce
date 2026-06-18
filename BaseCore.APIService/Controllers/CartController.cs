@@ -40,12 +40,14 @@ namespace BaseCore.APIService.Controllers
             if (dto.Quantity <= 0)
                 return BadRequest(new { message = "Quantity must be greater than zero" });
 
+            // Không tin product/variant từ client; luôn tải lại biến thể hợp lệ từ database.
             var productResult = await GetProductVariant(dto.ProductId, dto.ProductVariantId);
             if (productResult == null)
                 return BadRequest(new { message = "Product not found or unavailable" });
 
             var (_, variant) = productResult.Value;
             var cart = await GetOrCreateCart(userId);
+            // Mỗi biến thể chỉ có một dòng trong giỏ; thêm lần nữa sẽ cộng dồn số lượng.
             var existing = cart.Items.FirstOrDefault(item => item.ProductVariantId == variant.Id);
             var nextQuantity = (existing?.Quantity ?? 0) + dto.Quantity;
 
@@ -58,6 +60,7 @@ namespace BaseCore.APIService.Controllers
             if (existing == null)
             {
                 var unitPrice = variant.SalePrice ?? variant.Price;
+                // Snapshot giữ thông tin lúc thêm giỏ để UI ổn định khi sản phẩm thay đổi sau đó.
                 _db.CartItems.Add(new CartItem
                 {
                     CartId = cart.Id,
@@ -96,6 +99,7 @@ namespace BaseCore.APIService.Controllers
                 return BadRequest(new { message = "Quantity must be at least 1." });
 
             var cart = await GetOrCreateCart(userId);
+            // itemKey hỗ trợ ID biến thể, CartItem hoặc Product để tương thích các client cũ.
             var existing = FindCartItem(cart, itemKey);
             if (existing == null)
                 return NotFound(new { message = "Cart item not found" });
@@ -162,10 +166,12 @@ namespace BaseCore.APIService.Controllers
             if (cart.Items.Count == 0)
                 return BadRequest(new { message = "Your cart is empty." });
 
+            // Chỉ lấy các CartItem thuộc đúng giỏ hiện tại, tránh checkout ID của user khác.
             var checkoutItems = GetCheckoutItems(cart, dto.CartItemIds, out var selectionMessage);
             if (selectionMessage != null)
                 return BadRequest(new { message = selectionMessage });
 
+            // Tạo đơn, trừ kho và xóa giỏ phải thành công hoặc rollback cùng nhau.
             await using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
@@ -175,6 +181,7 @@ namespace BaseCore.APIService.Controllers
 
                 foreach (var item in checkoutItems)
                 {
+                    // Kiểm tra lại sản phẩm, giá và tồn kho tại thời điểm checkout.
                     var variant = await _db.ProductVariants
                         .Include(v => v.Product)
                         .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId);
@@ -189,6 +196,7 @@ namespace BaseCore.APIService.Controllers
                     subtotal += unitPrice * item.Quantity;
                     orderDetails.Add(new OrderDetail
                     {
+                        // OrderDetail lưu snapshot để lịch sử đơn không đổi theo catalog hiện tại.
                         ProductVariantId = variant.Id,
                         ProductNameSnapshot = variant.Product.Name,
                         SizeSnapshot = variant.Size,
@@ -199,6 +207,7 @@ namespace BaseCore.APIService.Controllers
                         TotalPrice = unitPrice * item.Quantity
                     });
 
+                    // Chỉ trừ kho sau khi toàn bộ điều kiện của dòng sản phẩm đã hợp lệ.
                     variant.StockQuantity -= item.Quantity;
                     variant.Product.SoldCount += item.Quantity;
                 }
@@ -208,6 +217,7 @@ namespace BaseCore.APIService.Controllers
                     return BadRequest(new { message = validationMessage });
 
                 var shippingFee = GetShippingFee(dto.ShippingMethod);
+                // Mã giảm giá từ frontend chỉ là yêu cầu; server tính lại trên subtotal thật.
                 var couponApplication = await CouponDiscountCalculator.ApplyAsync(_db, dto.CouponCode, subtotal);
                 if (couponApplication.ErrorMessage != null)
                     return BadRequest(new { message = couponApplication.ErrorMessage });
@@ -241,6 +251,7 @@ namespace BaseCore.APIService.Controllers
                     couponApplication.Coupon.UsedCount += 1;
 
                 _db.Orders.Add(order);
+                // Chỉ xóa những dòng đã thanh toán; các dòng không chọn vẫn nằm trong giỏ.
                 _db.CartItems.RemoveRange(checkoutItems);
                 cart.UpdatedAt = DateTime.Now;
                 await _db.SaveChangesAsync();
@@ -266,6 +277,7 @@ namespace BaseCore.APIService.Controllers
         private static List<CartItem> GetCheckoutItems(Cart cart, List<long>? cartItemIds, out string? selectionMessage)
         {
             selectionMessage = null;
+            // null mang nghĩa checkout toàn bộ; danh sách rỗng là người dùng chưa chọn gì.
             if (cartItemIds == null)
                 return cart.Items.ToList();
 
@@ -295,6 +307,7 @@ namespace BaseCore.APIService.Controllers
 
         private async Task<Cart> GetOrCreateCart(long userId)
         {
+            // Mỗi user có một giỏ lâu dài trong database, không lưu giỏ chính ở localStorage.
             var cart = await LoadCart(userId);
             if (cart != null)
                 return cart;
@@ -324,6 +337,7 @@ namespace BaseCore.APIService.Controllers
         {
             if (productVariantId.HasValue)
             {
+                // Khi client chọn variant, xác nhận variant đó thực sự thuộc product được gửi lên.
                 var selectedVariant = await _db.ProductVariants
                     .Include(variant => variant.Product)
                     .FirstOrDefaultAsync(variant =>
@@ -341,6 +355,7 @@ namespace BaseCore.APIService.Controllers
                 .Include(product => product.ProductVariants)
                 .FirstOrDefaultAsync(product => product.Id == productId && product.DeletedAt == null && product.IsActive);
 
+            // Client không truyền variant thì dùng biến thể active đầu tiên theo ID.
             var variant = product?.ProductVariants
                 .Where(item => item.IsActive)
                 .OrderBy(item => item.Id)
@@ -392,6 +407,7 @@ namespace BaseCore.APIService.Controllers
 
         private static object BuildCartResponse(Cart cart, string? message = null)
         {
+            // Trả về DTO phẳng để frontend không phụ thuộc trực tiếp vào entity/navigation EF.
             var items = cart.Items
                 .Where(item => item.ProductVariant?.Product != null)
                 .Select(item =>

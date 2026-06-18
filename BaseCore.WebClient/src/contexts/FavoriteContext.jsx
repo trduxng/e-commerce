@@ -23,6 +23,7 @@ export const FavoriteProvider = ({ children }) => {
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Chỉ tải danh sách ID để mọi ProductCard có thể kiểm tra yêu thích nhanh.
   const reloadFavorites = async () => {
     if (authLoading) return;
     if (!user) {
@@ -47,6 +48,7 @@ export const FavoriteProvider = ({ children }) => {
 
   const isFavorite = (productId) => favoriteIds.includes(Number(productId));
 
+  // Sau khi API thành công, cập nhật state cục bộ để giao diện phản hồi ngay.
   const addFavorite = async (productId) => {
     if (!user) {
       return { success: false, message: "Vui lòng đăng nhập trước khi thêm sản phẩm yêu thích." };
@@ -98,6 +100,7 @@ export const FavoriteProvider = ({ children }) => {
     }
   };
 
+  // Một điểm vào chung cho nút trái tim: tự quyết định gọi thêm hay xóa.
   const toggleFavorite = async (productId) => {
     return isFavorite(productId) ? removeFavorite(productId) : addFavorite(productId);
   };

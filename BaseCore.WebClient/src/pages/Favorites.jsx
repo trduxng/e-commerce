@@ -13,6 +13,7 @@ const Favorites = () => {
   const [loading, setLoading] = useState(true);
 
   const loadFavorites = async () => {
+    // Endpoint này trả sản phẩm đầy đủ để render card, khác FavoriteContext chỉ tải ID.
     setLoading(true);
     try {
       const response = await favoriteApi.getAll();

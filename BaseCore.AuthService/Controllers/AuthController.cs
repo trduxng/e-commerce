@@ -33,7 +33,7 @@ namespace BaseCore.AuthService.Controllers
                 return Unauthorized(new { message = "Invalid username or password" });
             }
 
-            // Generate JWT token
+            // JWT chứa user ID và role để các API phía sau xác thực quyền truy cập.
             var token = TokenHelper.GenerateToken(
                 SecretKey,
                 TokenExpirationMinutes,
@@ -74,6 +74,7 @@ namespace BaseCore.AuthService.Controllers
 
             try
             {
+                // Tài khoản đăng ký công khai luôn bắt đầu bằng role customer.
                 var user = new BaseCore.Entities.User
                 {
                     UserName = request.Username,

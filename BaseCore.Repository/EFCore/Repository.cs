@@ -40,6 +40,7 @@ namespace BaseCore.Repository.EFCore
 
         public virtual async Task<T> AddAsync(T entity)
         {
+            // Generic repository tự SaveChanges; caller dùng transaction nếu cần gom nhiều thao tác.
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -79,6 +80,7 @@ namespace BaseCore.Repository.EFCore
             Expression<Func<T, object>>? orderBy = null,
             bool descending = false)
         {
+            // Đếm sau filter nhưng trước Skip/Take để frontend tính đúng tổng số trang.
             IQueryable<T> query = _dbSet;
 
             // Apply filter

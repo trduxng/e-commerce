@@ -22,6 +22,7 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
   const dedupeKeys = useRef(new Set());
 
+  // Khi đóng toast phải giải phóng dedupeKey để thông báo cùng loại có thể xuất hiện lại.
   const dismissToast = useCallback((id) => {
     setToasts((current) => {
       const toast = current.find((item) => item.id === id);
@@ -32,6 +33,7 @@ export const ToastProvider = ({ children }) => {
     });
   }, []);
 
+  // dedupeKey ngăn cùng một lỗi bị hiển thị nhiều lần; duration = 0 tạo toast chờ xử lý.
   const showToast = useCallback(
     ({ type = "info", title = null, message, duration = 4000, dedupeKey = null }) => {
       if (dedupeKey && dedupeKeys.current.has(dedupeKey)) {

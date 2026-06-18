@@ -43,6 +43,7 @@ const ProductDetail = () => {
       try {
         const response = await productApi.getById(id);
         const loadedProduct = response.data;
+        // Tự chọn biến thể còn hàng đầu tiên để giá, ảnh và tồn kho có giá trị ngay.
         const variants = getActiveVariants(loadedProduct);
         const defaultVariant = variants.find((variant) => getVariantStock(variant) > 0) || variants[0] || null;
         setProduct(loadedProduct);
@@ -94,6 +95,7 @@ const ProductDetail = () => {
     let active = true;
 
     const loadReviews = async () => {
+      // Tách request review khỏi request sản phẩm để mỗi phần có trạng thái tải độc lập.
       setReviewsLoading(true);
       try {
         const response = await productApi.getReviews(id);
@@ -130,6 +132,7 @@ const ProductDetail = () => {
   const canIncreaseQuantity = stock === null || safeQuantity < stock;
   const canAddToCart = stock === null || stock > 0;
 
+  // Thêm biến thể đang chọn vào giỏ; kiểm tra frontend chỉ để phản hồi sớm cho người dùng.
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
@@ -153,6 +156,7 @@ const ProductDetail = () => {
     }
   };
 
+  // Mua ngay bỏ qua giỏ và truyền sản phẩm tạm thời sang Checkout qua route state.
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
@@ -186,6 +190,7 @@ const ProductDetail = () => {
     });
   };
 
+  // Giới hạn số lượng hiển thị theo tồn kho; backend vẫn kiểm tra lại lúc gửi request.
   const setQuantitySafely = (value) => {
     const nextValue = Math.max(1, value);
     if (stock !== null && nextValue > stock) {
@@ -204,6 +209,7 @@ const ProductDetail = () => {
     setQuantitySafely(getSafeQuantity(quantity));
   };
 
+  // Chọn đúng một biến thể sẽ đồng bộ cả size, màu và ảnh đại diện.
   const selectExactVariant = (variant) => {
     setSelectedVariantId(variant.id);
     setActiveImage(variant.imageUrl || variant.image || getProductImage(product));
@@ -222,6 +228,7 @@ const ProductDetail = () => {
     }
   };
 
+  // Khi đổi size/màu, tìm tổ hợp biến thể tương ứng; nếu thiếu thì chọn biến thể gần nhất.
   const selectVariant = (field, value) => {
     const nextCriteria = {
       size: field === "size" ? value : selectedSize,

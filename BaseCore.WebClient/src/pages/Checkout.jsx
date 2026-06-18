@@ -87,6 +87,7 @@ const Checkout = () => {
 
   useEffect(() => {
     const loadCheckoutData = async () => {
+      // Thuộc tính checkout là các dịch vụ bổ sung do admin cấu hình.
       try {
         const response = await checkoutAttributeApi.getAll();
         setCheckoutAttributes(response.data || []);
@@ -125,6 +126,7 @@ const Checkout = () => {
         const addresses = sortAddresses(Array.isArray(response.data) ? response.data : []);
         setSavedAddresses(addresses);
 
+        // Ưu tiên địa chỉ mặc định, nếu chưa có thì dùng địa chỉ đầu danh sách.
         const preferredAddress = addresses.find((address) => address.isDefault) || addresses[0];
         if (preferredAddress) {
           setSelectedAddressId(String(preferredAddress.id));
@@ -158,6 +160,7 @@ const Checkout = () => {
   );
 
   const attrAdjustment = useMemo(() => {
+    // Cộng phụ phí của các tùy chọn bổ sung đang được chọn.
     let adjustment = 0;
     Object.entries(selectedAttributes).forEach(([attrId, value]) => {
       const attr = checkoutAttributes.find(a => String(a.id) === attrId);
@@ -169,6 +172,7 @@ const Checkout = () => {
     return adjustment;
   }, [selectedAttributes, checkoutAttributes]);
 
+  // Checkout hỗ trợ hai luồng: Mua ngay bằng route state hoặc các dòng được chọn trong giỏ.
   const checkoutItems = isBuyNow ? [buyNowItem] : selectedItems;
   const checkoutSubtotal = isBuyNow
     ? Number(buyNowItem.price || 0) * Number(buyNowItem.quantity || 0)
@@ -183,6 +187,7 @@ const Checkout = () => {
   const addressPreview = getAddressText(activeAddress);
 
   useEffect(() => {
+    // Thay đổi giỏ làm mã giảm giá cũ mất hiệu lực, buộc người dùng áp dụng lại.
     setDiscountAmount(0);
     setVoucherMessage("");
   }, [checkoutSubtotal]);
@@ -212,6 +217,7 @@ const Checkout = () => {
     isDefault: billingData.isDefault,
   });
 
+  // Kiểm tra địa chỉ phía client để báo lỗi trước khi gọi API.
   const validateAddress = (address) => {
     if (!address.receiverName?.trim()) return "Vui lòng nhập tên người nhận.";
     if (!address.phone?.trim()) return "Vui lòng nhập số điện thoại.";
@@ -222,6 +228,7 @@ const Checkout = () => {
     return null;
   };
 
+  // Lưu địa chỉ mới vào sổ địa chỉ rồi chuyển checkout sang dùng địa chỉ vừa tạo.
   const handleSaveAddress = async () => {
     const dto = buildAddressDto();
     const validationMessage = validateAddress(dto);
@@ -264,6 +271,7 @@ const Checkout = () => {
     }
   };
 
+  // API apply chỉ phục vụ xem trước; backend checkout sẽ xác thực và tính coupon lại.
   const handleVoucher = async () => {
     if (checkoutItems.length === 0) {
       toast.warning("Vui lòng chọn ít nhất một sản phẩm trước khi áp dụng mã giảm giá.");
@@ -289,6 +297,7 @@ const Checkout = () => {
     }
   };
 
+  // Tạo payload chung, sau đó chọn endpoint theo luồng Mua ngay hoặc Checkout từ giỏ.
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (checkoutItems.length === 0) {
@@ -333,6 +342,7 @@ const Checkout = () => {
           });
       const orderId = response.data?.order?.id || response.data?.id;
       if (!isBuyNow) {
+        // Backend đã xóa các dòng vừa mua nên context phải tải lại giỏ còn lại.
         await reloadCart();
       }
       if (loadingToastRef.current) {
@@ -712,6 +722,7 @@ const Checkout = () => {
 };
 
 const normalizeBuyNowItem = (item) => {
+  // Không tin trực tiếp route state: chuẩn hóa ID, số lượng và giá trước khi render.
   if (!item) return null;
 
   const productId = Number(item.productId ?? item.id);
