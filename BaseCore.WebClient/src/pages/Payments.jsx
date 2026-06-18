@@ -44,7 +44,7 @@ const Payments = () => {
             setTransactions(txRes.data);
             setGateways(gatewayRes.data);
         } catch (error) {
-            console.error('Failed to load payment data:', error);
+            console.error('Lỗi tải dữ liệu thanh toán:', error);
         } finally {
             setLoading(false);
         }
@@ -59,7 +59,7 @@ const Payments = () => {
                 setSelectedTx({ ...selectedTx, status });
             }
         } catch (error) {
-            alert('Failed to update status');
+            alert('Cập nhật trạng thái thất bại');
         }
     };
 
@@ -82,7 +82,7 @@ const Payments = () => {
             setGateways(gateways.map(g => g.id === editingGateway.id ? { ...g, ...gatewayForm } : g));
             setEditingGateway(null);
         } catch (error) {
-            alert('Failed to save gateway config');
+            alert('Lưu cấu hình cổng thanh toán thất bại');
         }
     };
 
@@ -666,7 +666,7 @@ const Payments = () => {
                                     onClick={() => alert('Kết nối thử nghiệm Sandbox: Thành công!')}
                                     className="btn btn-outline-primary font-weight-bold"
                                 >
-                                    Test Connection
+                                    Kiểm tra kết nối
                                 </button>
                                 <div className="d-flex gap-2">
                                     <button

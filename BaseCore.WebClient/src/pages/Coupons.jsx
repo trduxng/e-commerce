@@ -43,7 +43,7 @@ const Coupons = () => {
             setError('');
         } catch (err) {
             console.error(err);
-            setError('Failed to load coupons.');
+            setError('Tải danh sách mã giảm giá thất bại.');
         } finally {
             setLoading(false);
         }
@@ -73,12 +73,12 @@ const Coupons = () => {
             setShowModal(false);
             loadCoupons();
         } catch (err) {
-            alert(err.response?.data?.message || 'Error saving coupon');
+            alert(err.response?.data?.message || 'Lỗi khi lưu mã giảm giá');
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Delete this coupon?')) {
+        if (window.confirm('Bạn có chắc chắn muốn xóa mã giảm giá này?')) {
             await couponApi.delete(id);
             loadCoupons();
         }
@@ -109,8 +109,8 @@ const Coupons = () => {
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid d-flex justify-content-between">
-                    <h1 className="m-0">Discount Coupons</h1>
-                    <button className="btn btn-primary" onClick={() => openModal()}>Create Coupon</button>
+                    <h1 className="m-0">Mã giảm giá</h1>
+                    <button className="btn btn-primary" onClick={() => openModal()}>Tạo mã giảm giá</button>
                 </div>
             </div>
 
@@ -119,38 +119,38 @@ const Coupons = () => {
                     <div className="card">
                         <div className="card-body table-responsive p-0">
                             {error && <div className="alert alert-danger m-3">{error}</div>}
-                            {loading ? <div className="p-4">Loading...</div> : (
+                            {loading ? <div className="p-4">Đang tải...</div> : (
                                 <table className="table table-hover text-nowrap">
                                     <thead>
                                         <tr>
-                                            <th>Code</th>
-                                            <th>Type</th>
-                                            <th>Value</th>
-                                            <th>Min Order</th>
-                                            <th>Limit</th>
-                                            <th>Used</th>
-                                            <th>Active</th>
-                                            <th>Actions</th>
+                                            <th>Mã</th>
+                                            <th>Loại</th>
+                                            <th>Giá trị</th>
+                                            <th>Đơn tối thiểu</th>
+                                            <th>Giới hạn</th>
+                                            <th>Đã dùng</th>
+                                            <th>Kích hoạt</th>
+                                            <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {coupons.length === 0 ? (
                                             <tr>
-                                                <td colSpan="8" className="text-center py-4">No coupons found</td>
+                                                <td colSpan="8" className="text-center py-4">Không có mã giảm giá nào</td>
                                             </tr>
                                         ) : (
                                             coupons.map(c => (
                                                 <tr key={c.id}>
                                                     <td><strong>{c.code}</strong></td>
-                                                    <td>{c.type}</td>
+                                                    <td>{c.type === 'percent' ? 'Phần trăm (%)' : 'Số tiền cố định'}</td>
                                                     <td>{c.value}</td>
                                                     <td>{c.minOrderValue}</td>
-                                                    <td>{c.usageLimit || 'Unlimited'}</td>
+                                                    <td>{c.usageLimit || 'Không giới hạn'}</td>
                                                     <td>{c.usedCount || 0}</td>
-                                                    <td>{c.isActive ? 'Yes' : 'No'}</td>
+                                                    <td>{c.isActive ? 'Có' : 'Không'}</td>
                                                     <td>
-                                                        <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(c)}>Edit</button>
-                                                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
+                                                        <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(c)}>Sửa</button>
+                                                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Xóa</button>
                                                     </td>
                                                 </tr>
                                             ))
@@ -161,11 +161,11 @@ const Coupons = () => {
                         </div>
                         {totalPages > 1 && (
                             <div className="card-footer d-flex justify-content-between align-items-center">
-                                <span className="text-muted">Page {page} of {totalPages}</span>
+                                <span className="text-muted">Trang {page} / {totalPages}</span>
                                 <nav>
                                     <ul className="pagination pagination-sm m-0 float-right">
                                         <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Previous</button>
+                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Trước</button>
                                         </li>
                                         {[...Array(totalPages)].map((_, i) => (
                                             <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
@@ -173,7 +173,7 @@ const Coupons = () => {
                                             </li>
                                         ))}
                                         <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Next</button>
+                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Sau</button>
                                         </li>
                                     </ul>
                                 </nav>
@@ -189,23 +189,23 @@ const Coupons = () => {
                         <div className="modal-content">
                             <form onSubmit={handleSave}>
                                 <div className="modal-header">
-                                    <h5 className="modal-title">{editingCoupon ? 'Edit' : 'Create'} Coupon</h5>
+                                    <h5 className="modal-title">{editingCoupon ? 'Sửa' : 'Tạo'} Mã giảm giá</h5>
                                     <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
                                 </div>
                                 <div className="modal-body">
                                     <div className="form-group">
-                                        <label>Code</label>
+                                        <label>Mã (Code)</label>
                                         <input className="form-control" required value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Type</label>
+                                        <label>Loại</label>
                                         <select className="form-control" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
-                                            <option value="percent">Percentage (%)</option>
-                                            <option value="fixed">Fixed Amount</option>
+                                            <option value="percent">Phần trăm (%)</option>
+                                            <option value="fixed">Số tiền cố định</option>
                                         </select>
                                     </div>
                                     <div className="form-group">
-                                        <label>Value</label>
+                                        <label>Giá trị</label>
                                         <input
                                             type="number"
                                             className="form-control"
@@ -216,11 +216,11 @@ const Coupons = () => {
                                             onChange={e => setFormData({...formData, value: e.target.value})}
                                         />
                                         <small className="text-muted">
-                                            Percent type uses 1-100. Fixed type uses currency amount.
+                                            Loại phần trăm dùng 1-100. Loại cố định dùng số tiền thực tế.
                                         </small>
                                     </div>
                                     <div className="form-group">
-                                        <label>Minimum Order Value</label>
+                                        <label>Giá trị đơn hàng tối thiểu</label>
                                         <input
                                             type="number"
                                             className="form-control"
@@ -231,46 +231,46 @@ const Coupons = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Maximum Discount Amount</label>
+                                        <label>Số tiền giảm tối đa</label>
                                         <input
                                             type="number"
                                             className="form-control"
                                             min="0"
                                             step="0.01"
-                                            placeholder="Leave blank for no cap"
+                                            placeholder="Bỏ trống nếu không giới hạn"
                                             value={formData.maxDiscountAmount}
                                             onChange={e => setFormData({...formData, maxDiscountAmount: e.target.value})}
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Usage Limit</label>
+                                        <label>Giới hạn lượt sử dụng</label>
                                         <input
                                             type="number"
                                             className="form-control"
                                             min="1"
                                             step="1"
-                                            placeholder="Leave blank for unlimited"
+                                            placeholder="Bỏ trống nếu không giới hạn"
                                             value={formData.usageLimit}
                                             onChange={e => setFormData({...formData, usageLimit: e.target.value})}
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Start Date</label>
+                                        <label>Ngày bắt đầu</label>
                                         <input type="date" className="form-control" required value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
                                     </div>
                                     <div className="form-group">
-                                        <label>End Date</label>
+                                        <label>Ngày kết thúc</label>
                                         <input type="date" className="form-control" required value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} />
                                     </div>
                                     <div className="form-group">
                                         <label>
-                                            <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Active
+                                            <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Kích hoạt
                                         </label>
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
-                                    <button type="submit" className="btn btn-primary">Save changes</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
+                                    <button type="submit" className="btn btn-primary">Lưu thay đổi</button>
                                 </div>
                             </form>
                         </div>

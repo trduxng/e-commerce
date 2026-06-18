@@ -33,7 +33,7 @@ const CheckoutAttributes = () => {
             setShowModal(false);
             loadAttributes();
         } catch (err) {
-            alert('Error saving attribute');
+            alert('Lỗi khi lưu thuộc tính');
         }
     };
 
@@ -66,8 +66,8 @@ const CheckoutAttributes = () => {
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid d-flex justify-content-between">
-                    <h1 className="m-0">Checkout Attributes</h1>
-                    <button className="btn btn-primary" onClick={() => openModal()}>Add New Attribute</button>
+                    <h1 className="m-0">Thuộc tính thanh toán</h1>
+                    <button className="btn btn-primary" onClick={() => openModal()}>Thêm thuộc tính</button>
                 </div>
             </div>
 
@@ -75,15 +75,15 @@ const CheckoutAttributes = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-body table-responsive p-0">
-                            {loading ? <div className="p-4">Loading...</div> : (
+                            {loading ? <div className="p-4">Đang tải...</div> : (
                                 <table className="table table-hover text-nowrap">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Control Type</th>
-                                            <th>Required</th>
-                                            <th>Values</th>
-                                            <th>Actions</th>
+                                            <th>Tên</th>
+                                            <th>Loại điều khiển</th>
+                                            <th>Bắt buộc</th>
+                                            <th>Giá trị</th>
+                                            <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -91,11 +91,11 @@ const CheckoutAttributes = () => {
                                             <tr key={a.id}>
                                                 <td><strong>{a.name}</strong></td>
                                                 <td>{a.controlType}</td>
-                                                <td>{a.isRequired ? 'Yes' : 'No'}</td>
-                                                <td>{a.values?.length || 0} values</td>
+                                                <td>{a.isRequired ? 'Có' : 'Không'}</td>
+                                                <td>{a.values?.length || 0} giá trị</td>
                                                 <td>
-                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(a)}>Edit</button>
-                                                    <button className="btn btn-sm btn-danger" onClick={() => checkoutAttributeApi.delete(a.id).then(loadAttributes)}>Delete</button>
+                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(a)}>Sửa</button>
+                                                    <button className="btn btn-sm btn-danger" onClick={() => checkoutAttributeApi.delete(a.id).then(loadAttributes)}>Xóa</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -113,30 +113,30 @@ const CheckoutAttributes = () => {
                         <div className="modal-content">
                             <form onSubmit={handleSave}>
                                 <div className="modal-header">
-                                    <h5>{editingAttr ? 'Edit' : 'Add'} Checkout Attribute</h5>
+                                    <h5>{editingAttr ? 'Sửa' : 'Thêm'} thuộc tính thanh toán</h5>
                                     <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
                                 </div>
                                 <div className="modal-body" style={{maxHeight: '70vh', overflowY: 'auto'}}>
                                     <div className="row">
                                         <div className="col-md-6">
-                                            <div className="form-group"><label>Name (e.g. Gift Wrap)</label><input className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
-                                            <div className="form-group"><label>Control Type</label>
+                                            <div className="form-group"><label>Tên (VD: Gói quà)</label><input className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
+                                            <div className="form-group"><label>Loại điều khiển</label>
                                                 <select className="form-control" value={formData.controlType} onChange={e => setFormData({...formData, controlType: e.target.value})}>
-                                                    <option value="DropdownList">Dropdown</option>
-                                                    <option value="RadioList">Radio Buttons</option>
-                                                    <option value="Checkboxes">Checkboxes</option>
+                                                    <option value="DropdownList">Danh sách thả xuống</option>
+                                                    <option value="RadioList">Nút radio</option>
+                                                    <option value="Checkboxes">Hộp kiểm</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div className="col-md-6">
-                                            <div className="form-group mt-4"><label><input type="checkbox" checked={formData.isRequired} onChange={e => setFormData({...formData, isRequired: e.target.checked})} /> Required?</label></div>
-                                            <div className="form-group"><label>Sort Order</label><input type="number" className="form-control" value={formData.sortOrder} onChange={e => setFormData({...formData, sortOrder: Number(e.target.value)})} /></div>
+                                            <div className="form-group mt-4"><label><input type="checkbox" checked={formData.isRequired} onChange={e => setFormData({...formData, isRequired: e.target.checked})} /> Bắt buộc?</label></div>
+                                            <div className="form-group"><label>Thứ tự sắp xếp</label><input type="number" className="form-control" value={formData.sortOrder} onChange={e => setFormData({...formData, sortOrder: Number(e.target.value)})} /></div>
                                         </div>
                                     </div>
                                     <hr />
-                                    <div className="d-flex justify-content-between align-items-center mb-2"><h6>Attribute Values</h6><button type="button" className="btn btn-sm btn-outline-primary" onClick={addValue}>+ Add Value</button></div>
+                                    <div className="d-flex justify-content-between align-items-center mb-2"><h6>Giá trị thuộc tính</h6><button type="button" className="btn btn-sm btn-outline-primary" onClick={addValue}>+ Thêm giá trị</button></div>
                                     <table className="table table-sm border">
-                                        <thead><tr><th>Name</th><th>Price Adjustment</th><th>Pre-selected</th><th>Action</th></tr></thead>
+                                        <thead><tr><th>Tên</th><th>Điều chỉnh giá</th><th>Chọn sẵn</th><th>Thao tác</th></tr></thead>
                                         <tbody>
                                             {formData.values.map((v, i) => (
                                                 <tr key={i}>
@@ -149,7 +149,7 @@ const CheckoutAttributes = () => {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div className="modal-footer"><button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button><button type="submit" className="btn btn-primary">Save</button></div>
+                                <div className="modal-footer"><button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button><button type="submit" className="btn btn-primary">Lưu</button></div>
                             </form>
                         </div>
                     </div>

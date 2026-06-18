@@ -176,21 +176,21 @@ const Users = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this user?')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn xóa khách hàng này không?')) return;
 
         try {
             await userApi.delete(id);
             loadUsers();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to delete user');
+            alert(error.response?.data?.message || 'Lỗi khi xóa khách hàng');
         }
     };
 
     const getRoleName = (userType) => {
         switch (Number(userType)) {
-            case 1: return 'Administrators';
-            case 2: return 'Staff';
-            default: return 'Registered';
+            case 1: return 'Quản trị viên';
+            case 2: return 'Nhân viên';
+            default: return 'Người dùng';
         }
     };
 
@@ -198,17 +198,17 @@ const Users = () => {
         <div className="content-wrapper">
             <div className="content-header clearfix">
                 <h1 className="float-left">
-                    Customers
+                    Khách hàng
                 </h1>
                 <div className="float-right">
                     <button type="button" className="btn btn-primary" onClick={() => openModal()}>
                         <i className="fas fa-plus-square"></i>
-                        {' '}Add new
+                        {' '}Thêm mới
                     </button>
                     <div className="btn-group ml-1">
                         <button type="button" className="btn btn-success">
                             <i className="fas fa-download"></i>
-                            {' '}Export
+                            {' '}Xuất file
                         </button>
                         <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                             <span className="caret"></span>
@@ -217,30 +217,30 @@ const Users = () => {
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link p-0 text-left w-100 text-dark text-decoration-none">
-                                    <i className="far fa-file-code mr-2"></i>Export to XML (all found)
+                                    <i className="far fa-file-code mr-2"></i>Xuất XML (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link p-0 text-left w-100 text-dark text-decoration-none">
-                                    <i className="far fa-file-code mr-2"></i>Export to XML (selected)
+                                    <i className="far fa-file-code mr-2"></i>Xuất XML (đã chọn)
                                 </button>
                             </li>
                             <li className="dropdown-divider"></li>
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link p-0 text-left w-100 text-dark text-decoration-none">
-                                    <i className="far fa-file-excel mr-2"></i>Export to Excel (all found)
+                                    <i className="far fa-file-excel mr-2"></i>Xuất Excel (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link p-0 text-left w-100 text-dark text-decoration-none">
-                                    <i className="far fa-file-excel mr-2"></i>Export to Excel (selected)
+                                    <i className="far fa-file-excel mr-2"></i>Xuất Excel (đã chọn)
                                 </button>
                             </li>
                         </ul>
                     </div>
                     <button type="button" className="btn bg-olive ml-1">
                         <i className="fas fa-upload"></i>
-                        {' '}Import
+                        {' '}Nhập file
                     </button>
                 </div>
             </div>
@@ -257,7 +257,7 @@ const Users = () => {
                                             onClick={() => setIsSearchOpen(!isSearchOpen)}
                                             style={{ cursor: 'pointer' }}
                                         >
-                                            <div className="search-text">Search</div>
+                                            <div className="search-text">Tìm kiếm</div>
                                             <div className="icon-search"><i className="fas fa-search" aria-hidden="true"></i></div>
                                             <div className="icon-collapse">
                                                 <i className={`fas fa-angle-${isSearchOpen ? 'up' : 'down'}`} aria-hidden="true"></i>
@@ -277,7 +277,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Username</label>
+                                                            <label className="col-form-label">Tên đăng nhập</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchUsername} onChange={(event) => setSearchUsername(event.target.value)} />
@@ -285,7 +285,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">First name</label>
+                                                            <label className="col-form-label">Tên</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchFirstName} onChange={(event) => setSearchFirstName(event.target.value)} />
@@ -293,7 +293,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Last name</label>
+                                                            <label className="col-form-label">Họ</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchLastName} onChange={(event) => setSearchLastName(event.target.value)} />
@@ -301,19 +301,19 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Active</label>
+                                                            <label className="col-form-label">Trạng thái</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <select className="form-control" value={searchIsActive} onChange={(event) => setSearchIsActive(event.target.value)}>
-                                                                <option value="0">All</option>
-                                                                <option value="1">Active only</option>
-                                                                <option value="2">Inactive only</option>
+                                                                <option value="0">Tất cả</option>
+                                                                <option value="1">Đang hoạt động</option>
+                                                                <option value="2">Không hoạt động</option>
                                                             </select>
                                                         </div>
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Registration date from</label>
+                                                            <label className="col-form-label">Ngày đăng ký từ</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="date" className="form-control" value={searchRegistrationDateFrom} onChange={(event) => setSearchRegistrationDateFrom(event.target.value)} />
@@ -321,7 +321,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Registration date to</label>
+                                                            <label className="col-form-label">Ngày đăng ký đến</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="date" className="form-control" value={searchRegistrationDateTo} onChange={(event) => setSearchRegistrationDateTo(event.target.value)} />
@@ -331,7 +331,7 @@ const Users = () => {
                                                 <div className="col-md-7">
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Company</label>
+                                                            <label className="col-form-label">Công ty</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchCompany} onChange={(event) => setSearchCompany(event.target.value)} />
@@ -339,7 +339,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Phone</label>
+                                                            <label className="col-form-label">Số điện thoại</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchPhone} onChange={(event) => setSearchPhone(event.target.value)} />
@@ -347,7 +347,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Zip / postal code</label>
+                                                            <label className="col-form-label">Mã bưu điện</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchZipPostalCode} onChange={(event) => setSearchZipPostalCode(event.target.value)} />
@@ -355,7 +355,7 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">IP address</label>
+                                                            <label className="col-form-label">Địa chỉ IP</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={searchIpAddress} onChange={(event) => setSearchIpAddress(event.target.value)} />
@@ -363,15 +363,15 @@ const Users = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label className="col-form-label">Customer roles</label>
+                                                            <label className="col-form-label">Vai trò</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <select className="form-control" multiple value={selectedCustomerRoleIds} onChange={handleRoleChange} style={{ height: '100px' }}>
-                                                                <option value="1">Administrators</option>
-                                                                <option value="2">Staff</option>
-                                                                <option value="0">Registered</option>
+                                                                <option value="1">Quản trị viên</option>
+                                                                <option value="2">Nhân viên</option>
+                                                                <option value="0">Người dùng</option>
                                                             </select>
-                                                            <small className="form-text text-muted">Hold Ctrl to select multiple roles</small>
+                                                            <small className="form-text text-muted">Giữ Ctrl để chọn nhiều vai trò</small>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -380,7 +380,7 @@ const Users = () => {
                                                 <div className="text-center col-12">
                                                     <button type="submit" className="btn btn-primary btn-search">
                                                         <i className="fas fa-search"></i>
-                                                        {' '}Search
+                                                        {' '}Tìm kiếm
                                                     </button>
                                                 </div>
                                             </div>
@@ -402,14 +402,14 @@ const Users = () => {
                                                                 <input type="checkbox" />
                                                             </th>
                                                             <th>Email</th>
-                                                            <th>Username</th>
-                                                            <th>Name</th>
-                                                            <th style={{ width: '150px' }}>Customer roles</th>
-                                                            <th>Company</th>
-                                                            <th>Phone</th>
-                                                            <th>Zip / postal code</th>
-                                                            <th className="text-center" style={{ width: '70px' }}>Active</th>
-                                                            <th className="text-center" style={{ width: '120px' }}>Actions</th>
+                                                            <th>Tên đăng nhập</th>
+                                                            <th>Họ tên</th>
+                                                            <th style={{ width: '150px' }}>Vai trò</th>
+                                                            <th>Công ty</th>
+                                                            <th>SĐT</th>
+                                                            <th>Mã bưu điện</th>
+                                                            <th className="text-center" style={{ width: '70px' }}>Kích hoạt</th>
+                                                            <th className="text-center" style={{ width: '120px' }}>Thao tác</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -417,13 +417,13 @@ const Users = () => {
                                                             <tr>
                                                                 <td colSpan="10" className="text-center">
                                                                     <div className="spinner-border text-primary" role="status">
-                                                                        <span className="sr-only">Loading...</span>
+                                                                        <span className="sr-only">Đang tải...</span>
                                                                     </div>
                                                                 </td>
                                                             </tr>
                                                         ) : users.length === 0 ? (
                                                             <tr>
-                                                                <td colSpan="10" className="dataTables_empty text-center">No data available in table</td>
+                                                                <td colSpan="10" className="dataTables_empty text-center">Không có bản ghi nào</td>
                                                             </tr>
                                                         ) : (
                                                             users.map((user) => (
@@ -444,7 +444,7 @@ const Users = () => {
                                                                     <td className="text-center">
                                                                         <button type="button" className="btn btn-default mr-1" disabled={loading} onClick={() => openModal(user)}>
                                                                             <i className="fas fa-pencil-alt"></i>
-                                                                            {' '}Edit
+                                                                            {' '}Sửa
                                                                         </button>
                                                                         <button type="button" className="btn btn-danger" onClick={() => handleDelete(user.id)}>
                                                                             <i className="fas fa-trash"></i>
@@ -462,14 +462,14 @@ const Users = () => {
                                             <div className="row margin-t-5">
                                                 <div className="col-sm-5">
                                                     <div className="dataTables_info">
-                                                        Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalCount)} of {totalCount} entries
+                                                        Hiển thị {(page - 1) * pageSize + 1} đến {Math.min(page * pageSize, totalCount)} của {totalCount} bản ghi
                                                     </div>
                                                 </div>
                                                 <div className="col-sm-7">
                                                     <div className="dataTables_paginate paging_simple_numbers">
                                                         <ul className="pagination">
                                                             <li className={`paginate_button page-item previous ${page === 1 ? 'disabled' : ''}`}>
-                                                                <button type="button" className="page-link" onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button>
+                                                                <button type="button" className="page-link" onClick={() => setPage((current) => Math.max(1, current - 1))}>Trước</button>
                                                             </li>
                                                             {[...Array(totalPages)].map((_, index) => (
                                                                 <li key={index + 1} className={`paginate_button page-item ${page === index + 1 ? 'active' : ''}`}>
@@ -477,7 +477,7 @@ const Users = () => {
                                                                 </li>
                                                             ))}
                                                             <li className={`paginate_button page-item next ${page === totalPages ? 'disabled' : ''}`}>
-                                                                <button type="button" className="page-link" onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Next</button>
+                                                                <button type="button" className="page-link" onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Sau</button>
                                                             </li>
                                                         </ul>
                                                     </div>
@@ -498,7 +498,7 @@ const Users = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">
-                                    {editingUser ? 'Edit User' : 'Add User'}
+                                    {editingUser ? 'Sửa' : 'Thêm'} Khách hàng
                                 </h5>
                                 <button type="button" className="close" onClick={closeModal}>
                                     <span>&times;</span>
@@ -508,7 +508,7 @@ const Users = () => {
                                 <div className="modal-body">
                                     {error && <div className="alert alert-danger">{error}</div>}
                                     <div className="form-group">
-                                        <label>Username</label>
+                                        <label>Tên đăng nhập</label>
                                         <input
                                             type="text"
                                             className="form-control"
@@ -519,7 +519,7 @@ const Users = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Password {editingUser && '(leave blank to keep current)'}</label>
+                                        <label>Mật khẩu {editingUser && '(để trống nếu không đổi)'}</label>
                                         <input
                                             type="password"
                                             className="form-control"
@@ -529,7 +529,7 @@ const Users = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Name</label>
+                                        <label>Họ tên</label>
                                         <input
                                             type="text"
                                             className="form-control"
@@ -547,7 +547,7 @@ const Users = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Phone</label>
+                                        <label>SĐT</label>
                                         <input
                                             type="text"
                                             className="form-control"
@@ -556,7 +556,7 @@ const Users = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Position</label>
+                                        <label>Chức vụ / Vị trí</label>
                                         <input
                                             type="text"
                                             className="form-control"
@@ -565,15 +565,15 @@ const Users = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Role</label>
+                                        <label>Vai trò</label>
                                         <select
                                             className="form-control"
                                             value={formData.userType}
                                             onChange={(event) => setFormData({ ...formData, userType: Number(event.target.value) })}
                                         >
-                                            <option value="0">User</option>
-                                            <option value="1">Admin</option>
-                                            <option value="2">Staff</option>
+                                            <option value="0">Người dùng</option>
+                                            <option value="1">Quản trị viên</option>
+                                            <option value="2">Nhân viên</option>
                                         </select>
                                     </div>
                                     {editingUser && (
@@ -586,17 +586,17 @@ const Users = () => {
                                                     checked={formData.isActive}
                                                     onChange={(event) => setFormData({ ...formData, isActive: event.target.checked })}
                                                 />
-                                                <label className="custom-control-label" htmlFor="user-is-active">Active</label>
+                                                <label className="custom-control-label" htmlFor="user-is-active">Kích hoạt</label>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                                 <div className="modal-footer">
                                     <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                                        Cancel
+                                        Huỷ
                                     </button>
                                     <button type="submit" className="btn btn-primary">
-                                        {editingUser ? 'Update' : 'Create'}
+                                        {editingUser ? 'Cập nhật' : 'Thêm mới'}
                                     </button>
                                 </div>
                             </form>

@@ -25,7 +25,7 @@ const Settings = () => {
                 const response = await settingApi.get();
                 setSettings(response.data);
             } catch (error) {
-                toast.error('Failed to load settings');
+                toast.error('Tải cài đặt thất bại');
             } finally {
                 setLoading(false);
             }
@@ -43,26 +43,26 @@ const Settings = () => {
         setSaving(true);
         try {
             await settingApi.update(settings);
-            toast.success('Settings updated successfully!');
+            toast.success('Cập nhật cài đặt thành công!');
             if (reloadSettings) {
                 await reloadSettings();
             }
         } catch (error) {
-            toast.error('Failed to update settings');
+            toast.error('Cập nhật cài đặt thất bại');
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) {
-        return <div className="content-wrapper p-4 text-center">Loading settings...</div>;
+        return <div className="content-wrapper p-4 text-center">Đang tải cài đặt...</div>;
     }
 
     return (
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid">
-                    <h1 className="m-0">Store Settings</h1>
+                    <h1 className="m-0">Cài đặt cửa hàng</h1>
                 </div>
             </div>
 
@@ -71,25 +71,25 @@ const Settings = () => {
                     <div className="card">
                         <form onSubmit={handleSave}>
                             <div className="card-body">
-                                <h5 className="mb-3">General Settings</h5>
+                                <h5 className="mb-3">Cài đặt chung</h5>
                                 <div className="row">
                                     <div className="col-md-6 form-group">
-                                        <label>Store Name</label>
+                                        <label>Tên cửa hàng</label>
                                         <input className="form-control" name="storeName" value={settings.storeName} onChange={handleChange} required />
                                     </div>
                                     <div className="col-md-6 form-group">
-                                        <label>Logo URL</label>
+                                        <label>Đường dẫn Logo</label>
                                         <div className="input-group">
                                             <input 
                                                 className="form-control" 
                                                 name="logoUrl" 
                                                 value={settings.logoUrl} 
                                                 onChange={handleChange} 
-                                                placeholder="/img/logo.png or custom URL" 
+                                                placeholder="/img/logo.png hoặc URL tùy chỉnh" 
                                             />
                                             <div className="input-group-append">
                                                 <label className="btn btn-secondary m-0 d-flex align-items-center">
-                                                    Browse...
+                                                    Duyệt...
                                                     <input 
                                                         type="file" 
                                                         accept="image/*" 
@@ -107,23 +107,23 @@ const Settings = () => {
                                     </div>
                                 </div>
                                 
-                                <h5 className="mb-3 mt-4">Contact Information</h5>
+                                <h5 className="mb-3 mt-4">Thông tin liên hệ</h5>
                                 <div className="row">
                                     <div className="col-md-6 form-group">
-                                        <label>Support Email</label>
+                                        <label>Email hỗ trợ</label>
                                         <input type="email" className="form-control" name="contactEmail" value={settings.contactEmail} onChange={handleChange} required />
                                     </div>
                                     <div className="col-md-6 form-group">
-                                        <label>Phone Number</label>
+                                        <label>Số điện thoại</label>
                                         <input className="form-control" name="contactPhone" value={settings.contactPhone} onChange={handleChange} required />
                                     </div>
                                     <div className="col-md-12 form-group">
-                                        <label>Physical Address</label>
+                                        <label>Địa chỉ</label>
                                         <input className="form-control" name="address" value={settings.address} onChange={handleChange} required />
                                     </div>
                                 </div>
 
-                                <h5 className="mb-3 mt-4">Social Links</h5>
+                                <h5 className="mb-3 mt-4">Liên kết Mạng xã hội</h5>
                                 <div className="row">
                                     <div className="col-md-4 form-group">
                                         <label>Facebook</label>
@@ -141,7 +141,7 @@ const Settings = () => {
                             </div>
                             <div className="card-footer">
                                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                                    {saving ? 'Saving...' : 'Save Settings'}
+                                    {saving ? 'Đang lưu...' : 'Lưu Cài đặt'}
                                 </button>
                             </div>
                         </form>

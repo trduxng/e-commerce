@@ -38,7 +38,7 @@ const Categories = () => {
 
             if (!Array.isArray(response.data?.items) && !Array.isArray(response.data)) {
                 setCategories([]);
-                setError('Categories API did not return a valid list. Check that ApiGateway and APIService are running.');
+                setError('API danh mục không trả về danh sách hợp lệ. Hãy kiểm tra xem ApiGateway và APIService có đang chạy không.');
                 return;
             }
 
@@ -46,9 +46,9 @@ const Categories = () => {
             setTotalPages(Number(response.data?.totalPages) || 0);
             setTotalCount(Number(response.data?.totalCount) || items.length);
         } catch (error) {
-            console.error('Failed to load categories:', error);
+            console.error('Tải danh mục thất bại:', error);
             setCategories([]);
-            setError(error.response?.data?.message || 'Failed to load categories. Check that ApiGateway and APIService are running.');
+            setError(error.response?.data?.message || 'Tải danh mục thất bại. Hãy kiểm tra xem ApiGateway và APIService có đang chạy không.');
         } finally {
             setLoading(false);
         }
@@ -101,7 +101,7 @@ const Categories = () => {
             closeModal();
             loadCategories();
         } catch (error) {
-            setError(error.response?.data?.message || 'Operation failed');
+            setError(error.response?.data?.message || 'Thao tác thất bại');
         } finally {
             setSavingCategory(false);
         }

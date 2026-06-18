@@ -21,7 +21,7 @@ const CurrentCarts = () => {
             setError('');
         } catch (err) {
             console.error(err);
-            setError('Failed to load shopping carts.');
+            setError('Không thể tải giỏ hàng.');
         } finally {
             setLoading(false);
         }
@@ -33,7 +33,7 @@ const CurrentCarts = () => {
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid">
-                    <h1 className="m-0">Current Shopping Carts</h1>
+                    <h1 className="m-0">Giỏ hàng hiện tại</h1>
                 </div>
             </div>
 
@@ -42,15 +42,15 @@ const CurrentCarts = () => {
                     <div className="card">
                         <div className="card-body table-responsive p-0">
                             {error && <div className="alert alert-danger m-3">{error}</div>}
-                            {loading ? <div className="p-4 text-center">Loading carts...</div> : (
+                            {loading ? <div className="p-4 text-center">Đang tải giỏ hàng...</div> : (
                                 <table className="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Customer</th>
-                                            <th>Last Updated</th>
-                                            <th>Items</th>
-                                            <th>Total Value</th>
-                                            <th>Contents</th>
+                                            <th>Khách hàng</th>
+                                            <th>Cập nhật lần cuối</th>
+                                            <th>Số lượng</th>
+                                            <th>Tổng giá trị</th>
+                                            <th>Nội dung</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -61,7 +61,7 @@ const CurrentCarts = () => {
                                                     <div className="text-muted small">{cart.user?.email}</div>
                                                 </td>
                                                 <td>{new Date(cart.updatedAt).toLocaleString('vi-VN')}</td>
-                                                <td><span className="badge badge-primary">{cart.itemCount} items</span></td>
+                                                <td><span className="badge badge-primary">{cart.itemCount} sản phẩm</span></td>
                                                 <td>{formatCurrency(cart.totalValue)}</td>
                                                 <td>
                                                     <ul className="list-unstyled mb-0 small">
@@ -78,7 +78,7 @@ const CurrentCarts = () => {
                                             </tr>
                                         ))}
                                         {carts.length === 0 && (
-                                            <tr><td colSpan="5" className="text-center py-4">No active shopping carts found.</td></tr>
+                                            <tr><td colSpan="5" className="text-center py-4">Không tìm thấy giỏ hàng nào đang hoạt động.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -86,11 +86,11 @@ const CurrentCarts = () => {
                         </div>
                         {totalPages > 1 && (
                             <div className="card-footer d-flex justify-content-between align-items-center">
-                                <span className="text-muted">Showing page {page} of {totalPages} ({totalCount} total carts)</span>
+                                <span className="text-muted">Trang {page} / {totalPages} (tổng số {totalCount} giỏ hàng)</span>
                                 <nav>
                                     <ul className="pagination pagination-sm m-0 float-right">
                                         <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Previous</button>
+                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Trước</button>
                                         </li>
                                         {[...Array(totalPages)].map((_, i) => (
                                             <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
@@ -98,7 +98,7 @@ const CurrentCarts = () => {
                                             </li>
                                         ))}
                                         <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Next</button>
+                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Sau</button>
                                         </li>
                                     </ul>
                                 </nav>

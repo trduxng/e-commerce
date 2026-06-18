@@ -439,28 +439,28 @@ const Products = () => {
         <div className="content-wrapper">
             <div className="content-header clearfix">
                 <h1 className="float-left">
-                    Products
+                    Sản phẩm
                 </h1>
                 <div className="float-right">
                     {isAdmin() && (
                         <button className="btn btn-primary mr-1" onClick={() => openModal()}>
-                            <i className="fas fa-plus-square"></i> Add new
+                            <i className="fas fa-plus-square"></i> Thêm mới
                         </button>
                     )}
                     <button className="btn bg-info mr-1">
-                        <i className="fas fa-download"></i> Download catalog as PDF
+                        <i className="fas fa-download"></i> Tải danh mục PDF
                     </button>
                     <button className="btn btn-success mr-1">
-                        <i className="fas fa-file-export"></i> Export
+                        <i className="fas fa-file-export"></i> Xuất file
                     </button>
                     <button className="btn bg-olive mr-1">
-                        <i className="fas fa-upload"></i> Import
+                        <i className="fas fa-upload"></i> Nhập file
                     </button>
                     <button className="btn btn-danger" onClick={() => {
-                        if (selectedIds.length === 0) alert('Please select at least one product to delete.');
-                        else if (window.confirm('Are you sure you want to delete selected products?')) alert('Delete selected logic here');
+                        if (selectedIds.length === 0) alert('Vui lòng chọn ít nhất một sản phẩm để xoá.');
+                        else if (window.confirm('Bạn có chắc chắn muốn xoá các sản phẩm đã chọn không?')) alert('Logic xoá đang phát triển');
                     }}>
-                        <i className="far fa-trash-alt"></i> Delete (selected)
+                        <i className="far fa-trash-alt"></i> Xoá (đã chọn)
                     </button>
                 </div>
             </div>
@@ -474,7 +474,7 @@ const Products = () => {
                             <div className="card card-default card-search">
                                 <div className="card-body">
                                     <div className="row search-row opened" onClick={() => setSearchOpen(!searchOpen)} style={{ cursor: 'pointer' }}>
-                                        <div className="search-text">Search</div>
+                                        <div className="search-text">Tìm kiếm</div>
                                         <div className="icon-search"><i className="fas fa-search" aria-hidden="true"></i></div>
                                         <div className="icon-collapse"><i className={`far fa-angle-${searchOpen ? 'up' : 'down'}`} aria-hidden="true"></i></div>
                                     </div>
@@ -485,7 +485,7 @@ const Products = () => {
                                                 <div className="col-md-5">
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Product name</label>
+                                                            <label>Tên sản phẩm</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="text" className="form-control text-box single-line" value={keyword} onChange={e => setKeyword(e.target.value)} />
@@ -493,18 +493,18 @@ const Products = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Category</label>
+                                                            <label>Danh mục</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <select className="form-control" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-                                                                <option value="0">All</option>
+                                                                <option value="0">Tất cả</option>
                                                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                                             </select>
                                                         </div>
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Search subcategories</label>
+                                                            <label>Tìm trong danh mục con</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <input type="checkbox" checked={searchIncludeSubCategories} onChange={e => setSearchIncludeSubCategories(e.target.checked)} />
@@ -512,11 +512,11 @@ const Products = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Manufacturer</label>
+                                                            <label>Thương hiệu</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <select className="form-control" value={manufacturerId} onChange={e => setManufacturerId(e.target.value)}>
-                                                                <option value="0">All</option>
+                                                                <option value="0">Tất cả</option>
                                                                 {manufacturers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                                             </select>
                                                         </div>
@@ -525,46 +525,46 @@ const Products = () => {
                                                 <div className="col-md-7">
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Published</label>
+                                                            <label>Xuất bản</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <select className="form-control" value={publishedId} onChange={e => setPublishedId(e.target.value)}>
-                                                                <option value="0">All</option>
-                                                                <option value="1">Published only</option>
-                                                                <option value="2">Unpublished only</option>
+                                                                <option value="0">Tất cả</option>
+                                                                <option value="1">Đã xuất bản</option>
+                                                                <option value="2">Chưa xuất bản</option>
                                                             </select>
                                                         </div>
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Go directly to product SKU</label>
+                                                            <label>Chuyển đến SKU sản phẩm</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <div className="input-group input-group-short">
                                                                 <input type="text" className="form-control text-box single-line" value={goDirectlyToSku} onChange={e => setGoDirectlyToSku(e.target.value)} />
                                                                 <span className="input-group-append">
-                                                                    <button type="button" className="btn btn-info btn-flat">Go</button>
+                                                                    <button type="button" className="btn btn-info btn-flat">Đến</button>
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Sort by</label>
+                                                            <label>Sắp xếp theo</label>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
-                                                                <option value="created">Created date</option>
-                                                                <option value="name">Product name</option>
-                                                                <option value="price">Price</option>
-                                                                <option value="category">Category</option>
-                                                                <option value="manufacturer">Manufacturer</option>
+                                                                <option value="created">Ngày tạo</option>
+                                                                <option value="name">Tên sản phẩm</option>
+                                                                <option value="price">Giá</option>
+                                                                <option value="category">Danh mục</option>
+                                                                <option value="manufacturer">Thương hiệu</option>
                                                             </select>
                                                         </div>
                                                         <div className="col-md-4">
                                                             <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
-                                                                <option value="desc">Descending</option>
-                                                                <option value="asc">Ascending</option>
+                                                                <option value="desc">Giảm dần</option>
+                                                                <option value="asc">Tăng dần</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -574,7 +574,7 @@ const Products = () => {
                                                 <div className="text-center col-12">
                                                     <button type="button" id="search-products" className="btn btn-primary btn-search" disabled={loading} onClick={handleSearch}>
                                                         {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
-                                                        Search
+                                                        Tìm kiếm
                                                     </button>
                                                 </div>
                                             </div>
@@ -596,18 +596,18 @@ const Products = () => {
                                                                 <th className="text-center" style={{ width: 50 }}>
                                                                     <input type="checkbox" checked={selectedIds.length === products.length && products.length > 0} onChange={handleSelectAll} />
                                                                 </th>
-                                                                <th className="text-center" style={{ width: 100 }}>Picture</th>
-                                                                <th>Product name</th>
+                                                                <th className="text-center" style={{ width: 100 }}>Hình ảnh</th>
+                                                                <th>Tên sản phẩm</th>
                                                                 <th style={{ width: 150 }}>SKU</th>
-                                                                <th style={{ width: 150 }}>Price</th>
-                                                                <th style={{ width: 100 }}>Stock quantity</th>
-                                                                <th className="text-center" style={{ width: 100 }}>Published</th>
-                                                                <th className="text-center" style={{ width: 100 }}>Edit</th>
+                                                                <th style={{ width: 150 }}>Giá</th>
+                                                                <th style={{ width: 100 }}>Tồn kho</th>
+                                                                <th className="text-center" style={{ width: 100 }}>Trạng thái</th>
+                                                                <th className="text-center" style={{ width: 100 }}>Sửa</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {products.length === 0 ? (
-                                                                <tr><td colSpan="8" className="text-center">No records</td></tr>
+                                                                <tr><td colSpan="8" className="text-center">Không có bản ghi nào</td></tr>
                                                             ) : products.map(p => {
                                                                 const isChecked = selectedIds.includes(p.id);
                                                                 return (
@@ -634,7 +634,7 @@ const Products = () => {
                                                                         </td>
                                                                         <td className="text-center">
                                                                             <button className="btn btn-default btn-sm" onClick={() => openModal(p)}>
-                                                                                <i className="fas fa-pencil-alt"></i> Edit
+                                                                                <i className="fas fa-pencil-alt"></i> Sửa
                                                                             </button>
                                                                         </td>
                                                                     </tr>
@@ -648,7 +648,7 @@ const Products = () => {
                                         <div className="row mt-3">
                                             <div className="col-sm-12 col-md-5">
                                                 <div className="dataTables_info">
-                                                    Showing {products.length > 0 ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, totalCount)} of {totalCount} entries
+                                                    Hiển thị {products.length > 0 ? (page - 1) * pageSize + 1 : 0} đến {Math.min(page * pageSize, totalCount)} của {totalCount} bản ghi
                                                 </div>
                                             </div>
                                             <div className="col-sm-12 col-md-7">
@@ -672,14 +672,16 @@ const Products = () => {
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">{editingProduct ? 'Edit' : 'Add'} Product</h5>
+                                <h5 className="modal-title">{editingProduct ? 'Sửa' : 'Thêm'} sản phẩm</h5>
                                 <button type="button" className="close" onClick={closeModal}>&times;</button>
                             </div>
                             <div className="modal-nav bg-light border-bottom">
                                 <ul className="nav nav-tabs px-3 pt-2">
                                     {['info', 'variants', 'specs'].map(t => (
                                         <li className="nav-item" key={t}>
-                                            <button type="button" className={`nav-link ${modalTab === t ? 'active' : ''}`} onClick={() => setModalTab(t)}>{t.toUpperCase()}</button>
+                                            <button type="button" className={`nav-link ${modalTab === t ? 'active' : ''}`} onClick={() => setModalTab(t)}>
+                                                {t === 'info' ? 'THÔNG TIN' : t === 'variants' ? 'PHÂN LOẠI' : 'THÔNG SỐ KỸ THUẬT'}
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
@@ -689,23 +691,23 @@ const Products = () => {
                                     {modalTab === 'info' && (
                                         <div className="row">
                                             <div className="col-md-6">
-                                                <div className="form-group"><label>Name</label><input className="form-control" required value={formData.name} onChange={e => setField('name', e.target.value)} /></div>
-                                                <div className="form-group"><label>Category</label>
+                                                <div className="form-group"><label>Tên sản phẩm</label><input className="form-control" required value={formData.name} onChange={e => setField('name', e.target.value)} /></div>
+                                                <div className="form-group"><label>Danh mục</label>
                                                     <select className="form-control" required value={formData.categoryId} onChange={e => setField('categoryId', e.target.value)}>
-                                                        <option value="">Select Category</option>
+                                                        <option value="">Chọn danh mục</option>
                                                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                                     </select>
                                                 </div>
-                                                <div className="form-group"><label>Brand</label>
+                                                <div className="form-group"><label>Thương hiệu</label>
                                                     <select className="form-control" value={formData.manufacturerId} onChange={e => setField('manufacturerId', e.target.value)}>
-                                                        <option value="">Select Brand</option>
+                                                        <option value="">Chọn thương hiệu</option>
                                                         {manufacturers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                                     </select>
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
                                                 <div className="form-group">
-                                                    <label>Image URL</label>
+                                                    <label>URL Hình ảnh</label>
                                                     <div className="input-group">
                                                         <input 
                                                             type="text" 
@@ -716,7 +718,7 @@ const Products = () => {
                                                         />
                                                         <div className="input-group-append">
                                                             <label className="btn btn-secondary m-0 d-flex align-items-center">
-                                                                Browse...
+                                                                Duyệt...
                                                                 <input 
                                                                     type="file" 
                                                                     accept="image/*" 
@@ -732,12 +734,12 @@ const Products = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="custom-control custom-switch mt-4"><input type="checkbox" className="custom-control-input" id="sw1" checked={formData.isActive} onChange={e => setField('isActive', e.target.checked)} /><label className="custom-control-label" htmlFor="sw1">Is Active</label></div>
-                                                <div className="custom-control custom-switch mt-2"><input type="checkbox" className="custom-control-input" id="sw2" checked={formData.isFeatured} onChange={e => setField('isFeatured', e.target.checked)} /><label className="custom-control-label" htmlFor="sw2">Is Featured</label></div>
+                                                <div className="custom-control custom-switch mt-4"><input type="checkbox" className="custom-control-input" id="sw1" checked={formData.isActive} onChange={e => setField('isActive', e.target.checked)} /><label className="custom-control-label" htmlFor="sw1">Kích hoạt</label></div>
+                                                <div className="custom-control custom-switch mt-2"><input type="checkbox" className="custom-control-input" id="sw2" checked={formData.isFeatured} onChange={e => setField('isFeatured', e.target.checked)} /><label className="custom-control-label" htmlFor="sw2">Nổi bật</label></div>
                                             </div>
                                             <div className="col-12 mt-2">
-                                                <div className="form-group"><label>Short Description</label><input className="form-control" value={formData.shortDescription} onChange={e => setField('shortDescription', e.target.value)} /></div>
-                                                <div className="form-group"><label>Full Description</label><textarea className="form-control" rows={4} value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
+                                                <div className="form-group"><label>Mô tả ngắn</label><input className="form-control" value={formData.shortDescription} onChange={e => setField('shortDescription', e.target.value)} /></div>
+                                                <div className="form-group"><label>Mô tả chi tiết</label><textarea className="form-control" rows={4} value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
                                             </div>
                                         </div>
                                     )}
@@ -746,15 +748,15 @@ const Products = () => {
                                             <table className="table table-sm table-bordered align-middle">
                                                 <thead>
                                                     <tr>
-                                                        <th style={{ width: 92 }}>Image</th>
-                                                        <th style={{ minWidth: 240 }}>Image URL</th>
-                                                        <th style={{ minWidth: 100 }}>Size</th>
-                                                        <th style={{ minWidth: 100 }}>Color</th>
-                                                        <th style={{ minWidth: 110 }}>Price</th>
-                                                        <th style={{ minWidth: 110 }}>Sale</th>
-                                                        <th style={{ minWidth: 90 }}>Stock</th>
+                                                        <th style={{ width: 92 }}>Ảnh</th>
+                                                        <th style={{ minWidth: 240 }}>URL Hình ảnh</th>
+                                                        <th style={{ minWidth: 100 }}>Kích thước</th>
+                                                        <th style={{ minWidth: 100 }}>Màu sắc</th>
+                                                        <th style={{ minWidth: 110 }}>Giá gốc</th>
+                                                        <th style={{ minWidth: 110 }}>Giá KM</th>
+                                                        <th style={{ minWidth: 90 }}>Tồn kho</th>
                                                         <th style={{ minWidth: 150 }}>SKU</th>
-                                                        <th style={{ width: 70 }}>Active</th>
+                                                        <th style={{ width: 70 }}>Hiển thị</th>
                                                         <th style={{ width: 52 }}>
                                                             <button type="button" className="btn btn-xs btn-primary" onClick={addVariant}>+</button>
                                                         </th>
@@ -788,7 +790,7 @@ const Products = () => {
                                                                             onClick={() => setVariantField(i, 'imageUrl', formData.imageUrl)}
                                                                             disabled={!formData.imageUrl}
                                                                         >
-                                                                            Use product image
+                                                                            Lấy ảnh SP
                                                                         </button>
                                                                         <button
                                                                             type="button"
@@ -796,7 +798,7 @@ const Products = () => {
                                                                             onClick={() => setVariantField(i, 'imageUrl', '')}
                                                                             disabled={!v.imageUrl}
                                                                         >
-                                                                            Clear
+                                                                            Xoá ảnh
                                                                         </button>
                                                                     </div>
                                                                 </td>
@@ -823,11 +825,11 @@ const Products = () => {
                                     )}
                                     {modalTab === 'specs' && (
                                         <table className="table table-sm table-bordered">
-                                            <thead><tr><th>Attribute</th><th>Value</th><th>Order</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addSpec}>+</button></th></tr></thead>
+                                            <thead><tr><th>Thuộc tính</th><th>Giá trị</th><th>Thứ tự</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addSpec}>+</button></th></tr></thead>
                                             <tbody>
                                                 {formData.specifications.map((s, i) => (
                                                     <tr key={i}>
-                                                        <td><select className="form-control form-control-sm" value={s.attributeId} onChange={e => setSpecField(i, 'attributeId', e.target.value)}><option value="">Select</option>{specAttributes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></td>
+                                                        <td><select className="form-control form-control-sm" value={s.attributeId} onChange={e => setSpecField(i, 'attributeId', e.target.value)}><option value="">Chọn</option>{specAttributes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></td>
                                                         <td><input className="form-control form-control-sm" value={s.value} onChange={e => setSpecField(i, 'value', e.target.value)} /></td>
                                                         <td><input type="number" className="form-control form-control-sm" value={s.sortOrder} onChange={e => setSpecField(i, 'sortOrder', e.target.value)} /></td>
                                                         <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeSpec(i)}>x</button></td>
@@ -838,9 +840,9 @@ const Products = () => {
                                     )}
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" disabled={savingProduct} onClick={closeModal}>Cancel</button>
+                                    <button type="button" className="btn btn-secondary" disabled={savingProduct} onClick={closeModal}>Huỷ</button>
                                     <button type="submit" className="btn btn-primary" disabled={savingProduct}>
-                                        {savingProduct ? <><i className="fas fa-spinner fa-spin mr-1"></i>Saving...</> : 'Save Product'}
+                                        {savingProduct ? <><i className="fas fa-spinner fa-spin mr-1"></i>Đang lưu...</> : 'Lưu sản phẩm'}
                                     </button>
                                 </div>
                             </form>

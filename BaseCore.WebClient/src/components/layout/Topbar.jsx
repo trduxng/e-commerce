@@ -13,7 +13,7 @@ const Topbar = () => {
   const location = useLocation();
   const timeoutRef = useRef(null);
   const accountMenuRef = useRef(null);
-  const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin, isManager } = useAuth();
   const { count } = useCart();
   const { count: favoriteCount } = useFavorites();
   const { settings } = useSettings();
@@ -152,7 +152,7 @@ const Topbar = () => {
                         <i className="fa fa-receipt me-2"></i>
                         My Orders
                       </Link>
-                      {isAdmin() && (
+                      {(isAdmin() || isManager()) && (
                         <Link className="dropdown-item" to="/admin/dashboard" onClick={() => setShowAccountMenu(false)}>
                           <i className="fa fa-chart-line me-2"></i>
                           Dashboard

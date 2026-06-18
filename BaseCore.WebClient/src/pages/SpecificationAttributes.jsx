@@ -33,12 +33,12 @@ const SpecificationAttributes = () => {
             setShowModal(false);
             loadAttributes();
         } catch (err) {
-            alert('Error saving attribute');
+            alert('Lỗi khi lưu thuộc tính');
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Delete this attribute?')) {
+        if (window.confirm('Bạn có chắc muốn xóa thuộc tính này?')) {
             await specificationAttributeApi.delete(id);
             loadAttributes();
         }
@@ -59,8 +59,8 @@ const SpecificationAttributes = () => {
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid d-flex justify-content-between">
-                    <h1 className="m-0">Specification Attributes</h1>
-                    <button className="btn btn-primary" onClick={() => openModal()}>Add New Attribute</button>
+                    <h1 className="m-0">Thuộc tính kỹ thuật</h1>
+                    <button className="btn btn-primary" onClick={() => openModal()}>Thêm thuộc tính</button>
                 </div>
             </div>
 
@@ -68,15 +68,15 @@ const SpecificationAttributes = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-body table-responsive p-0">
-                            {loading ? <div className="p-4">Loading...</div> : (
+                            {loading ? <div className="p-4">Đang tải...</div> : (
                                 <table className="table table-hover text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Name</th>
-                                            <th>Sort Order</th>
-                                            <th>Active</th>
-                                            <th>Actions</th>
+                                            <th>Tên</th>
+                                            <th>Thứ tự sắp xếp</th>
+                                            <th>Kích hoạt</th>
+                                            <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -85,10 +85,10 @@ const SpecificationAttributes = () => {
                                                 <td>{a.id}</td>
                                                 <td><strong>{a.name}</strong></td>
                                                 <td>{a.sortOrder}</td>
-                                                <td>{a.isActive ? 'Yes' : 'No'}</td>
+                                                <td>{a.isActive ? 'Có' : 'Không'}</td>
                                                 <td>
-                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(a)}>Edit</button>
-                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a.id)}>Delete</button>
+                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(a)}>Sửa</button>
+                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a.id)}>Xóa</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -106,27 +106,27 @@ const SpecificationAttributes = () => {
                         <div className="modal-content">
                             <form onSubmit={handleSave}>
                                 <div className="modal-header">
-                                    <h5 className="modal-title">{editingAttr ? 'Edit' : 'Add'} Attribute</h5>
+                                    <h5 className="modal-title">{editingAttr ? 'Sửa' : 'Thêm'} thuộc tính</h5>
                                     <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
                                 </div>
                                 <div className="modal-body">
                                     <div className="form-group">
-                                        <label>Attribute Name (e.g., RAM, CPU, Color)</label>
+                                        <label>Tên thuộc tính (VD: RAM, CPU, Màu sắc)</label>
                                         <input className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Sort Order</label>
+                                        <label>Thứ tự sắp xếp</label>
                                         <input type="number" className="form-control" required value={formData.sortOrder} onChange={e => setFormData({...formData, sortOrder: Number(e.target.value)})} />
                                     </div>
                                     <div className="form-group">
                                         <label>
-                                            <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Active
+                                            <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Kích hoạt
                                         </label>
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
-                                    <button type="submit" className="btn btn-primary">Save changes</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Đóng</button>
+                                    <button type="submit" className="btn btn-primary">Lưu thay đổi</button>
                                 </div>
                             </form>
                         </div>

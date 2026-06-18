@@ -8,6 +8,7 @@ import {
   getProductRating,
   getProductReviewCount,
   getProductStock,
+  getProductVariants,
 } from "../data/shopData";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -32,7 +33,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-      toast.info("Please sign in before updating favorites.");
+      toast.info("Vui lòng đăng nhập trước khi cập nhật danh sách yêu thích.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
@@ -46,16 +47,19 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
     }
   };
 
+  const variants = getProductVariants(product);
+  const hasMultipleVariants = variants.length > 1 || (variants.length === 1 && (variants[0].size || variants[0].color));
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-      toast.info("Please sign in before adding products to cart.");
+      toast.info("Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
 
     const result = await addToCart(product);
-    const message = result.message || (result.success ? "Product added to cart." : "Cannot add this product.");
+    const message = result.message || (result.success ? "Đã thêm sản phẩm vào giỏ." : "Không thể thêm sản phẩm này.");
     if (result.success) {
       toast.success(message);
     } else {
@@ -74,14 +78,15 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
       <div className="product-img position-relative overflow-hidden">
         <img className="img-fluid w-100" src={getProductImage(product)} alt={product.name} />
         <div className="product-badges">
-          {isOnSale && <span className="product-badge product-badge-sale">Sale</span>}
-          {stock === 0 && <span className="product-badge product-badge-muted">Sold out</span>}
+          {isOnSale && <span className="product-badge product-badge-sale">Giảm giá</span>}
+          {stock === 0 && <span className="product-badge product-badge-muted">Hết hàng</span>}
+          {hasMultipleVariants && <span className="product-badge product-badge-info" style={{background: '#17a2b8', color: '#fff'}}>+{variants.length} Phân loại</span>}
         </div>
         <div className="product-action">
           <button
             type="button"
             className={`btn btn-square favorite-button ${favorite ? "is-favorite" : ""}`}
-            title={favorite ? "Remove from favorites" : "Add to favorites"}
+            title={favorite ? "Xoá khỏi yêu thích" : "Thêm vào yêu thích"}
             aria-pressed={favorite}
             onClick={handleToggleFavorite}
           >
@@ -90,13 +95,13 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
           <button
             type="button"
             className="btn btn-outline-dark btn-square"
-            title={stock === 0 ? "Out of stock" : "Add to cart"}
+            title={stock === 0 ? "Hết hàng" : "Thêm vào giỏ"}
             disabled={stock === 0}
             onClick={handleAddToCart}
           >
             <i className="fa fa-shopping-cart"></i>
           </button>
-          <Link className="btn btn-outline-dark btn-square" title="View details" to={`/product/${product.id}`}>
+          <Link className="btn btn-outline-dark btn-square" title="Xem chi tiết" to={`/product/${product.id}`}>
             <i className="fa fa-search"></i>
           </Link>
         </div>
@@ -120,7 +125,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
         </div>
         {stock !== null && (
           <small className={stock > 0 ? "text-muted" : "text-danger"}>
-            {stock > 0 ? `${stock} in stock` : "Out of stock"}
+            {stock > 0 ? `Còn ${stock} sản phẩm` : "Hết hàng"}
           </small>
         )}
         <div className="product-card-footer">
@@ -131,9 +136,9 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
             onClick={handleAddToCart}
           >
             <i className="fa fa-cart-plus me-2"></i>
-            Add to cart
+            {hasMultipleVariants ? "Tuỳ chọn" : "Thêm vào giỏ"}
           </button>
-          <Link className="btn btn-outline-dark product-card-view" to={`/product/${product.id}`} aria-label={`View ${product.name}`}>
+          <Link className="btn btn-outline-dark product-card-view" to={`/product/${product.id}`} aria-label={`Xem chi tiết ${product.name}`}>
             <i className="fa fa-arrow-right"></i>
           </Link>
         </div>

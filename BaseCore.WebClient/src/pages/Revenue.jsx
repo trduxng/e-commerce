@@ -3,11 +3,11 @@ import { orderApi } from '../services/api';
 import { formatCurrency } from '../data/shopData';
 
 const orderStatuses = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'confirmed', label: 'Confirmed' },
-    { value: 'shipping', label: 'Shipping' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'pending', label: 'Chờ xử lý' },
+    { value: 'confirmed', label: 'Đã xác nhận' },
+    { value: 'shipping', label: 'Đang giao hàng' },
+    { value: 'delivered', label: 'Đã giao hàng' },
+    { value: 'cancelled', label: 'Đã hủy' },
 ];
 
 const emptySummary = {
@@ -54,7 +54,7 @@ const Revenue = () => {
             if (!Array.isArray(response.data?.items) && !Array.isArray(response.data)) {
                 setOrders([]);
                 setSummary(emptySummary);
-                setError('Orders API did not return a valid list. Check that ApiGateway and APIService are running.');
+                setError('Lỗi kết nối API lấy danh sách đơn hàng. Vui lòng kiểm tra lại hệ thống.');
                 return;
             }
 
@@ -66,7 +66,7 @@ const Revenue = () => {
             console.error('Failed to load revenue:', error);
             setOrders([]);
             setSummary(emptySummary);
-            setError(error.response?.data?.message || 'Failed to load revenue. Check that ApiGateway and APIService are running.');
+            setError(error.response?.data?.message || 'Tải dữ liệu doanh thu thất bại. Vui lòng kiểm tra lại hệ thống.');
         } finally {
             setLoading(false);
         }
@@ -92,7 +92,7 @@ const Revenue = () => {
                 <div className="container-fluid">
                     <div className="row mb-2">
                         <div className="col-sm-6">
-                            <h1 className="m-0">Revenue</h1>
+                            <h1 className="m-0">Doanh thu</h1>
                         </div>
                     </div>
                 </div>
@@ -115,7 +115,7 @@ const Revenue = () => {
                                                 <input
                                                     type="search"
                                                     className="form-control mr-2 mb-2 mb-sm-0"
-                                                    placeholder="Search order, customer, phone, payment"
+                                                    placeholder="Tìm mã đơn, khách, SĐT..."
                                                     value={keyword}
                                                     onChange={(event) => {
                                                         setKeyword(event.target.value);
@@ -130,7 +130,7 @@ const Revenue = () => {
                                                         setPage(1);
                                                     }}
                                                 >
-                                                    <option value="">All Statuses</option>
+                                                    <option value="">Tất cả trạng thái</option>
                                                     {orderStatuses.map((status) => (
                                                         <option key={status.value} value={status.value}>{status.label}</option>
                                                     ))}
@@ -145,14 +145,14 @@ const Revenue = () => {
                                                             setPage(1);
                                                         }}
                                                     >
-                                                        Clear
+                                                        Xóa lọc
                                                     </button>
                                                 )}
                                             </form>
                                         </div>
                                         <div className="col-lg-4 text-lg-right mt-2 mt-lg-0">
                                             <span className="text-muted">
-                                                Showing {orders.length} of {totalCount} orders
+                                                Hiển thị {orders.length} / {totalCount} đơn hàng
                                             </span>
                                         </div>
                                     </div>
@@ -164,7 +164,7 @@ const Revenue = () => {
                                     <div className="small-box bg-primary">
                                         <div className="inner">
                                             <h3 style={{ fontSize: '1.6rem' }}>{formatCurrency(summary.totalRevenue)}</h3>
-                                            <p>Total Revenue</p>
+                                            <p>Tổng doanh thu</p>
                                         </div>
                                         <div className="icon">
                                             <i className="fas fa-coins"></i>
@@ -175,7 +175,7 @@ const Revenue = () => {
                                     <div className="small-box bg-success">
                                         <div className="inner">
                                             <h3 style={{ fontSize: '1.6rem' }}>{formatCurrency(summary.todayRevenue)}</h3>
-                                            <p>Today Revenue</p>
+                                            <p>Doanh thu hôm nay</p>
                                         </div>
                                         <div className="icon">
                                             <i className="fas fa-calendar-day"></i>
@@ -186,7 +186,7 @@ const Revenue = () => {
                                     <div className="small-box bg-info">
                                         <div className="inner">
                                             <h3>{summary.totalOrders}</h3>
-                                            <p>Total Orders</p>
+                                            <p>Tổng số đơn hàng</p>
                                         </div>
                                         <div className="icon">
                                             <i className="fas fa-shopping-cart"></i>
@@ -197,7 +197,7 @@ const Revenue = () => {
                                     <div className="small-box bg-warning">
                                         <div className="inner">
                                             <h3>{summary.validOrders}</h3>
-                                            <p>Revenue Orders</p>
+                                            <p>Đơn hàng có doanh thu</p>
                                         </div>
                                         <div className="icon">
                                             <i className="fas fa-receipt"></i>
@@ -208,20 +208,20 @@ const Revenue = () => {
 
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">Orders By Status</h3>
+                                    <h3 className="card-title">Thống kê trạng thái</h3>
                                 </div>
                                 <div className="card-body table-responsive p-0">
                                     <table className="table table-bordered mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Status</th>
-                                                <th>Orders</th>
+                                                <th>Trạng thái</th>
+                                                <th>Số lượng</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {Object.keys(summary.byStatus || {}).length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={2} className="text-center py-4">No revenue data</td>
+                                                    <td colSpan={2} className="text-center py-4">Không có dữ liệu</td>
                                                 </tr>
                                             ) : (
                                                 Object.entries(summary.byStatus).map(([status, count]) => (
@@ -238,26 +238,26 @@ const Revenue = () => {
 
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">Revenue Orders</h3>
+                                    <h3 className="card-title">Danh sách đơn hàng</h3>
                                 </div>
                                 <div className="card-body table-responsive p-0">
                                     <table className="table table-hover text-nowrap mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Order Code</th>
-                                                <th>Customer</th>
-                                                <th>Phone</th>
-                                                <th>Total</th>
-                                                <th>Payment</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
+                                                <th>Mã đơn</th>
+                                                <th>Khách hàng</th>
+                                                <th>SĐT</th>
+                                                <th>Tổng tiền</th>
+                                                <th>Thanh toán</th>
+                                                <th>Trạng thái</th>
+                                                <th>Ngày tạo</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {orders.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={7} className="text-center py-4">
-                                                        {(keyword || statusFilter) ? 'No revenue orders match your search' : 'No revenue data'}
+                                                        {(keyword || statusFilter) ? 'Không tìm thấy đơn hàng phù hợp' : 'Không có dữ liệu'}
                                                     </td>
                                                 </tr>
                                             ) : (
@@ -277,18 +277,18 @@ const Revenue = () => {
                                     </table>
 
                                     <div className="d-flex justify-content-between align-items-center p-3">
-                                        <span>Total: {totalCount} orders</span>
+                                        <span>Tổng: {totalCount} đơn hàng</span>
                                         <nav>
                                             <ul className="pagination mb-0">
                                                 <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                                                     <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>
-                                                        Previous
+                                                        Trước
                                                     </button>
                                                 </li>
                                                 {renderPagination()}
                                                 <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
                                                     <button className="page-link" type="button" onClick={() => setPage(page + 1)}>
-                                                        Next
+                                                        Sau
                                                     </button>
                                                 </li>
                                             </ul>

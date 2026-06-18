@@ -61,10 +61,29 @@ const Manufacturers = () => {
 
     return (
         <div className="content-wrapper">
-            <div className="content-header">
-                <div className="container-fluid d-flex justify-content-between">
-                    <h1 className="m-0">Nhà sản xuất / Thương hiệu</h1>
-                    <button className="btn btn-primary" onClick={() => openModal()}>Thêm thương hiệu mới</button>
+            <div className="content-header clearfix">
+                <h1 className="float-left">
+                    Nhà sản xuất
+                </h1>
+                <div className="float-right">
+                    <button type="button" className="btn btn-primary" onClick={() => openModal()}>
+                        <i className="fas fa-plus-square"></i>
+                        {' '}Thêm mới
+                    </button>
+                    <div className="btn-group ml-1">
+                        <button type="button" className="btn btn-success">
+                            <i className="fas fa-download"></i>
+                            {' '}Xuất file
+                        </button>
+                        <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            <span className="caret"></span>
+                            <span className="sr-only">&nbsp;</span>
+                        </button>
+                    </div>
+                    <button type="button" className="btn bg-olive ml-1">
+                        <i className="fas fa-upload"></i>
+                        {' '}Nhập file
+                    </button>
                 </div>
             </div>
 
