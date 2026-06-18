@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { orderApi } from "../services/api";
+import { orderApi, productApi } from "../services/api";
 import { formatCurrency } from "../data/shopData";
+import { useToast } from "../contexts/ToastContext";
 
 const statusMeta = {
   pending: { label: "Pending", className: "badge-warning" },
@@ -21,6 +22,7 @@ const paymentLabels = {
 };
 
 const MyOrders = () => {
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -31,6 +33,9 @@ const MyOrders = () => {
     searchParams.get("success") === "1" ? "Order placed successfully." : ""
   );
   const [cancellingId, setCancellingId] = useState(null);
+  const [reviewTarget, setReviewTarget] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     loadOrders(searchParams.get("orderId"));
@@ -152,6 +157,84 @@ const MyOrders = () => {
     }
   };
 
+  const openReview = (order, detail) => {
+    if (detail.isReviewed) {
+      toast.info("Bạn đã đánh giá đơn hàng này rồi.");
+      return;
+    }
+
+    const productId = getProductId(detail);
+    if (!productId) {
+      toast.error("Không tìm thấy sản phẩm để đánh giá.");
+      return;
+    }
+
+    setSelectedOrder(null);
+    setReviewForm({ rating: 5, content: "" });
+    setReviewTarget({
+      orderId: order.id,
+      orderCode: order.orderCode,
+      billDetailId: detail.id,
+      productId,
+      productName: detail.productNameSnapshot || "Product",
+      imageUrl: getDetailImage(detail),
+    });
+  };
+
+  const closeReview = () => {
+    if (submittingReview) return;
+    setReviewTarget(null);
+  };
+
+  const markDetailReviewed = (order, orderId, billDetailId, reviewId) => {
+    if (!order || Number(order.id) !== Number(orderId)) return order;
+
+    return {
+      ...order,
+      orderDetails: getOrderDetails(order).map((detail) => (
+        Number(detail.id) === Number(billDetailId)
+          ? { ...detail, isReviewed: true, reviewId: reviewId || detail.reviewId }
+          : detail
+      )),
+    };
+  };
+
+  const submitReview = async (event) => {
+    event.preventDefault();
+    if (!reviewTarget) return;
+
+    const content = reviewForm.content.trim();
+    if (!content) {
+      toast.warning("Vui lòng nhập nội dung đánh giá.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const response = await productApi.saveReview(reviewTarget.productId, {
+        billDetailId: reviewTarget.billDetailId,
+        rating: Number(reviewForm.rating),
+        content,
+      });
+      const submittedReview = response.data?.items?.find((item) => (
+        Number(item.billDetailId) === Number(reviewTarget.billDetailId)
+      ));
+
+      setOrders((current) => current.map((order) => (
+        markDetailReviewed(order, reviewTarget.orderId, reviewTarget.billDetailId, submittedReview?.id)
+      )));
+      setSelectedOrder((current) => (
+        markDetailReviewed(current, reviewTarget.orderId, reviewTarget.billDetailId, submittedReview?.id)
+      ));
+      setReviewTarget(null);
+      toast.success("Đánh giá sản phẩm thành công.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Không thể gửi đánh giá sản phẩm.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const renderOrderProducts = (order) => (
     <div className="order-products">
       {getOrderDetails(order).map((detail) => {
@@ -176,6 +259,18 @@ const MyOrders = () => {
             <div className="order-product-price">
               {formatCurrency(detail.totalPrice || Number(detail.unitPrice || 0) * Number(detail.quantity || 0))}
             </div>
+            {normalizeStatus(order.orderStatus) === "delivered" && (
+              <div className="order-product-actions">
+                <button
+                  className={`btn btn-sm ${detail.isReviewed ? "btn-outline-secondary" : "btn-outline-primary"}`}
+                  type="button"
+                  onClick={() => openReview(order, detail)}
+                >
+                  <i className="fa fa-star mr-1"></i>
+                  {detail.isReviewed ? "Đã đánh giá" : "Đánh giá sản phẩm"}
+                </button>
+              </div>
+            )}
           </div>
         );
       })}
@@ -378,6 +473,63 @@ const MyOrders = () => {
                   <button className="btn btn-primary" type="button" onClick={closeOrderDetail}>Close</button>
                 </div>
               </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+
+      {reviewTarget && (
+        <>
+          <div className="modal fade show review-order-modal" style={{ display: "block" }} tabIndex={-1} role="dialog" aria-modal="true">
+            <div className="modal-dialog modal-dialog-centered">
+              <form className="modal-content" onSubmit={submitReview}>
+                <div className="modal-header">
+                  <div>
+                    <h5 className="modal-title">Đánh giá sản phẩm</h5>
+                    <small className="text-muted">Đơn hàng {reviewTarget.orderCode}</small>
+                  </div>
+                  <button type="button" className="btn-close" aria-label="Close" onClick={closeReview}></button>
+                </div>
+                <div className="modal-body">
+                  <div className="review-order-product">
+                    <img src={reviewTarget.imageUrl} alt={reviewTarget.productName} />
+                    <strong>{reviewTarget.productName}</strong>
+                  </div>
+                  <label className="form-label d-block">Số sao</label>
+                  <div className="review-rating-control mb-3" role="radiogroup" aria-label="Số sao đánh giá">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className={value <= reviewForm.rating ? "is-active" : ""}
+                        onClick={() => setReviewForm((current) => ({ ...current, rating: value }))}
+                        aria-label={`${value} sao`}
+                      >
+                        <i className="fa fa-star"></i>
+                      </button>
+                    ))}
+                    <span>{reviewForm.rating}/5</span>
+                  </div>
+                  <label className="form-label" htmlFor="order-review-content">Nội dung đánh giá</label>
+                  <textarea
+                    id="order-review-content"
+                    className="form-control"
+                    rows={5}
+                    maxLength={2000}
+                    placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm"
+                    value={reviewForm.content}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, content: event.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline-secondary" type="button" onClick={closeReview} disabled={submittingReview}>Hủy</button>
+                  <button className="btn btn-primary" type="submit" disabled={submittingReview}>
+                    {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
           <div className="modal-backdrop fade show"></div>

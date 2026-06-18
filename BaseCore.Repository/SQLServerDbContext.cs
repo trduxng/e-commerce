@@ -253,7 +253,9 @@ namespace BaseCore.Repository
                 entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
                 entity.HasIndex(e => e.ProductId);
-                entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+                entity.HasIndex(e => e.BillDetailId)
+                      .IsUnique()
+                      .HasFilter("[bill_detail_id] IS NOT NULL");
 
                 entity.HasOne(e => e.User)
                       .WithMany()

@@ -1002,6 +1002,32 @@ img {
   white-space: nowrap;
 }
 
+.order-product-actions {
+  flex: 0 0 auto;
+}
+
+.review-order-product {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 12px;
+}
+
+.review-order-product img {
+  border-radius: 8px;
+  height: 64px;
+  object-fit: cover;
+  width: 64px;
+}
+
+.review-order-modal {
+  z-index: 1060;
+}
+
 .order-card-footer {
   justify-content: flex-end;
   gap: 24px;
@@ -1408,6 +1434,11 @@ img {
   .order-product-price {
     width: 100%;
     padding-left: 86px;
+  }
+
+  .order-product-actions {
+    padding-left: 86px;
+    width: 100%;
   }
 
   .order-detail-summary {

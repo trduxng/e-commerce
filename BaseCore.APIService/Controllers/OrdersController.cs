@@ -49,6 +49,7 @@ namespace BaseCore.APIService.Controllers
                 return Unauthorized();
 
             var orders = await _orderRepository.GetByUserAsync(userLongId);
+            await PopulateReviewStatus(orders);
             return Ok(orders);
         }
 
@@ -103,6 +104,7 @@ namespace BaseCore.APIService.Controllers
             if (order == null) return NotFound(new { message = "Order not found" });
             if (!CanAccessOrder(order)) return Forbid();
 
+            await PopulateReviewStatus(new[] { order });
             return Ok(new { order, details = order.OrderDetails });
         }
 
@@ -343,6 +345,33 @@ namespace BaseCore.APIService.Controllers
         {
             var rawUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return long.TryParse(rawUserId, out userId);
+        }
+
+        private async Task PopulateReviewStatus(IEnumerable<Order> orders)
+        {
+            var details = orders
+                .SelectMany(order => order.OrderDetails)
+                .ToList();
+            var detailIds = details.Select(detail => detail.Id).ToList();
+            if (detailIds.Count == 0)
+                return;
+
+            var reviews = await _db.Reviews
+                .Where(review => review.BillDetailId.HasValue && detailIds.Contains(review.BillDetailId.Value))
+                .Select(review => new { BillDetailId = review.BillDetailId!.Value, review.Id })
+                .ToListAsync();
+            var reviewsByDetailId = reviews
+                .GroupBy(review => review.BillDetailId)
+                .ToDictionary(group => group.Key, group => group.First().Id);
+
+            foreach (var detail in details)
+            {
+                if (reviewsByDetailId.TryGetValue(detail.Id, out var reviewId))
+                {
+                    detail.IsReviewed = true;
+                    detail.ReviewId = reviewId;
+                }
+            }
         }
 
         private bool IsAdmin()
