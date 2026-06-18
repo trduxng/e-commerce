@@ -43,7 +43,7 @@ const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath 
 
 // Wrapper to redirect authenticated users away from login
 const PublicRoute = ({ children }) => {
-    const { isAuthenticated, loading, isAdmin } = useAuth();
+    const { isAuthenticated, loading, isStaff } = useAuth();
     const location = useLocation();
     const returnUrl = new URLSearchParams(location.search).get('returnUrl');
     const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
@@ -59,9 +59,9 @@ const PublicRoute = ({ children }) => {
     }
 
     if (isAuthenticated) {
-        const targetUrl = safeReturnUrl && (isAdmin() || !isAdminPath(safeReturnUrl))
+        const targetUrl = safeReturnUrl && (isStaff() || !isAdminPath(safeReturnUrl))
             ? safeReturnUrl
-            : (isAdmin() ? '/dashboard' : '/');
+            : (isStaff() ? '/admin/dashboard' : '/');
         return <Navigate to={targetUrl} replace />;
     }
 

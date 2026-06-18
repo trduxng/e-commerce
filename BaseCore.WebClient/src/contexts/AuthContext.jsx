@@ -85,6 +85,14 @@ export const AuthProvider = ({ children }) => {
         return String(user?.role || '').toLowerCase() === 'admin';
     };
 
+    const isManager = () => {
+        return String(user?.role || '').toLowerCase() === 'manager';
+    };
+
+    const isStaff = () => {
+        return isAdmin() || isManager();
+    };
+
     const value = {
         user,
         login,
@@ -92,6 +100,8 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateStoredUser,
         isAdmin,
+        isManager,
+        isStaff,
         isAuthenticated: !!user,
         loading,
     };

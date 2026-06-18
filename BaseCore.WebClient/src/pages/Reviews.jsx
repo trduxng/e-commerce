@@ -23,7 +23,7 @@ const Reviews = () => {
             setTotalPages(response.data.totalPages || 0);
             setError('');
         } catch (err) {
-            setError('Failed to load reviews.');
+            setError('Không thể tải đánh giá sản phẩm.');
         } finally {
             setLoading(false);
         }
@@ -34,7 +34,7 @@ const Reviews = () => {
             await reviewApi.updateStatus(id, newStatus);
             loadReviews();
         } catch (err) {
-            alert('Failed to update review status.');
+            alert('Cập nhật trạng thái đánh giá thất bại.');
         }
     };
 
@@ -44,11 +44,20 @@ const Reviews = () => {
         ));
     };
 
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'approved': return 'Đã duyệt';
+            case 'rejected': return 'Bị từ chối';
+            case 'pending': return 'Chờ duyệt';
+            default: return status;
+        }
+    };
+
     return (
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid">
-                    <h1 className="m-0">Product Reviews</h1>
+                    <h1 className="m-0">Đánh giá sản phẩm</h1>
                 </div>
             </div>
 
@@ -61,32 +70,32 @@ const Reviews = () => {
                                 value={statusFilter} 
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
-                                <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="pending">Chờ duyệt</option>
+                                <option value="approved">Đã duyệt</option>
+                                <option value="rejected">Bị từ chối</option>
                             </select>
                         </div>
                         <div className="card-body table-responsive p-0">
                             {error && <div className="alert alert-danger m-3">{error}</div>}
                             {loading ? (
-                                <div className="text-center p-4">Loading...</div>
+                                <div className="text-center p-4">Đang tải...</div>
                             ) : (
                                 <table className="table table-hover text-nowrap">
                                     <thead>
                                         <tr>
-                                            <th>Product</th>
-                                            <th>Customer</th>
-                                            <th>Rating</th>
-                                            <th>Content</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
+                                            <th>Sản phẩm</th>
+                                            <th>Khách hàng</th>
+                                            <th>Đánh giá</th>
+                                            <th>Nội dung</th>
+                                            <th>Trạng thái</th>
+                                            <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {reviews.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="text-center py-4">No reviews found</td>
+                                                <td colSpan="6" className="text-center py-4">Không tìm thấy đánh giá nào</td>
                                             </tr>
                                         ) : (
                                             reviews.map(review => (
@@ -97,15 +106,15 @@ const Reviews = () => {
                                                     <td className="text-wrap" style={{maxWidth: '300px'}}>{review.content}</td>
                                                     <td>
                                                         <span className={`badge badge-${review.status === 'approved' ? 'success' : review.status === 'rejected' ? 'danger' : 'warning'}`}>
-                                                            {review.status}
+                                                            {getStatusText(review.status)}
                                                         </span>
                                                     </td>
                                                     <td>
                                                         {review.status !== 'approved' && (
-                                                            <button className="btn btn-sm btn-success mr-2" onClick={() => handleStatusChange(review.id, 'approved')}>Approve</button>
+                                                            <button className="btn btn-sm btn-success mr-2" onClick={() => handleStatusChange(review.id, 'approved')}>Duyệt</button>
                                                         )}
                                                         {review.status !== 'rejected' && (
-                                                            <button className="btn btn-sm btn-danger" onClick={() => handleStatusChange(review.id, 'rejected')}>Reject</button>
+                                                            <button className="btn btn-sm btn-danger" onClick={() => handleStatusChange(review.id, 'rejected')}>Từ chối</button>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -117,11 +126,11 @@ const Reviews = () => {
                         </div>
                         {totalPages > 1 && (
                             <div className="card-footer d-flex justify-content-between align-items-center">
-                                <span className="text-muted">Page {page} of {totalPages}</span>
+                                <span className="text-muted">Trang {page} / {totalPages}</span>
                                 <nav>
                                     <ul className="pagination pagination-sm m-0 float-right">
                                         <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Previous</button>
+                                            <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Trước</button>
                                         </li>
                                         {[...Array(totalPages)].map((_, i) => (
                                             <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
@@ -129,7 +138,7 @@ const Reviews = () => {
                                             </li>
                                         ))}
                                         <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Next</button>
+                                            <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Sau</button>
                                         </li>
                                     </ul>
                                 </nav>

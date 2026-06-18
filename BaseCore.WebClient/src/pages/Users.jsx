@@ -386,8 +386,8 @@ const Users = () => {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                             </form>
-
 
                             <div className="card card-default">
                                 <div className="card-body">

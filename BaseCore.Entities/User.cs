@@ -9,6 +9,7 @@ namespace BaseCore.Entities
 
         public string Email { get; set; } = "";
 
+        [System.Text.Json.Serialization.JsonIgnore]
         public string Password { get; set; } = "";
 
         public string? Phone { get; set; }

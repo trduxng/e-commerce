@@ -260,6 +260,91 @@ namespace BaseCore.APIService.Controllers
             return Ok(product.ProductSpecifications);
         }
 
+        /// <summary>
+        /// Get product reviews
+        /// </summary>
+        [HttpGet("{id}/reviews")]
+        public async Task<IActionResult> GetReviews(long id, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var query = _context.Reviews
+                .Include(r => r.User)
+                .Where(r => r.ProductId == id && r.Status == "approved");
+
+            var totalCount = await query.CountAsync();
+            
+            var allRatings = await query.Select(r => (double)r.Rating).ToListAsync();
+            var breakdown = new List<object>();
+            for (int i = 5; i >= 1; i--)
+            {
+                var count = allRatings.Count(r => r == i);
+                breakdown.Add(new { stars = i, count = count, percentage = totalCount > 0 ? (count * 100.0 / totalCount) : 0 });
+            }
+
+            var items = await query
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Rating,
+                    r.Title,
+                    r.Content,
+                    r.CreatedAt,
+                    r.IsVerifiedPurchase,
+                    reviewerName = r.User != null ? r.User.Name : "Anonymous"
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                averageRating = totalCount > 0 ? allRatings.Average() : 0,
+                totalCount,
+                breakdown,
+                items,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            });
+        }
+
+        /// <summary>
+        /// Add product review
+        /// </summary>
+        [HttpPost("{id}/reviews")]
+        [Authorize]
+        public async Task<IActionResult> AddReview(long id, [FromBody] ReviewCreateDto dto)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound(new { message = "Product not found" });
+            }
+
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+            if (!long.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { message = "User not found in token" });
+            }
+
+            var review = new Review
+            {
+                ProductId = id,
+                UserId = userId,
+                Rating = (byte)dto.Rating,
+                Title = dto.Title ?? "",
+                Content = dto.Content,
+                Status = "pending", // Default status for new reviews
+                CreatedAt = DateTime.Now,
+                IsVerifiedPurchase = true // Typically you'd verify this against actual orders
+            };
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            return Ok(review);
+        }
+
         private static string Slugify(string value)
         {
             var slug = new string(value.Trim().ToLowerInvariant()
@@ -484,5 +569,12 @@ namespace BaseCore.APIService.Controllers
         public int AttributeId { get; set; }
         public string Value { get; set; } = "";
         public int SortOrder { get; set; }
+    }
+
+    public class ReviewCreateDto
+    {
+        public int Rating { get; set; }
+        public string? Title { get; set; }
+        public string Content { get; set; } = "";
     }
 }

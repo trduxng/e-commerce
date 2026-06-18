@@ -341,32 +341,31 @@ const Dashboard = () => {
                             </div>
                         )}
                         </div>
-                    )}
 
                     {isAdmin() && (
                         <div className="row">
                             <div className="col-12">
                                 <div className="card">
                                     <div className="card-header">
-                                        <h3 className="card-title">Recent Purchases</h3>
+                                        <h3 className="card-title">Giao dịch gần đây</h3>
                                     </div>
                                     <div className="card-body table-responsive p-0">
                                         <table className="table table-hover text-nowrap mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th>Order Code</th>
-                                                    <th>Customer</th>
-                                                    <th>Phone</th>
-                                                    <th>Products</th>
-                                                    <th>Total</th>
-                                                    <th>Status</th>
-                                                    <th>Date</th>
+                                                    <th>Mã đơn hàng</th>
+                                                    <th>Khách hàng</th>
+                                                    <th>SĐT</th>
+                                                    <th>Sản phẩm</th>
+                                                    <th>Tổng tiền</th>
+                                                    <th>Trạng thái</th>
+                                                    <th>Ngày</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {recentOrders.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan={7} className="text-center py-4">No purchase data yet.</td>
+                                                        <td colSpan={7} className="text-center py-4">Chưa có dữ liệu giao dịch.</td>
                                                     </tr>
                                                 ) : (
                                                     recentOrders.map((order) => (
@@ -417,27 +416,27 @@ const Dashboard = () => {
                         <div className="col-12">
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">My Orders</h3>
+                                    <h3 className="card-title">Đơn hàng của tôi</h3>
                                 </div>
                                 <div className="card-body table-responsive p-0">
                                     {orderError && <div className="alert alert-warning m-3">{orderError}</div>}
                                     <table className="table table-hover text-nowrap mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Order Code</th>
-                                                <th>Receiver</th>
-                                                <th>Products</th>
-                                                <th>Total</th>
-                                                <th>Payment</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
-                                                <th>Actions</th>
+                                                <th>Mã đơn hàng</th>
+                                                <th>Người nhận</th>
+                                                <th>Sản phẩm</th>
+                                                <th>Tổng tiền</th>
+                                                <th>Thanh toán</th>
+                                                <th>Trạng thái</th>
+                                                <th>Ngày tạo</th>
+                                                <th>Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {myOrders.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={8} className="text-center py-4">No orders found</td>
+                                                    <td colSpan={8} className="text-center py-4">Không tìm thấy đơn hàng</td>
                                                 </tr>
                                             ) : (
                                                 myOrders.map((order) => (
@@ -488,10 +487,10 @@ const Dashboard = () => {
                                 </div>
                                 {editingOrder && (
                                     <form className="card-body border-top" onSubmit={saveOrder}>
-                                        <h5 className="mb-3">Edit {editingOrder.orderCode}</h5>
+                                        <h5 className="mb-3">Sửa đơn hàng {editingOrder.orderCode}</h5>
                                         <div className="row">
                                             <div className="col-md-4 form-group">
-                                                <label>Receiver Name</label>
+                                                <label>Tên người nhận</label>
                                                 <input
                                                     className="form-control"
                                                     value={orderForm.receiverName}
@@ -500,7 +499,7 @@ const Dashboard = () => {
                                                 />
                                             </div>
                                             <div className="col-md-4 form-group">
-                                                <label>Phone</label>
+                                                <label>Số điện thoại</label>
                                                 <input
                                                     className="form-control"
                                                     value={orderForm.receiverPhone}
@@ -518,7 +517,7 @@ const Dashboard = () => {
                                                 />
                                             </div>
                                             <div className="col-md-8 form-group">
-                                                <label>Shipping Address</label>
+                                                <label>Địa chỉ giao hàng</label>
                                                 <input
                                                     className="form-control"
                                                     value={orderForm.shippingAddress}
@@ -527,19 +526,19 @@ const Dashboard = () => {
                                                 />
                                             </div>
                                             <div className="col-md-4 form-group">
-                                                <label>Payment</label>
+                                                <label>Thanh toán</label>
                                                 <select
                                                     className="custom-select"
                                                     value={orderForm.paymentMethod}
                                                     onChange={(event) => setOrderField('paymentMethod', event.target.value)}
                                                 >
-                                                    <option value="cod">Cash on Delivery</option>
-                                                    <option value="banktransfer">Bank Transfer</option>
+                                                    <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+                                                    <option value="banktransfer">Chuyển khoản ngân hàng</option>
                                                     <option value="paypal">Paypal</option>
                                                 </select>
                                             </div>
                                             <div className="col-12 form-group">
-                                                <label>Note</label>
+                                                <label>Ghi chú</label>
                                                 <textarea
                                                     className="form-control"
                                                     rows={3}
@@ -549,18 +548,16 @@ const Dashboard = () => {
                                             </div>
                                         </div>
                                         <button className="btn btn-primary mr-2" type="submit" disabled={savingOrder}>
-                                            {savingOrder ? 'Saving...' : 'Save Order'}
+                                            {savingOrder ? 'Đang lưu...' : 'Lưu đơn hàng'}
                                         </button>
                                         <button className="btn btn-secondary" type="button" onClick={cancelEditOrder}>
-                                            Cancel
+                                            Hủy
                                         </button>
                                     </form>
                                 )}
                             </div>
                         </div>
->>>>>>> 76372a3090e5c6212d2917ee03bebe61d663b860
                     </div>
-
                     {/* Charts & Analytics Section */}
                     {isAdmin() && (
                         <div className="row mb-4">

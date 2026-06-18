@@ -154,6 +154,7 @@ namespace BaseCore.Repository.EFCore
         {
             var product = await _dbSet
                 .Include(p => p.Category)
+                .Include(p => p.Manufacturer)
                 .Include(p => p.ProductVariants)
                 .FirstOrDefaultAsync(p => p.Id == id && p.DeletedAt == null);
 

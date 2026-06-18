@@ -199,15 +199,15 @@ const MainLayout = ({ children }) => {
                         <li className="nav-item">
                             <Link to="/admin/dashboard" className={`nav-link ${isActive('/admin/dashboard')}`}>
                                 <i className="nav-icon fas fa-tachometer-alt"></i>
-                                <span className="menu-text">Dashboard</span>
+                                <span className="menu-text">Bảng điều khiển</span>
                             </Link>
                         </li>
                         
                         {/* Catalog */}
-                        <li className={`nav-item ${openMenus.catalog ? 'menu-open' : ''}`}>
-                            <div onClick={() => toggleMenu('catalog')} className={`nav-link ${['/admin/products', '/admin/categories', '/admin/manufacturers', '/admin/reviews'].includes(location.pathname) ? 'active' : ''}`}>
+                        <li className={`nav-item has-treeview ${openMenus.catalog ? 'menu-open' : ''}`}>
+                            <div onClick={() => toggleMenu('catalog')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/products', '/admin/categories', '/admin/manufacturers', '/admin/reviews'].includes(location.pathname) ? 'active' : ''}`}>
                                 <i className="nav-icon fas fa-book"></i>
-                                <span className="menu-text">Catalog</span>
+                                <span className="menu-text">Danh mục sản phẩm</span>
                                 <i className="right fas fa-angle-left"></i>
                             </div>
                             {openMenus.catalog && (
@@ -215,39 +215,39 @@ const MainLayout = ({ children }) => {
                                     <li className="nav-item">
                                         <Link to="/admin/products" className={`nav-link ${isActive('/admin/products')}`}>
                                             <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                            <span className="menu-text">Products</span>
-                                        </Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link to="/admin/categories" className={`nav-link ${isActive('/admin/categories')}`}>
-                                            <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                            <span className="menu-text">Categories</span>
-                                        </Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link to="/admin/manufacturers" className={`nav-link ${isActive('/admin/manufacturers')}`}>
-                                            <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                            <span className="menu-text">Manufacturers</span>
+                                            <span className="menu-text">Sản phẩm</span>
                                         </Link>
                                     </li>
                                     {isAdmin() && (
+                                        <li className="nav-item">
+                                            <Link to="/admin/categories" className={`nav-link ${isActive('/admin/categories')}`}>
+                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                                <span className="menu-text">Thể loại</span>
+                                            </Link>
+                                        </li>
+                                    )}
+                                    <li className="nav-item">
+                                        <Link to="/admin/manufacturers" className={`nav-link ${isActive('/admin/manufacturers')}`}>
+                                            <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                            <span className="menu-text">Nhà sản xuất</span>
+                                        </Link>
+                                    </li>
                                     <li className="nav-item">
                                         <Link to="/admin/reviews" className={`nav-link ${isActive('/admin/reviews')}`}>
                                             <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                            <span className="menu-text">Product reviews</span>
+                                            <span className="menu-text">Đánh giá sản phẩm</span>
                                         </Link>
                                     </li>
-                                    )}
                                 </ul>
                             )}
                         </li>
 
                         {/* Sales */}
                         {isAdmin() && (
-                            <li className={`nav-item ${openMenus.sales ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('sales')} className={`nav-link ${['/admin/orders', '/admin/current-carts', '/admin/payments'].includes(location.pathname) ? 'active' : ''}`}>
+                            <li className={`nav-item has-treeview ${openMenus.sales ? 'menu-open' : ''}`}>
+                                <div onClick={() => toggleMenu('sales')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/orders', '/admin/current-carts', '/admin/payments'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon fas fa-shopping-cart"></i>
-                                    <span className="menu-text">Sales</span>
+                                    <span className="menu-text">Bán hàng</span>
                                     <i className="right fas fa-angle-left"></i>
                                 </div>
                                 {openMenus.sales && (
@@ -255,19 +255,19 @@ const MainLayout = ({ children }) => {
                                         <li className="nav-item">
                                             <Link to="/admin/orders" className={`nav-link ${isActive('/admin/orders')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Orders</span>
+                                                <span className="menu-text">Đơn hàng</span>
                                             </Link>
                                         </li>
                                         <li className="nav-item">
                                             <Link to="/admin/current-carts" className={`nav-link ${isActive('/admin/current-carts')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Current Carts</span>
+                                                <span className="menu-text">Giỏ hàng hiện tại</span>
                                             </Link>
                                         </li>
                                         <li className="nav-item">
                                             <Link to="/admin/payments" className={`nav-link ${isActive('/admin/payments')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Payments</span>
+                                                <span className="menu-text">Giao dịch thanh toán</span>
                                             </Link>
                                         </li>
                                     </ul>
@@ -277,10 +277,10 @@ const MainLayout = ({ children }) => {
 
                         {/* Customers */}
                         {isAdmin() && (
-                            <li className={`nav-item ${openMenus.customers ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('customers')} className={`nav-link ${['/admin/users'].includes(location.pathname) ? 'active' : ''}`}>
+                            <li className={`nav-item has-treeview ${openMenus.customers ? 'menu-open' : ''}`}>
+                                <div onClick={() => toggleMenu('customers')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/users'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon far fa-user"></i>
-                                    <span className="menu-text">Customers</span>
+                                    <span className="menu-text">Khách hàng</span>
                                     <i className="right fas fa-angle-left"></i>
                                 </div>
                                 {openMenus.customers && (
@@ -288,7 +288,7 @@ const MainLayout = ({ children }) => {
                                         <li className="nav-item">
                                             <Link to="/admin/users" className={`nav-link ${isActive('/admin/users')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Customers</span>
+                                                <span className="menu-text">Khách hàng</span>
                                             </Link>
                                         </li>
                                     </ul>
@@ -297,65 +297,63 @@ const MainLayout = ({ children }) => {
                         )}
 
                         {/* Promotions */}
-                        {isAdmin() && (
-                            <li className={`nav-item ${openMenus.promotions ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('promotions')} className={`nav-link ${['/admin/coupons'].includes(location.pathname) ? 'active' : ''}`}>
-                                    <i className="nav-icon fas fa-tags"></i>
-                                    <span className="menu-text">Promotions</span>
-                                    <i className="right fas fa-angle-left"></i>
-                                </div>
-                                {openMenus.promotions && (
-                                    <ul className="nav nav-treeview">
-                                        <li className="nav-item">
-                                            <Link to="/admin/coupons" className={`nav-link ${isActive('/admin/coupons')}`}>
-                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Discounts</span>
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                )}
-                            </li>
-                        )}
+                        <li className={`nav-item has-treeview ${openMenus.promotions ? 'menu-open' : ''}`}>
+                            <div onClick={() => toggleMenu('promotions')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/coupons'].includes(location.pathname) ? 'active' : ''}`}>
+                                <i className="nav-icon fas fa-tags"></i>
+                                <span className="menu-text">Khuyến mãi</span>
+                                <i className="right fas fa-angle-left"></i>
+                            </div>
+                            {openMenus.promotions && (
+                                <ul className="nav nav-treeview">
+                                    <li className="nav-item">
+                                        <Link to="/admin/coupons" className={`nav-link ${isActive('/admin/coupons')}`}>
+                                            <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                            <span className="menu-text">Mã giảm giá</span>
+                                        </Link>
+                                    </li>
+                                </ul>
+                            )}
+                        </li>
 
                         {/* Configuration */}
-                        {isAdmin() && (
-                            <li className={`nav-item ${openMenus.config ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('config')} className={`nav-link ${['/admin/settings', '/admin/specification-attributes', '/admin/checkout-attributes'].includes(location.pathname) ? 'active' : ''}`}>
-                                    <i className="nav-icon fas fa-cogs"></i>
-                                    <span className="menu-text">Configuration</span>
-                                    <i className="right fas fa-angle-left"></i>
-                                </div>
-                                {openMenus.config && (
-                                    <ul className="nav nav-treeview">
+                        <li className={`nav-item has-treeview ${openMenus.config ? 'menu-open' : ''}`}>
+                            <div onClick={() => toggleMenu('config')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/settings', '/admin/specification-attributes', '/admin/checkout-attributes'].includes(location.pathname) ? 'active' : ''}`}>
+                                <i className="nav-icon fas fa-cogs"></i>
+                                <span className="menu-text">Cấu hình</span>
+                                <i className="right fas fa-angle-left"></i>
+                            </div>
+                            {openMenus.config && (
+                                <ul className="nav nav-treeview">
+                                    {isAdmin() && (
                                         <li className="nav-item">
                                             <Link to="/admin/settings" className={`nav-link ${isActive('/admin/settings')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Settings</span>
+                                                <span className="menu-text">Cài đặt</span>
                                             </Link>
                                         </li>
-                                        <li className="nav-item">
-                                            <Link to="/admin/specification-attributes" className={`nav-link ${isActive('/admin/specification-attributes')}`}>
-                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Spec Attributes</span>
-                                            </Link>
-                                        </li>
-                                        <li className="nav-item">
-                                            <Link to="/admin/checkout-attributes" className={`nav-link ${isActive('/admin/checkout-attributes')}`}>
-                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Checkout Attributes</span>
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                )}
-                            </li>
-                        )}
+                                    )}
+                                    <li className="nav-item">
+                                        <Link to="/admin/specification-attributes" className={`nav-link ${isActive('/admin/specification-attributes')}`}>
+                                            <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                            <span className="menu-text">Thuộc tính kỹ thuật</span>
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link to="/admin/checkout-attributes" className={`nav-link ${isActive('/admin/checkout-attributes')}`}>
+                                            <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                            <span className="menu-text">Thuộc tính thanh toán</span>
+                                        </Link>
+                                    </li>
+                                </ul>
+                            )}
+                        </li>
 
                         {/* Reports */}
                         {isAdmin() && (
-                            <li className={`nav-item ${openMenus.reports ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('reports')} className={`nav-link ${['/admin/revenue'].includes(location.pathname) ? 'active' : ''}`}>
+                            <li className={`nav-item has-treeview ${openMenus.reports ? 'menu-open' : ''}`}>
+                                <div onClick={() => toggleMenu('reports')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/revenue'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon fas fa-chart-line"></i>
-                                    <span className="menu-text">Reports</span>
+                                    <span className="menu-text">Báo cáo</span>
                                     <i className="right fas fa-angle-left"></i>
                                 </div>
                                 {openMenus.reports && (
@@ -363,7 +361,7 @@ const MainLayout = ({ children }) => {
                                         <li className="nav-item">
                                             <Link to="/admin/revenue" className={`nav-link ${isActive('/admin/revenue')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Revenue</span>
+                                                <span className="menu-text">Doanh thu</span>
                                             </Link>
                                         </li>
                                     </ul>
@@ -381,9 +379,9 @@ const MainLayout = ({ children }) => {
 
             {/* Footer */}
             <footer className="main-footer">
-                <span>Copyright &copy; 2026 <a href="#">BaseCore Sales</a>. All rights reserved.</span>
+                <span>Copyright &copy; 2026 <a href="#">BaseCore Sales</a>. Bản quyền đã được bảo lưu.</span>
                 <div className="d-none d-sm-block">
-                    <b>Version</b> 1.1.0
+                    <b>Phiên bản</b> 1.1.0
                 </div>
             </footer>
         </div>

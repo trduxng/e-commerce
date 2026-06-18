@@ -298,9 +298,12 @@ const ProductDetail = () => {
               </div>
               <p className="mb-4">{product.description || "A quality product ready for everyday use."}</p>
               <p className="mb-2"><strong>Category:</strong> {getProductCategoryName(product, [])}</p>
-              <p className="mb-4"><strong>Stock:</strong> {stock ?? "Available"}</p>
+              <p className="mb-2"><strong>Stock:</strong> {stock ?? "Available"}</p>
+              {selectedVariant?.sku && (
+                <p className="mb-4"><strong>SKU:</strong> {selectedVariant.sku}</p>
+              )}
 
-              {variants.length > 0 && (
+              {variants.length > 1 && variants.some(v => v.size || v.color) && (
                 <div className="mb-4">
                   <strong className="d-block mb-2">Variant</strong>
                   <div className="d-flex flex-wrap" style={{ gap: 10 }}>
@@ -364,7 +367,7 @@ const ProductDetail = () => {
                     <h4>Specifications</h4>
                     <table className="table product-spec-table"><tbody>
                       {[
-                        ["Brand", product.brand || "BaseShop"],
+                        ["Brand", product.manufacturer?.name || "BaseShop"],
                         ["Model", selectedVariant?.sku || product.slug || `Product-${product.id}`],
                       ].map(([label, value]) => <tr key={label}><th>{label}</th><td>{value}</td></tr>)}
                     </tbody></table>

@@ -108,13 +108,13 @@ const Categories = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this category?')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn xóa danh mục này không?')) return;
 
         try {
             await categoryApi.delete(id);
             loadCategories();
         } catch (error) {
-            alert('Failed to delete category. It may have associated products.');
+            alert('Xóa danh mục thất bại. Danh mục này có thể đang chứa sản phẩm.');
         }
     };
 
@@ -136,7 +136,7 @@ const Categories = () => {
                 <div className="container-fluid">
                     <div className="row mb-2">
                         <div className="col-sm-6">
-                            <h1 className="m-0">Categories Management</h1>
+                            <h1 className="m-0">Quản lý Danh mục</h1>
                         </div>
                     </div>
                 </div>
@@ -152,7 +152,7 @@ const Categories = () => {
                                         <input
                                             type="search"
                                             className="form-control mr-2"
-                                            placeholder="Search categories"
+                                            placeholder="Tìm kiếm danh mục..."
                                             value={keyword}
                                             onChange={handleSearchChange}
                                         />
@@ -166,28 +166,28 @@ const Categories = () => {
                                                     setPage(1);
                                                 }}
                                             >
-                                                Clear
+                                                Xóa tìm kiếm
                                             </button>
                                         )}
                                         <select className="form-control mr-2" value={sortField} onChange={e => setSortField(e.target.value)}>
-                                            <option value="order">Sort Order</option>
-                                            <option value="name">Name</option>
-                                            <option value="created">Created Date</option>
+                                            <option value="order">Thứ tự hiển thị</option>
+                                            <option value="name">Tên danh mục</option>
+                                            <option value="created">Ngày tạo</option>
                                         </select>
                                         <select className="form-control mr-2" value={sortDir} onChange={e => setSortDir(e.target.value)}>
-                                            <option value="asc">Ascending</option>
-                                            <option value="desc">Descending</option>
+                                            <option value="asc">Tăng dần</option>
+                                            <option value="desc">Giảm dần</option>
                                         </select>
                                         <button className="btn btn-primary" type="button" disabled={loading} onClick={() => loadCategories()}>
                                             {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
-                                            Search
+                                            Tìm kiếm
                                         </button>
                                     </form>
                                 </div>
                                 <div className="col-md-5 text-right">
                                     {isAdmin() && (
                                         <button className="btn btn-success" onClick={() => openModal()}>
-                                            <i className="fas fa-plus"></i> Add Category
+                                            <i className="fas fa-plus"></i> Thêm Danh mục
                                         </button>
                                     )}
                                 </div>
@@ -204,17 +204,17 @@ const Categories = () => {
                                     <table className="table table-bordered table-striped">
                                         <thead>
                                             <tr>
-                                                <th style={{ width: '80px' }}>ID</th>
-                                                <th>Name</th>
-                                                <th>Description</th>
-                                                {isAdmin() && <th style={{ width: '150px' }}>Actions</th>}
+                                                <th style={{ width: '80px' }}>Mã (ID)</th>
+                                                <th>Tên danh mục</th>
+                                                <th>Mô tả</th>
+                                                {isAdmin() && <th style={{ width: '150px' }}>Thao tác</th>}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {categories.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={isAdmin() ? 4 : 3} className="text-center">
-                                                        {keyword ? 'No categories match your search' : 'No categories found'}
+                                                        {keyword ? 'Không tìm thấy danh mục nào phù hợp với tìm kiếm' : 'Không có danh mục nào'}
                                                     </td>
                                                 </tr>
                                             ) : (
@@ -246,18 +246,18 @@ const Categories = () => {
                                     </table>
 
                                     <div className="d-flex justify-content-between align-items-center">
-                                        <span>Total: {totalCount} categories</span>
+                                        <span>Tổng cộng: {totalCount} danh mục</span>
                                         <nav>
                                             <ul className="pagination mb-0">
                                                 <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                                                     <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>
-                                                        Previous
+                                                        Trước
                                                     </button>
                                                 </li>
                                                 {renderPagination()}
                                                 <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
                                                     <button className="page-link" type="button" onClick={() => setPage(page + 1)}>
-                                                        Next
+                                                        Sau
                                                     </button>
                                                 </li>
                                             </ul>
@@ -277,7 +277,7 @@ const Categories = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">
-                                    {editingCategory ? 'Edit Category' : 'Add Category'}
+                                    {editingCategory ? 'Sửa Danh mục' : 'Thêm Danh mục'}
                                 </h5>
                                 <button type="button" className="close" onClick={closeModal}>
                                     <span>&times;</span>
@@ -287,7 +287,7 @@ const Categories = () => {
                                 <div className="modal-body">
                                     {error && <div className="alert alert-danger">{error}</div>}
                                     <div className="form-group">
-                                        <label>Name</label>
+                                        <label>Tên danh mục</label>
                                         <input
                                             type="text"
                                             className="form-control"
@@ -297,7 +297,7 @@ const Categories = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Description</label>
+                                        <label>Mô tả</label>
                                         <textarea
                                             className="form-control"
                                             value={formData.description}
@@ -308,10 +308,10 @@ const Categories = () => {
                                 </div>
                                 <div className="modal-footer">
                                     <button type="button" className="btn btn-secondary" disabled={savingCategory} onClick={closeModal}>
-                                        Cancel
+                                        Hủy
                                     </button>
                                     <button type="submit" className="btn btn-primary" disabled={savingCategory}>
-                                        {savingCategory ? <><i className="fas fa-spinner fa-spin mr-1"></i>Saving...</> : (editingCategory ? 'Update' : 'Create')}
+                                        {savingCategory ? <><i className="fas fa-spinner fa-spin mr-1"></i>Đang lưu...</> : (editingCategory ? 'Cập nhật' : 'Tạo mới')}
                                     </button>
                                 </div>
                             </form>

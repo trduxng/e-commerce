@@ -37,12 +37,12 @@ const Manufacturers = () => {
             setShowModal(false);
             loadManufacturers();
         } catch (err) {
-            alert(err.response?.data?.message || 'Error saving manufacturer');
+            alert(err.response?.data?.message || 'Lỗi khi lưu nhà sản xuất');
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Delete this manufacturer?')) {
+        if (window.confirm('Bạn có chắc chắn muốn xóa nhà sản xuất này không?')) {
             await manufacturerApi.delete(id);
             loadManufacturers();
         }
@@ -63,8 +63,8 @@ const Manufacturers = () => {
         <div className="content-wrapper">
             <div className="content-header">
                 <div className="container-fluid d-flex justify-content-between">
-                    <h1 className="m-0">Manufacturers / Brands</h1>
-                    <button className="btn btn-primary" onClick={() => openModal()}>Add New Brand</button>
+                    <h1 className="m-0">Nhà sản xuất / Thương hiệu</h1>
+                    <button className="btn btn-primary" onClick={() => openModal()}>Thêm thương hiệu mới</button>
                 </div>
             </div>
 
@@ -72,29 +72,29 @@ const Manufacturers = () => {
                 <div className="container-fluid">
                     <div className="card">
                         <div className="card-body table-responsive p-0">
-                            {loading ? <div className="p-4">Loading...</div> : (
+                            {loading ? <div className="p-4">Đang tải...</div> : (
                                 <table className="table table-hover text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>Logo</th>
-                                            <th>Name</th>
-                                            <th>Sort Order</th>
-                                            <th>Active</th>
-                                            <th>Actions</th>
+                                            <th>Tên thương hiệu</th>
+                                            <th>Thứ tự sắp xếp</th>
+                                            <th>Kích hoạt</th>
+                                            <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {manufacturers.map(b => (
                                             <tr key={b.id}>
                                                 <td>
-                                                    {b.pictureUrl ? <img src={b.pictureUrl} alt={b.name} style={{height: 40, width: 'auto'}} /> : <span className="text-muted">No Image</span>}
+                                                    {b.pictureUrl ? <img src={b.pictureUrl} alt={b.name} style={{height: 40, width: 'auto'}} /> : <span className="text-muted">Không có ảnh</span>}
                                                 </td>
                                                 <td><strong>{b.name}</strong></td>
                                                 <td>{b.sortOrder}</td>
-                                                <td>{b.isActive ? 'Yes' : 'No'}</td>
+                                                <td>{b.isActive ? 'Có' : 'Không'}</td>
                                                 <td>
-                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(b)}>Edit</button>
-                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(b.id)}>Delete</button>
+                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(b)}>Sửa</button>
+                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(b.id)}>Xóa</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -112,26 +112,26 @@ const Manufacturers = () => {
                         <div className="modal-content">
                             <form onSubmit={handleSave}>
                                 <div className="modal-header">
-                                    <h5 className="modal-title">{editingBrand ? 'Edit' : 'Add'} Brand</h5>
+                                    <h5 className="modal-title">{editingBrand ? 'Sửa' : 'Thêm'} Thương hiệu</h5>
                                     <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
                                 </div>
                                 <div className="modal-body">
                                     <div className="form-group">
-                                        <label>Brand Name</label>
+                                        <label>Tên thương hiệu</label>
                                         <input className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Logo (optional)</label>
+                                        <label>Logo (tùy chọn)</label>
                                         <div className="input-group">
                                             <input 
                                                 className="form-control" 
                                                 value={formData.pictureUrl || ''} 
                                                 onChange={e => setFormData({...formData, pictureUrl: e.target.value})} 
-                                                placeholder="/img/vendor-1.jpg or custom URL"
+                                                placeholder="/img/vendor-1.jpg hoặc URL tùy chỉnh"
                                             />
                                             <div className="input-group-append">
                                                 <label className="btn btn-secondary m-0 d-flex align-items-center">
-                                                    Browse...
+                                                    Tải ảnh lên...
                                                     <input 
                                                         type="file" 
                                                         accept="image/*" 
@@ -139,7 +139,7 @@ const Manufacturers = () => {
                                                         onChange={e => {
                                                             const file = e.target.files[0];
                                                             if (file) {
-                                                                setFormData({...formData, pictureUrl: `/img/${file.name}`});
+                                                                 setFormData({...formData, pictureUrl: `/img/${file.name}`});
                                                             }
                                                         }} 
                                                     />
@@ -148,18 +148,18 @@ const Manufacturers = () => {
                                         </div>
                                     </div>
                                     <div className="form-group">
-                                        <label>Sort Order</label>
+                                        <label>Thứ tự sắp xếp</label>
                                         <input type="number" className="form-control" required value={formData.sortOrder} onChange={e => setFormData({...formData, sortOrder: Number(e.target.value)})} />
                                     </div>
                                     <div className="form-group">
                                         <label>
-                                            <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Active
+                                            <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} /> Kích hoạt
                                         </label>
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
-                                    <button type="submit" className="btn btn-primary">Save changes</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
+                                    <button type="submit" className="btn btn-primary">Lưu thay đổi</button>
                                 </div>
                             </form>
                         </div>

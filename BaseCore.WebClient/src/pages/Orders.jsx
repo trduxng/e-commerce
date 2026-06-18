@@ -4,14 +4,14 @@ import { formatCurrency } from '../data/shopData';
 import { Link } from 'react-router-dom';
 
 const orderStatuses = [
-    { value: 'pending', label: 'Pending', badge: 'badge-warning' },
-    { value: 'confirmed', label: 'Confirmed', badge: 'badge-primary' },
-    { value: 'shipping', label: 'Shipping', badge: 'badge-info' },
-    { value: 'delivered', label: 'Delivered', badge: 'badge-success' },
-    { value: 'cancelled', label: 'Cancelled', badge: 'badge-secondary' },
-    { value: 'return_requested', label: 'Return Requested', badge: 'badge-info' },
-    { value: 'returned', label: 'Returned', badge: 'badge-dark' },
-    { value: 'refunded', label: 'Refunded', badge: 'badge-danger' },
+    { value: 'pending', label: 'Chờ duyệt', badge: 'badge-warning' },
+    { value: 'confirmed', label: 'Đã xác nhận', badge: 'badge-primary' },
+    { value: 'shipping', label: 'Đang giao', badge: 'badge-info' },
+    { value: 'delivered', label: 'Đã giao', badge: 'badge-success' },
+    { value: 'cancelled', label: 'Đã hủy', badge: 'badge-secondary' },
+    { value: 'return_requested', label: 'Yêu cầu trả hàng', badge: 'badge-info' },
+    { value: 'returned', label: 'Đã trả hàng', badge: 'badge-dark' },
+    { value: 'refunded', label: 'Đã hoàn tiền', badge: 'badge-danger' },
 ];
 
 const Orders = () => {
@@ -60,14 +60,14 @@ const Orders = () => {
     };
     const getStatus = (status) => {
         const statuses = {
-            pending: { label: "Pending", className: "badge-warning" },
-            confirmed: { label: "Confirmed", className: "badge-primary" },
-            shipping: { label: "Shipping", className: "badge-info" },
-            delivered: { label: "Delivered", className: "badge-success" },
-            cancelled: { label: "Cancelled", className: "badge-secondary" },
-            return_requested: { label: "Return Requested", className: "badge-info" },
-            returned: { label: "Returned", className: "badge-dark" },
-            refunded: { label: "Refunded", className: "badge-danger" },
+            pending: { label: "Chờ duyệt", className: "badge-warning" },
+            confirmed: { label: "Đã xác nhận", className: "badge-primary" },
+            shipping: { label: "Đang giao", className: "badge-info" },
+            delivered: { label: "Đã giao", className: "badge-success" },
+            cancelled: { label: "Đã hủy", className: "badge-secondary" },
+            return_requested: { label: "Yêu cầu trả", className: "badge-info" },
+            returned: { label: "Đã trả", className: "badge-dark" },
+            refunded: { label: "Đã hoàn tiền", className: "badge-danger" },
         };
         return statuses[normalizeStatus(status)] || statuses.pending;
     };
@@ -88,7 +88,7 @@ const Orders = () => {
             const details = response.data?.details || orderData?.orderDetails || getOrderDetails(order);
             setSelectedOrder({ ...order, ...orderData, orderDetails: details });
         } catch (error) {
-            setError(error.response?.data?.message || "Cannot load order detail.");
+            setError(error.response?.data?.message || "Không thể tải chi tiết đơn hàng.");
         } finally {
             setDetailLoading(false);
         }
@@ -129,9 +129,9 @@ const Orders = () => {
             setTotalPages(Number(response.data?.totalPages) || 0);
             setTotalCount(Number(response.data?.totalCount) || items.length);
         } catch (error) {
-            console.error('Failed to load orders:', error);
+            console.error('Lỗi khi tải đơn hàng:', error);
             setOrders([]);
-            setError(error.response?.data?.message || 'Failed to load orders. Check that ApiGateway and APIService are running.');
+            setError(error.response?.data?.message || 'Không thể tải danh sách đơn hàng. Kiểm tra kết nối.');
         } finally {
             setLoading(false);
         }
@@ -177,7 +177,7 @@ const Orders = () => {
                     : item
             )));
         } catch (error) {
-            setError(error.response?.data?.message || 'Failed to update order status.');
+            setError(error.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.');
         } finally {
             setUpdatingOrderId(null);
         }
@@ -199,12 +199,12 @@ const Orders = () => {
         <div className="content-wrapper">
             <div className="content-header clearfix">
                 <h1 className="float-left">
-                    Orders
+                    Đơn hàng
                 </h1>
                 <div className="float-right">
                     <div className="btn-group">
                         <button type="button" className="btn btn-success">
-                            <i className="fas fa-download"></i> Export
+                            <i className="fas fa-download"></i> Xuất file
                         </button>
                         <button type="button" className="btn btn-success dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
                             <span className="sr-only">&nbsp;</span>
@@ -212,35 +212,35 @@ const Orders = () => {
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none">
-                                    <i className="far fa-file-code"></i> Export to XML (all)
+                                    <i className="far fa-file-code"></i> Xuất ra XML (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Export XML Selected: ' + selectedIds.join(','))}>
-                                    <i className="far fa-file-code"></i> Export to XML (selected)
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Xuất XML Đã chọn: ' + selectedIds.join(','))}>
+                                    <i className="far fa-file-code"></i> Xuất ra XML (đã chọn)
                                 </button>
                             </li>
                             <li className="dropdown-divider"></li>
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none">
-                                    <i className="far fa-file-excel"></i> Export to Excel (all)
+                                    <i className="far fa-file-excel"></i> Xuất ra Excel (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Export Excel Selected: ' + selectedIds.join(','))}>
-                                    <i className="far fa-file-excel"></i> Export to Excel (selected)
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Xuất Excel Đã chọn: ' + selectedIds.join(','))}>
+                                    <i className="far fa-file-excel"></i> Xuất ra Excel (đã chọn)
                                 </button>
                             </li>
                         </ul>
                     </div>
                     {' '}
                     <button type="button" name="importexcel" className="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
-                        <i className="fas fa-upload"></i> Import
+                        <i className="fas fa-upload"></i> Nhập file
                     </button>
                     {' '}
                     <div className="btn-group">
                         <button type="button" className="btn btn-info">
-                            <i className="far fa-file-pdf"></i> Print packaging slips
+                            <i className="far fa-file-pdf"></i> In phiếu giao hàng
                         </button>
                         <button type="button" className="btn btn-info dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
                             <span className="sr-only">&nbsp;</span>
@@ -248,12 +248,12 @@ const Orders = () => {
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none">
-                                    Print packaging slips (all)
+                                    In phiếu giao hàng (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Print pdf: ' + selectedIds.join(','))}>
-                                    Print packaging slips (selected)
+                                    In phiếu giao hàng (đã chọn)
                                 </button>
                             </li>
                         </ul>
@@ -268,7 +268,7 @@ const Orders = () => {
                             <div className="card card-default card-search">
                                 <div className="card-body">
                                     <div className={`row search-row ${isSearchOpen ? 'opened' : ''}`} onClick={() => setIsSearchOpen(!isSearchOpen)} style={{ cursor: 'pointer' }}>
-                                        <div className="search-text">Search</div>
+                                        <div className="search-text">Tìm kiếm</div>
                                         <div className="icon-search"><i className="fas fa-search" aria-hidden="true"></i></div>
                                         <div className="icon-collapse"><i className={`fas fa-angle-${isSearchOpen ? 'up' : 'down'}`} aria-hidden="true"></i></div>
                                     </div>
@@ -278,7 +278,7 @@ const Orders = () => {
                                             <div className="col-md-5">
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label" title="Start date for the search.">Start date</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label" title="Start date for the search.">Từ ngày</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />
@@ -286,7 +286,7 @@ const Orders = () => {
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label" title="End date for the search.">End date</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label" title="End date for the search.">Đến ngày</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} />
@@ -294,37 +294,37 @@ const Orders = () => {
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Order statuses</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Trạng thái đơn hàng</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <select className="form-control" value={orderStatusIds} onChange={e => setOrderStatusIds(e.target.value)}>
-                                                            <option value="">All</option>
+                                                            <option value="">Tất cả</option>
                                                             {orderStatuses.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Payment statuses</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Trạng thái thanh toán</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <select className="form-control" value={paymentStatusIds} onChange={e => setPaymentStatusIds(e.target.value)}>
-                                                            <option value="">All</option>
-                                                            <option value="pending">Pending</option>
-                                                            <option value="paid">Paid</option>
+                                                            <option value="">Tất cả</option>
+                                                            <option value="pending">Chờ thanh toán</option>
+                                                            <option value="paid">Đã thanh toán</option>
                                                         </select>
                                                     </div>
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Shipping statuses</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Trạng thái giao hàng</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <select className="form-control" value={shippingStatusIds} onChange={e => setShippingStatusIds(e.target.value)}>
-                                                            <option value="">All</option>
-                                                            <option value="not_yet_shipped">Not yet shipped</option>
-                                                            <option value="shipped">Shipped</option>
-                                                            <option value="delivered">Delivered</option>
+                                                            <option value="">Tất cả</option>
+                                                            <option value="not_yet_shipped">Chưa giao</option>
+                                                            <option value="shipped">Đang giao</option>
+                                                            <option value="delivered">Đã giao</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -332,7 +332,7 @@ const Orders = () => {
                                             <div className="col-md-7">
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Billing email address</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Email thanh toán</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <input type="text" className="form-control" value={billingEmail} onChange={e => setBillingEmail(e.target.value)} />
@@ -340,7 +340,7 @@ const Orders = () => {
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Billing last name</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Tên người nhận</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <input type="text" className="form-control" value={billingLastName} onChange={e => setBillingLastName(e.target.value)} />
@@ -348,7 +348,7 @@ const Orders = () => {
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Billing phone number</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">SĐT người nhận</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <input type="text" className="form-control" value={billingPhone} onChange={e => setBillingPhone(e.target.value)} />
@@ -356,32 +356,32 @@ const Orders = () => {
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Go directly to order #</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Đi tới đơn hàng #</label></div>
                                                     </div>
                                                     <div className="col-md-8">
                                                         <div className="input-group input-group-short">
                                                             <input type="text" className="form-control" value={goDirectlyToCustomOrderNumber} onChange={e => setGoDirectlyToCustomOrderNumber(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') handleSearch(e); }} />
                                                             <span className="input-group-append">
-                                                                <button type="button" className="btn btn-info btn-flat" disabled={loading} onClick={handleSearch}>Go</button>
+                                                                <button type="button" className="btn btn-info btn-flat" disabled={loading} onClick={handleSearch}>Đi</button>
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="form-group row">
                                                     <div className="col-md-4">
-                                                        <div className="label-wrapper"><label className="col-form-label">Sort by</label></div>
+                                                        <div className="label-wrapper"><label className="col-form-label">Sắp xếp theo</label></div>
                                                     </div>
                                                     <div className="col-md-4">
                                                         <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
-                                                            <option value="created">Created date</option>
-                                                            <option value="total">Order total</option>
-                                                            <option value="ordercode">Order #</option>
+                                                            <option value="created">Ngày tạo</option>
+                                                            <option value="total">Tổng tiền</option>
+                                                            <option value="ordercode">Mã đơn hàng</option>
                                                         </select>
                                                     </div>
                                                     <div className="col-md-4">
                                                         <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
-                                                            <option value="desc">Descending</option>
-                                                            <option value="asc">Ascending</option>
+                                                            <option value="desc">Giảm dần</option>
+                                                            <option value="asc">Tăng dần</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -391,7 +391,7 @@ const Orders = () => {
                                             <div className="text-center col-12">
                                                 <button type="button" id="search-orders" className="btn btn-primary btn-search" disabled={loading} onClick={handleSearch}>
                                                     {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
-                                                    Search
+                                                    Tìm kiếm
                                                 </button>
                                             </div>
                                         </div>
@@ -408,7 +408,7 @@ const Orders = () => {
                                             <div className="col-sm-12 col-md-6">
                                                 <div className="dataTables_length">
                                                     <label>
-                                                        Show 
+                                                        Hiển thị 
                                                         <select className="custom-select custom-select-sm form-control form-control-sm" value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
                                                             <option value="7">7</option>
                                                             <option value="15">15</option>
@@ -416,7 +416,7 @@ const Orders = () => {
                                                             <option value="50">50</option>
                                                             <option value="100">100</option>
                                                         </select>
-                                                         entries
+                                                         mục
                                                     </label>
                                                 </div>
                                             </div>
@@ -432,21 +432,21 @@ const Orders = () => {
                                                                            checked={orders.length > 0 && selectedIds.length === orders.length} 
                                                                            onChange={handleSelectAll} />
                                                                 </th>
-                                                                <th className="sorting" style={{ width: '80px' }}>Order #</th>
-                                                                <th className="sorting" style={{ width: '100px' }}>Order status</th>
-                                                                <th className="sorting" style={{ width: '150px' }}>Payment status</th>
-                                                                <th className="sorting" style={{ width: '150px' }}>Shipping status</th>
-                                                                <th className="sorting">Customer</th>
-                                                                <th className="sorting" style={{ width: '120px' }}>Created on</th>
-                                                                <th className="sorting" style={{ width: '100px' }}>Order total</th>
-                                                                <th className="text-center sorting_disabled" style={{ width: '50px' }}>View</th>
+                                                                <th className="sorting" style={{ width: '80px' }}>Mã đơn</th>
+                                                                <th className="sorting" style={{ width: '100px' }}>Trạng thái ĐH</th>
+                                                                <th className="sorting" style={{ width: '150px' }}>Trạng thái TT</th>
+                                                                <th className="sorting" style={{ width: '150px' }}>Giao hàng</th>
+                                                                <th className="sorting">Khách hàng</th>
+                                                                <th className="sorting" style={{ width: '120px' }}>Ngày tạo</th>
+                                                                <th className="sorting" style={{ width: '100px' }}>Tổng tiền</th>
+                                                                <th className="text-center sorting_disabled" style={{ width: '50px' }}>Xem</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {loading ? (
-                                                                <tr><td colSpan="9" className="text-center dataTables_empty">Loading...</td></tr>
+                                                                <tr><td colSpan="9" className="text-center dataTables_empty">Đang tải...</td></tr>
                                                             ) : orders.length === 0 ? (
-                                                                <tr><td colSpan="9" className="text-center dataTables_empty">No data available in table</td></tr>
+                                                                <tr><td colSpan="9" className="text-center dataTables_empty">Không có dữ liệu</td></tr>
                                                             ) : (
                                                                 orders.map(order => (
                                                                     <tr key={order.id} role="row" className="odd">
@@ -477,7 +477,7 @@ const Orders = () => {
                                                                             </div>
                                                                         </td>
                                                                         <td>{order.paymentMethod || 'Pending'}</td>
-                                                                        <td>{order.orderStatus === 'shipping' || order.orderStatus === 'delivered' ? 'Shipped' : 'Not yet shipped'}</td>
+                                                                        <td>{order.orderStatus === 'shipping' || order.orderStatus === 'delivered' ? 'Đã giao' : 'Chưa giao'}</td>
                                                                         <td>
                                                                             {order.receiverName} <br/>
                                                                             <Link to={`/admin/customers/edit/${order.userId || 0}`}>{order.receiverEmail || order.receiverPhone}</Link>
@@ -486,7 +486,7 @@ const Orders = () => {
                                                                         <td>{formatCurrency(order.totalAmount)}</td>
                                                                         <td className="text-center button-column">
                                                                             <button className="btn btn-default" type="button" onClick={() => loadOrderDetail(order)}>
-                                                                                <i className="fas fa-eye"></i> View
+                                                                                <i className="fas fa-eye"></i> Xem
                                                                             </button>
 
                                                                         </td>
@@ -502,19 +502,19 @@ const Orders = () => {
                                             <div className="col-sm-12 col-md-5">
                                                 <div className="dataTables_info" role="status" aria-live="polite">
                                                     {totalCount > 0 
-                                                        ? `Showing ${((page - 1) * pageSize) + 1} to ${Math.min(page * pageSize, totalCount)} of ${totalCount} entries`
-                                                        : 'Showing 0 to 0 of 0 entries'}
+                                                        ? `Hiển thị ${((page - 1) * pageSize) + 1} đến ${Math.min(page * pageSize, totalCount)} trong tổng số ${totalCount} mục`
+                                                        : 'Không có dữ liệu'}
                                                 </div>
                                             </div>
                                             <div className="col-sm-12 col-md-7">
                                                 <div className="dataTables_paginate paging_simple_numbers">
                                                     <ul className="pagination">
                                                         <li className={`paginate_button page-item previous ${page === 1 ? 'disabled' : ''}`}>
-                                                            <button className="page-link" onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
+                                                            <button className="page-link" onClick={() => setPage(p => Math.max(1, p - 1))}>Trước</button>
                                                         </li>
                                                         {renderPagination()}
                                                         <li className={`paginate_button page-item next ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                            <button className="page-link" onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</button>
+                                                            <button className="page-link" onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Sau</button>
                                                         </li>
                                                     </ul>
                                                 </div>
