@@ -35,9 +35,10 @@ const SpecificationAttributes = lazy(() => import('./pages/SpecificationAttribut
 const CheckoutAttributes = lazy(() => import('./pages/CheckoutAttributes'));
 const CurrentCarts = lazy(() => import('./pages/CurrentCarts'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Payments = lazy(() => import('./pages/Payments'));
 
 const queryClient = new QueryClient();
-const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users', '/reviews', '/coupons', '/manufacturers', '/specification-attributes', '/checkout-attributes', '/current-carts'];
+const adminPaths = ['/admin'];
 const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
 // Wrapper to redirect authenticated users away from login
@@ -69,236 +70,48 @@ const PublicRoute = ({ children }) => {
 
 function AppRoutes() {
     return (
-        <Routes>
-            {/* Shop Routes - Public */}
-            <Route
-                path="/"
-                element={
-                    <ShopLayout>
-                        <Home />
-                    </ShopLayout>
-                }
-            />
-            <Route
-                path="/shop"
-                element={
-                    <ShopLayout>
-                        <Shop />
-                    </ShopLayout>
-                }
-            />
-            <Route
-                path="/cart"
-                element={
-                    <ShopLayout>
-                        <Cart />
-                    </ShopLayout>
-                }
-            />
-            <Route
-                path="/favorites"
-                element={
-                    <ProtectedRoute>
-                        <ShopLayout>
-                            <Favorites />
-                        </ShopLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/account"
-                element={
-                    <ProtectedRoute>
-                        <ShopLayout>
-                            <Account />
-                        </ShopLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/my-orders"
-                element={
-                    <ProtectedRoute>
-                        <ShopLayout>
-                            <MyOrders />
-                        </ShopLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/product/:id"
-                element={
-                    <ShopLayout>
-                        <ProductDetail />
-                    </ShopLayout>
-                }
-            />
-            <Route
-                path="/checkout"
-                element={
-                    <ProtectedRoute>
-                        <ShopLayout>
-                            <Checkout />
-                        </ShopLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/contact"
-                element={
-                    <ShopLayout>
-                        <Contact />
-                    </ShopLayout>
-                }
-            />
+                <Routes>
+            {/* 1. PUBLIC ROUTES */}
+            <Route element={<ShopLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/contact" element={<Contact />} />
+            </Route>
 
-            {/* Admin Dashboard Routes */}
-            <Route
-                path="/login"
-                element={
-                    <PublicRoute>
-                        <Login />
-                    </PublicRoute>
-                }
-            />
-            <Route
-                path="/register"
-                element={
-                    <PublicRoute>
-                        <Register />
-                    </PublicRoute>
-                }
-            />
-            <Route
-                path="/dashboard"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Dashboard />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/products"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Products />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/categories"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Categories />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/orders"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Orders />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/revenue"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Revenue />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/users"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Users />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/reviews"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Reviews />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/coupons"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Coupons />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/manufacturers"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Manufacturers />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/specification-attributes"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <SpecificationAttributes />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/checkout-attributes"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <CheckoutAttributes />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/current-carts"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <CurrentCarts />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/settings"
-                element={
-                    <ProtectedRoute adminOnly={true}>
-                        <AdminLayout>
-                            <Settings />
-                        </AdminLayout>
-                    </ProtectedRoute>
-                }
-            />
+            {/* 2. CUSTOMER ROUTES (Protected but not Admin) */}
+            <Route element={<ProtectedRoute><ShopLayout /></ProtectedRoute>}>
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/my-orders" element={<MyOrders />} />
+                <Route path="/checkout" element={<Checkout />} />
+            </Route>
+
+            {/* 3. AUTH ROUTES */}
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+
+            {/* 4. ADMIN ROUTES (Nested) */}
+            <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="products" element={<Products />} />
+                <Route path="categories" element={<Categories />} />
+                <Route path="orders" element={<Orders />} />
+                <Route path="revenue" element={<Revenue />} />
+                <Route path="users" element={<Users />} />
+                <Route path="reviews" element={<Reviews />} />
+                <Route path="coupons" element={<Coupons />} />
+                <Route path="manufacturers" element={<Manufacturers />} />
+                <Route path="specification-attributes" element={<SpecificationAttributes />} />
+                <Route path="checkout-attributes" element={<CheckoutAttributes />} />
+                <Route path="current-carts" element={<CurrentCarts />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="payments" element={<Payments />} />
+            </Route>
+
+            {/* CATCH ALL */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

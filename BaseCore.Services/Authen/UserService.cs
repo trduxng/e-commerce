@@ -29,6 +29,8 @@ namespace BaseCore.Services.Authen
             int[] userTypes,
             DateTime? registrationFrom,
             DateTime? registrationTo,
+            string sortField,
+            string sortDir,
             int page, 
             int pageSize);
     }
@@ -116,12 +118,14 @@ namespace BaseCore.Services.Authen
             int[] userTypes,
             DateTime? registrationFrom,
             DateTime? registrationTo,
+            string sortField,
+            string sortDir,
             int page, 
             int pageSize)
         {
             return await _userRepository.SearchAsync(
                 keyword, email, username, firstName, lastName, phone, company, ipAddress, zipPostalCode, 
-                isActive, userTypes, registrationFrom, registrationTo, page, pageSize);
+                isActive, userTypes, registrationFrom, registrationTo, sortField, sortDir, page, pageSize);
         }
     }
 }

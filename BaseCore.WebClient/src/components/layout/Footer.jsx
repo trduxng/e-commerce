@@ -44,7 +44,7 @@ const Footer = () => {
                 {isAuthenticated && <Link className="text-secondary mb-2" to="/my-orders"><i className="fa fa-angle-right me-2"></i>My Orders</Link>}
                 {isAdmin() && (
                   <>
-                    <Link className="text-secondary mb-2" to="/dashboard"><i className="fa fa-angle-right me-2"></i>Dashboard</Link>
+                    <Link className="text-secondary mb-2" to="/admin/dashboard"><i className="fa fa-angle-right me-2"></i>Dashboard</Link>
                     <Link className="text-secondary mb-2" to="/products"><i className="fa fa-angle-right me-2"></i>Manage Products</Link>
                     <Link className="text-secondary" to="/categories"><i className="fa fa-angle-right me-2"></i>Manage Categories</Link>
                   </>

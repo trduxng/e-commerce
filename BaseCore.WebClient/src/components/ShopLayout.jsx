@@ -1,4 +1,5 @@
 import React from "react";
+import { Outlet } from "react-router-dom";
 import Topbar from "./layout/Topbar";
 import Footer from "./layout/Footer";
 import BackToTop from "./BackToTop";
@@ -9,7 +10,7 @@ const ShopLayout = ({ children }) => {
       <header className="storefront-shell">
         <Topbar />
       </header>
-      {children}
+      {children || <Outlet />}
       <Footer />
       <BackToTop />
     </div>

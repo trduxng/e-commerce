@@ -14,7 +14,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { useFavorites } from "../contexts/FavoriteContext";
 
-const ProductCard = ({ product, onFavoriteChange }) => {
+const ProductCard = ({ product, onFavoriteChange = null }) => {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();

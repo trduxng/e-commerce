@@ -12,7 +12,7 @@ const Login = () => {
     const { login } = useAuth();
     const returnUrl = new URLSearchParams(location.search).get('returnUrl');
     const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
-    const adminPaths = ['/dashboard', '/products', '/categories', '/orders', '/revenue', '/users'];
+    const adminPaths = ['/admin'];
     const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
     const handleSubmit = async (e) => {
@@ -26,7 +26,7 @@ const Login = () => {
             const userIsAdmin = String(result.user?.role || '').toLowerCase() === 'admin';
             const targetUrl = safeReturnUrl && (userIsAdmin || !isAdminPath(safeReturnUrl))
                 ? safeReturnUrl
-                : (userIsAdmin ? '/dashboard' : '/');
+                : (userIsAdmin ? '/admin/dashboard' : '/');
             navigate(targetUrl);
         } else {
             setError(result.message);

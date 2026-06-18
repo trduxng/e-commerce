@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 using BaseCore.Repository;
+using BaseCore.APIService.Services;
 using System.Security.Claims;
 
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,7 @@ namespace BaseCore.APIService.Controllers
                 return Unauthorized();
 
             var orders = await _orderRepository.GetByUserAsync(userLongId);
+            await PopulateReviewStatus(orders);
             return Ok(orders);
         }
 
@@ -68,14 +70,16 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] string? billingPhone,
             [FromQuery] string? orderCode,
             [FromQuery] int? page,
-            [FromQuery] int? pageSize)
+            [FromQuery] int? pageSize,
+            [FromQuery] string? sortField,
+            [FromQuery] string? sortDir)
         {
-            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status) || !string.IsNullOrWhiteSpace(paymentStatus) || !string.IsNullOrWhiteSpace(shippingStatus) || startDate.HasValue || endDate.HasValue || !string.IsNullOrWhiteSpace(billingEmail) || !string.IsNullOrWhiteSpace(billingLastName) || !string.IsNullOrWhiteSpace(billingPhone) || !string.IsNullOrWhiteSpace(orderCode))
+            if (page.HasValue || pageSize.HasValue || !string.IsNullOrWhiteSpace(keyword) || !string.IsNullOrWhiteSpace(status) || !string.IsNullOrWhiteSpace(paymentStatus) || !string.IsNullOrWhiteSpace(shippingStatus) || startDate.HasValue || endDate.HasValue || !string.IsNullOrWhiteSpace(billingEmail) || !string.IsNullOrWhiteSpace(billingLastName) || !string.IsNullOrWhiteSpace(billingPhone) || !string.IsNullOrWhiteSpace(orderCode) || !string.IsNullOrWhiteSpace(sortField) || !string.IsNullOrWhiteSpace(sortDir))
             {
                 var safePage = Math.Max(1, page ?? 1);
                 var safePageSize = Math.Clamp(pageSize ?? 10, 1, 100);
                 var (items, totalCount, summary) = await _orderRepository.SearchAllWithDetailsAsync(
-                    keyword, status, paymentStatus, shippingStatus, startDate, endDate, billingEmail, billingLastName, billingPhone, orderCode, safePage, safePageSize);
+                    keyword, status, paymentStatus, shippingStatus, startDate, endDate, billingEmail, billingLastName, billingPhone, orderCode, safePage, safePageSize, sortField, sortDir);
 
                 return Ok(new
                 {
@@ -102,6 +106,7 @@ namespace BaseCore.APIService.Controllers
             if (order == null) return NotFound(new { message = "Order not found" });
             if (!CanAccessOrder(order)) return Forbid();
 
+            await PopulateReviewStatus(new[] { order });
             return Ok(new { order, details = order.OrderDetails });
         }
 
@@ -168,6 +173,13 @@ namespace BaseCore.APIService.Controllers
                 await _productRepository.UpdateAsync(product);
             }
 
+            var shippingFee = GetShippingFee(dto.ShippingMethod);
+            var couponApplication = await CouponDiscountCalculator.ApplyAsync(_db, dto.CouponCode, totalAmount);
+            if (couponApplication.ErrorMessage != null)
+                return BadRequest(new { message = couponApplication.ErrorMessage });
+
+            var discountAmount = couponApplication.DiscountAmount;
+            const decimal taxAmount = 0;
             var order = new Order
             {
                 OrderCode = $"ORD-{DateTime.Now:yyyy}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
@@ -179,16 +191,19 @@ namespace BaseCore.APIService.Controllers
                 ReceiverPhone = dto.ReceiverPhone ?? "0000000000",
                 ShippingAddressFull = dto.ShippingAddress ?? "",
                 Subtotal = totalAmount,
-                ShippingFee = GetShippingFee(dto.ShippingMethod),
-                DiscountAmount = 0,
-                TaxAmount = 0,
-                TotalAmount = totalAmount + GetShippingFee(dto.ShippingMethod),
+                ShippingFee = shippingFee,
+                DiscountAmount = discountAmount,
+                TaxAmount = taxAmount,
+                TotalAmount = Math.Max(0, totalAmount - discountAmount) + shippingFee + taxAmount,
                 PaymentMethod = dto.PaymentMethod!.Trim().ToLowerInvariant(),
                 PaymentStatus = "pending",
                 OrderStatus = "pending",
-                CouponCode = null,
+                CouponCode = couponApplication.Code,
                 Note = dto.Note
             };
+
+            if (couponApplication.Coupon != null)
+                couponApplication.Coupon.UsedCount += 1;
 
             await _orderRepository.AddAsync(order);
 
@@ -200,7 +215,14 @@ namespace BaseCore.APIService.Controllers
             }
 
             await transaction.CommitAsync();
-            return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order, details = orderDetails });
+            return CreatedAtAction(nameof(GetById), new { id = order.Id }, new
+            {
+                order,
+                details = orderDetails,
+                coupon = couponApplication.Code == null
+                    ? null
+                    : new { code = couponApplication.Code, discountAmount }
+            });
 
         }
 
@@ -327,6 +349,33 @@ namespace BaseCore.APIService.Controllers
             return long.TryParse(rawUserId, out userId);
         }
 
+        private async Task PopulateReviewStatus(IEnumerable<Order> orders)
+        {
+            var details = orders
+                .SelectMany(order => order.OrderDetails)
+                .ToList();
+            var detailIds = details.Select(detail => detail.Id).ToList();
+            if (detailIds.Count == 0)
+                return;
+
+            var reviews = await _db.Reviews
+                .Where(review => review.BillDetailId.HasValue && detailIds.Contains(review.BillDetailId.Value))
+                .Select(review => new { BillDetailId = review.BillDetailId!.Value, review.Id })
+                .ToListAsync();
+            var reviewsByDetailId = reviews
+                .GroupBy(review => review.BillDetailId)
+                .ToDictionary(group => group.Key, group => group.First().Id);
+
+            foreach (var detail in details)
+            {
+                if (reviewsByDetailId.TryGetValue(detail.Id, out var reviewId))
+                {
+                    detail.IsReviewed = true;
+                    detail.ReviewId = reviewId;
+                }
+            }
+        }
+
         private bool IsAdmin()
         {
             return User.IsInRole("Admin");
@@ -416,9 +465,6 @@ namespace BaseCore.APIService.Controllers
             var paymentMethod = dto.PaymentMethod?.Trim().ToLowerInvariant();
             if (paymentMethod is not ("cod" or "banktransfer" or "paypal"))
                 return "Payment method is not supported.";
-
-            if (!string.IsNullOrWhiteSpace(dto.CouponCode))
-                return "Voucher code is not valid.";
 
             return null;
         }

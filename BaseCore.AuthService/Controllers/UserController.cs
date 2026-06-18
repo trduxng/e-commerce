@@ -36,12 +36,14 @@ namespace BaseCore.AuthService.Controllers
             [FromQuery] int[] userType = null,
             [FromQuery] DateTime? registrationFrom = null,
             [FromQuery] DateTime? registrationTo = null,
+            [FromQuery] string sortField = "created",
+            [FromQuery] string sortDir = "desc",
             [FromQuery] int page = 1, 
             [FromQuery] int pageSize = 10)
         {
             var (users, totalCount) = await _userService.Search(
                 keyword, email, username, firstName, lastName, phone, company, ipAddress, zipPostalCode, 
-                isActive, userType, registrationFrom, registrationTo, page, pageSize);
+                isActive, userType, registrationFrom, registrationTo, sortField, sortDir, page, pageSize);
 
             var result = users.Select(u => new UserResponse
             {

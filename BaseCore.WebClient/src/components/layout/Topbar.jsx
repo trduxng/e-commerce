@@ -4,16 +4,29 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoriteContext";
 import { useSettings } from "../../contexts/SettingsContext";
+import ThemeToggle from "../ThemeToggle";
 
 const Topbar = () => {
   const [keyword, setKeyword] = useState("");
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const timeoutRef = useRef(null);
+  const accountMenuRef = useRef(null);
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const { count } = useCart();
   const { count: favoriteCount } = useFavorites();
   const { settings } = useSettings();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
+        setShowAccountMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (location.pathname === "/shop") {
@@ -107,6 +120,7 @@ const Topbar = () => {
               </form>
 
               <div className="compact-header-actions">
+                <ThemeToggle />
                 {isAuthenticated && (
                   <Link to="/favorites" className="cart-button" aria-label="Favorite products">
                     <i className="fas fa-heart"></i>
@@ -118,33 +132,33 @@ const Topbar = () => {
                   <span className="badge">{count}</span>
                 </Link>
                 {isAuthenticated ? (
-                  <div className="dropdown storefront-account-actions">
+                  <div className="dropdown storefront-account-actions" ref={accountMenuRef}>
                     <button
                       className="cart-button"
                       type="button"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
+                      onClick={() => setShowAccountMenu(!showAccountMenu)}
+                      aria-expanded={showAccountMenu}
                       aria-label="Account menu"
                     >
                       <i className="far fa-user"></i>
                     </button>
-                    <div className="dropdown-menu dropdown-menu-end">
+                    <div className={`dropdown-menu dropdown-menu-end ${showAccountMenu ? 'show' : ''}`} style={{ display: showAccountMenu ? 'block' : 'none' }}>
                       <span className="dropdown-item-text">{user?.name || user?.username}</span>
-                      <Link className="dropdown-item" to="/account">
+                      <Link className="dropdown-item" to="/account" onClick={() => setShowAccountMenu(false)}>
                         <i className="fa fa-user-gear me-2"></i>
                         My Account
                       </Link>
-                      <Link className="dropdown-item" to="/my-orders">
+                      <Link className="dropdown-item" to="/my-orders" onClick={() => setShowAccountMenu(false)}>
                         <i className="fa fa-receipt me-2"></i>
                         My Orders
                       </Link>
                       {isAdmin() && (
-                        <Link className="dropdown-item" to="/dashboard">
+                        <Link className="dropdown-item" to="/admin/dashboard" onClick={() => setShowAccountMenu(false)}>
                           <i className="fa fa-chart-line me-2"></i>
                           Dashboard
                         </Link>
                       )}
-                      <button className="dropdown-item text-danger" type="button" onClick={handleLogout}>
+                      <button className="dropdown-item text-danger" type="button" onClick={() => { setShowAccountMenu(false); handleLogout(); }}>
                         <i className="fa fa-right-from-bracket me-2"></i>
                         Logout
                       </button>

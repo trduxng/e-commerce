@@ -58,6 +58,9 @@ const Products = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
+    const [sortField, setSortField] = useState('created');
+    const [sortDir, setSortDir] = useState('desc');
+    const [savingProduct, setSavingProduct] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalTab, setModalTab] = useState('info'); // 'info', 'variants', 'specs'
     const [editingProduct, setEditingProduct] = useState(null);
@@ -76,7 +79,7 @@ const Products = () => {
 
     useEffect(() => {
         loadProducts();
-    }, [page, keyword, categoryId]);
+    }, [page, keyword, categoryId, sortField, sortDir]);
 
     const firstVariant = (product) => product?.productVariants?.[0] || {};
 
@@ -139,6 +142,8 @@ const Products = () => {
                 manufacturerId: manufacturerId && manufacturerId !== '0' ? manufacturerId : undefined,
                 publishedId: publishedId && publishedId !== '0' ? publishedId : undefined,
                 goDirectlyToSku: goDirectlyToSku || undefined,
+                sortField,
+                sortDir,
                 page,
                 pageSize,
             });
@@ -329,6 +334,7 @@ const Products = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
+        setSavingProduct(true);
 
         if (!formData.categoryId) {
             setError('Please select a category.');
@@ -396,6 +402,8 @@ const Products = () => {
             loadProducts();
         } catch (error) {
             setError(error.response?.data?.message || 'Operation failed');
+        } finally {
+            setSavingProduct(false);
         }
     };
 
@@ -553,12 +561,33 @@ const Products = () => {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Sort by</label>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
+                                                                <option value="created">Created date</option>
+                                                                <option value="name">Product name</option>
+                                                                <option value="price">Price</option>
+                                                                <option value="category">Category</option>
+                                                                <option value="manufacturer">Manufacturer</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
+                                                                <option value="desc">Descending</option>
+                                                                <option value="asc">Ascending</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="row">
                                                 <div className="text-center col-12">
-                                                    <button type="button" id="search-products" className="btn btn-primary btn-search" onClick={handleSearch}>
-                                                        <i className="fas fa-search"></i> Search
+                                                    <button type="button" id="search-products" className="btn btn-primary btn-search" disabled={loading} onClick={handleSearch}>
+                                                        {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                                        Search
                                                     </button>
                                                 </div>
                                             </div>
@@ -721,27 +750,89 @@ const Products = () => {
                                             </div>
                                             <div className="col-12 mt-2">
                                                 <div className="form-group"><label>Short Description</label><input className="form-control" value={formData.shortDescription} onChange={e => setField('shortDescription', e.target.value)} /></div>
-                                                <div className="form-group"><label>Full Description</label><textarea className="form-control" rows="4" value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
+                                                <div className="form-group"><label>Full Description</label><textarea className="form-control" rows={4} value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
                                             </div>
                                         </div>
                                     )}
                                     {modalTab === 'variants' && (
-                                        <table className="table table-sm table-bordered">
-                                            <thead><tr><th>Size</th><th>Color</th><th>Price</th><th>Sale</th><th>Stock</th><th>SKU</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addVariant}>+</button></th></tr></thead>
-                                            <tbody>
-                                                {formData.variants.map((v, i) => (
-                                                    <tr key={i}>
-                                                        <td><input className="form-control form-control-sm" value={v.size} onChange={e => setVariantField(i, 'size', e.target.value)} /></td>
-                                                        <td><input className="form-control form-control-sm" value={v.color} onChange={e => setVariantField(i, 'color', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={v.price} onChange={e => setVariantField(i, 'price', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={v.salePrice} onChange={e => setVariantField(i, 'salePrice', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={v.stockQuantity} onChange={e => setVariantField(i, 'stockQuantity', e.target.value)} /></td>
-                                                        <td><input className="form-control form-control-sm" value={v.sku} onChange={e => setVariantField(i, 'sku', e.target.value)} /></td>
-                                                        <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeVariant(i)} disabled={formData.variants.length <= 1}>x</button></td>
+                                        <div className="table-responsive">
+                                            <table className="table table-sm table-bordered align-middle">
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ width: 92 }}>Image</th>
+                                                        <th style={{ minWidth: 240 }}>Image URL</th>
+                                                        <th style={{ minWidth: 100 }}>Size</th>
+                                                        <th style={{ minWidth: 100 }}>Color</th>
+                                                        <th style={{ minWidth: 110 }}>Price</th>
+                                                        <th style={{ minWidth: 110 }}>Sale</th>
+                                                        <th style={{ minWidth: 90 }}>Stock</th>
+                                                        <th style={{ minWidth: 150 }}>SKU</th>
+                                                        <th style={{ width: 70 }}>Active</th>
+                                                        <th style={{ width: 52 }}>
+                                                            <button type="button" className="btn btn-xs btn-primary" onClick={addVariant}>+</button>
+                                                        </th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    {formData.variants.map((v, i) => {
+                                                        const variantImage = v.imageUrl || formData.imageUrl || '/img/product-1.jpg';
+
+                                                        return (
+                                                            <tr key={i}>
+                                                                <td>
+                                                                    <img
+                                                                        src={variantImage}
+                                                                        alt={`Variant ${i + 1}`}
+                                                                        className="img-thumbnail"
+                                                                        style={{ width: 64, height: 64, objectFit: 'cover' }}
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        className="form-control form-control-sm mb-1"
+                                                                        placeholder="https://.../variant-image.jpg"
+                                                                        value={v.imageUrl}
+                                                                        onChange={e => setVariantField(i, 'imageUrl', e.target.value)}
+                                                                    />
+                                                                    <div className="btn-group btn-group-xs">
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-outline-secondary"
+                                                                            onClick={() => setVariantField(i, 'imageUrl', formData.imageUrl)}
+                                                                            disabled={!formData.imageUrl}
+                                                                        >
+                                                                            Use product image
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-outline-secondary"
+                                                                            onClick={() => setVariantField(i, 'imageUrl', '')}
+                                                                            disabled={!v.imageUrl}
+                                                                        >
+                                                                            Clear
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                                <td><input className="form-control form-control-sm" value={v.size} onChange={e => setVariantField(i, 'size', e.target.value)} /></td>
+                                                                <td><input className="form-control form-control-sm" value={v.color} onChange={e => setVariantField(i, 'color', e.target.value)} /></td>
+                                                                <td><input type="number" className="form-control form-control-sm" value={v.price} onChange={e => setVariantField(i, 'price', e.target.value)} /></td>
+                                                                <td><input type="number" className="form-control form-control-sm" value={v.salePrice} onChange={e => setVariantField(i, 'salePrice', e.target.value)} /></td>
+                                                                <td><input type="number" className="form-control form-control-sm" value={v.stockQuantity} onChange={e => setVariantField(i, 'stockQuantity', e.target.value)} /></td>
+                                                                <td><input className="form-control form-control-sm" value={v.sku} onChange={e => setVariantField(i, 'sku', e.target.value)} /></td>
+                                                                <td className="text-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={v.isActive}
+                                                                        onChange={e => setVariantField(i, 'isActive', e.target.checked)}
+                                                                    />
+                                                                </td>
+                                                                <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeVariant(i)} disabled={formData.variants.length <= 1}>x</button></td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     )}
                                     {modalTab === 'specs' && (
                                         <table className="table table-sm table-bordered">
@@ -760,8 +851,10 @@ const Products = () => {
                                     )}
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                                    <button type="submit" className="btn btn-primary">Save Product</button>
+                                    <button type="button" className="btn btn-secondary" disabled={savingProduct} onClick={closeModal}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary" disabled={savingProduct}>
+                                        {savingProduct ? <><i className="fas fa-spinner fa-spin mr-1"></i>Saving...</> : 'Save Product'}
+                                    </button>
                                 </div>
                             </form>
                         </div>

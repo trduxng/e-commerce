@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BaseCore.Entities;
 using BaseCore.Repository;
+using BaseCore.APIService.Services;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -51,7 +52,11 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin,Manager")]
         public async Task<ActionResult<Coupon>> CreateCoupon(Coupon coupon)
         {
-            if (await _context.Coupons.AnyAsync(c => c.Code == coupon.Code))
+            var validationMessage = NormalizeCoupon(coupon);
+            if (validationMessage != null)
+                return BadRequest(new { message = validationMessage });
+
+            if (await _context.Coupons.AnyAsync(c => c.Code.ToLower() == coupon.Code.ToLower()))
             {
                 return BadRequest(new { message = "Coupon code already exists" });
             }
@@ -67,12 +72,27 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> UpdateCoupon(int id, Coupon coupon)
         {
-            if (id != coupon.Id)
-            {
-                return BadRequest();
-            }
+            var existing = await _context.Coupons.FindAsync(id);
+            if (existing == null)
+                return NotFound();
 
-            _context.Entry(coupon).State = EntityState.Modified;
+            coupon.Id = id;
+            var validationMessage = NormalizeCoupon(coupon);
+            if (validationMessage != null)
+                return BadRequest(new { message = validationMessage });
+
+            if (await _context.Coupons.AnyAsync(c => c.Id != id && c.Code.ToLower() == coupon.Code.ToLower()))
+                return BadRequest(new { message = "Coupon code already exists" });
+
+            existing.Code = coupon.Code;
+            existing.Type = coupon.Type;
+            existing.Value = coupon.Value;
+            existing.MinOrderValue = coupon.MinOrderValue;
+            existing.MaxDiscountAmount = coupon.MaxDiscountAmount;
+            existing.UsageLimit = coupon.UsageLimit;
+            existing.StartDate = coupon.StartDate;
+            existing.EndDate = coupon.EndDate;
+            existing.IsActive = coupon.IsActive;
 
             try
             {
@@ -115,48 +135,59 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<ActionResult<object>> ApplyCoupon([FromBody] ApplyCouponDto dto)
         {
-            var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == dto.Code);
-
-            if (coupon == null || !coupon.IsActive || coupon.StartDate > DateTime.Now || coupon.EndDate < DateTime.Now)
-            {
-                return BadRequest(new { message = "Invalid or expired coupon code" });
-            }
-
-            if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit.Value)
-            {
-                return BadRequest(new { message = "Coupon usage limit reached" });
-            }
-
-            if (dto.OrderValue < coupon.MinOrderValue)
-            {
-                return BadRequest(new { message = $"Minimum order value of {coupon.MinOrderValue} required" });
-            }
-
-            decimal discountAmount = 0;
-            if (coupon.Type == "fixed")
-            {
-                discountAmount = coupon.Value;
-            }
-            else if (coupon.Type == "percent")
-            {
-                discountAmount = dto.OrderValue * (coupon.Value / 100);
-                if (coupon.MaxDiscountAmount.HasValue && discountAmount > coupon.MaxDiscountAmount.Value)
-                {
-                    discountAmount = coupon.MaxDiscountAmount.Value;
-                }
-            }
+            var couponApplication = await CouponDiscountCalculator.ApplyAsync(_context, dto.Code, dto.OrderValue, requireCode: true);
+            if (couponApplication.ErrorMessage != null)
+                return BadRequest(new { message = couponApplication.ErrorMessage });
 
             return Ok(new
             {
-                couponId = coupon.Id,
-                code = coupon.Code,
-                discountAmount = discountAmount
+                couponId = couponApplication.Coupon!.Id,
+                code = couponApplication.Code,
+                discountAmount = couponApplication.DiscountAmount
             });
         }
 
         private bool CouponExists(int id)
         {
             return _context.Coupons.Any(e => e.Id == id);
+        }
+
+        private static string? NormalizeCoupon(Coupon coupon)
+        {
+            coupon.Code = coupon.Code?.Trim().ToUpperInvariant() ?? "";
+            if (string.IsNullOrWhiteSpace(coupon.Code))
+                return "Coupon code is required";
+
+            coupon.Type = coupon.Type?.Trim().ToLowerInvariant() ?? "";
+            if (coupon.Type is not ("percent" or "fixed"))
+                return "Coupon type must be percent or fixed";
+
+            if (coupon.Value <= 0)
+                return "Coupon value must be greater than zero";
+
+            if (coupon.Type == "percent" && coupon.Value > 100)
+                return "Percent coupon value cannot exceed 100";
+
+            if (coupon.MinOrderValue < 0)
+                return "Minimum order value cannot be negative";
+
+            if (coupon.MaxDiscountAmount.HasValue && coupon.MaxDiscountAmount.Value <= 0)
+                coupon.MaxDiscountAmount = null;
+
+            if (coupon.UsageLimit.HasValue && coupon.UsageLimit.Value <= 0)
+                coupon.UsageLimit = null;
+
+            if (coupon.EndDate == default || coupon.StartDate == default)
+                return "Start date and end date are required";
+
+            coupon.StartDate = coupon.StartDate.Date;
+            coupon.EndDate = coupon.EndDate.Date.AddDays(1).AddTicks(-1);
+
+            if (coupon.EndDate < coupon.StartDate)
+                return "End date must be after start date";
+
+            coupon.UsedCount = Math.Max(0, coupon.UsedCount);
+            return null;
         }
     }
 

@@ -18,6 +18,8 @@ namespace BaseCore.Repository.EFCore
             Dictionary<int, List<string>>? specificationFilters,
             decimal? minPrice,
             decimal? maxPrice,
+            string? sortField,
+            string? sortDir,
             int page,
             int pageSize);
         Task<List<Product>> GetByCategoryAsync(int categoryId);
@@ -41,6 +43,8 @@ namespace BaseCore.Repository.EFCore
             Dictionary<int, List<string>>? specificationFilters,
             decimal? minPrice,
             decimal? maxPrice,
+            string? sortField,
+            string? sortDir,
             int page,
             int pageSize)
         {
@@ -116,8 +120,16 @@ namespace BaseCore.Repository.EFCore
 
             var totalCount = await query.CountAsync();
 
+            query = sortField?.ToLower() switch
+            {
+                "name" => sortDir?.ToLower() == "asc" ? query.OrderBy(p => p.Name) : query.OrderByDescending(p => p.Name),
+                "price" => sortDir?.ToLower() == "asc" ? query.OrderBy(p => p.BasePrice) : query.OrderByDescending(p => p.BasePrice),
+                "category" => sortDir?.ToLower() == "asc" ? query.OrderBy(p => p.Category != null ? p.Category.Name : "") : query.OrderByDescending(p => p.Category != null ? p.Category.Name : ""),
+                "manufacturer" => sortDir?.ToLower() == "asc" ? query.OrderBy(p => p.Manufacturer != null ? p.Manufacturer.Name : "") : query.OrderByDescending(p => p.Manufacturer != null ? p.Manufacturer.Name : ""),
+                _ => sortDir?.ToLower() == "asc" ? query.OrderBy(p => p.Id) : query.OrderByDescending(p => p.Id),
+            };
+
             var products = await query
-                .OrderByDescending(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

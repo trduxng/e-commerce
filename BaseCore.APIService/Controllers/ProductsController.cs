@@ -38,6 +38,8 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] string? goDirectlyToSku,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
+            [FromQuery] string? sortField = "id",
+            [FromQuery] string? sortDir = "desc",
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
@@ -61,6 +63,8 @@ namespace BaseCore.APIService.Controllers
                 specFilters.Any() ? specFilters : null,
                 minPrice, 
                 maxPrice, 
+                sortField,
+                sortDir,
                 page, 
                 pageSize);
 

@@ -34,23 +34,33 @@ const Orders = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
+    const [sortField, setSortField] = useState('created');
+    const [sortDir, setSortDir] = useState('desc');
     const [selectedIds, setSelectedIds] = useState([]);
     const [isSearchOpen, setIsSearchOpen] = useState(true);
+    const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
     useEffect(() => {
         loadOrders();
-    }, [page, pageSize]);
+    }, [page, pageSize, sortField, sortDir]);
 
     const loadOrders = async () => {
         setLoading(true);
         setError('');
 
         try {
-            // Mapping existing state to API if possible, else just pass what we have
             const response = await orderApi.getAll({
-                keyword: billingEmail || billingPhone || billingLastName || undefined, // Temp mapping
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
                 status: orderStatusIds || undefined,
+                paymentStatus: paymentStatusIds || undefined,
+                shippingStatus: shippingStatusIds || undefined,
+                billingEmail: billingEmail || undefined,
+                billingLastName: billingLastName || undefined,
+                billingPhone: billingPhone || undefined,
                 orderCode: goDirectlyToCustomOrderNumber || undefined,
+                sortField,
+                sortDir,
                 page,
                 pageSize,
             });
@@ -74,8 +84,11 @@ const Orders = () => {
 
     const handleSearch = (event) => {
         event.preventDefault();
-        setPage(1);
-        loadOrders();
+        if (page === 1) {
+            loadOrders();
+        } else {
+            setPage(1);
+        }
     };
 
     const handleSelectAll = (event) => {
@@ -93,6 +106,27 @@ const Orders = () => {
     };
 
     const getStatusMeta = (status) => orderStatuses.find((item) => item.value === status) || orderStatuses[0];
+
+    const updateStatus = async (order, status) => {
+        if (status === order.orderStatus) return;
+
+        setUpdatingOrderId(order.id);
+        setError('');
+
+        try {
+            const response = await orderApi.updateStatus(order.id, status);
+            const updatedOrder = response.data;
+            setOrders((current) => current.map((item) => (
+                Number(item.id) === Number(order.id)
+                    ? { ...item, ...updatedOrder }
+                    : item
+            )));
+        } catch (error) {
+            setError(error.response?.data?.message || 'Failed to update order status.');
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
 
     const renderPagination = () => {
         const pages = [];
@@ -273,17 +307,36 @@ const Orders = () => {
                                                         <div className="input-group input-group-short">
                                                             <input type="text" className="form-control" value={goDirectlyToCustomOrderNumber} onChange={e => setGoDirectlyToCustomOrderNumber(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') handleSearch(e); }} />
                                                             <span className="input-group-append">
-                                                                <button type="button" className="btn btn-info btn-flat" onClick={handleSearch}>Go</button>
+                                                                <button type="button" className="btn btn-info btn-flat" disabled={loading} onClick={handleSearch}>Go</button>
                                                             </span>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">Sort by</label></div>
+                                                    </div>
+                                                    <div className="col-md-4">
+                                                        <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
+                                                            <option value="created">Created date</option>
+                                                            <option value="total">Order total</option>
+                                                            <option value="ordercode">Order #</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="col-md-4">
+                                                        <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
+                                                            <option value="desc">Descending</option>
+                                                            <option value="asc">Ascending</option>
+                                                        </select>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="row">
                                             <div className="text-center col-12">
-                                                <button type="button" id="search-orders" className="btn btn-primary btn-search" onClick={handleSearch}>
-                                                    <i className="fas fa-search"></i> Search
+                                                <button type="button" id="search-orders" className="btn btn-primary btn-search" disabled={loading} onClick={handleSearch}>
+                                                    {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                                    Search
                                                 </button>
                                             </div>
                                         </div>
@@ -350,9 +403,23 @@ const Orders = () => {
                                                                         </td>
                                                                         <td>{order.orderCode || order.id}</td>
                                                                         <td>
-                                                                            <span className={`grid-report-item ${getStatusMeta(order.orderStatus).badge.replace('badge-', 'text-')}`}>
-                                                                                {getStatusMeta(order.orderStatus).label}
-                                                                            </span>
+                                                                            <div className="d-flex align-items-center">
+                                                                                <span className={`grid-report-item mr-2 ${getStatusMeta(order.orderStatus).badge.replace('badge-', 'text-')}`}>
+                                                                                    {getStatusMeta(order.orderStatus).label}
+                                                                                </span>
+                                                                                <select
+                                                                                    className="custom-select custom-select-sm order-status-select"
+                                                                                    value={order.orderStatus || 'pending'}
+                                                                                    disabled={updatingOrderId === order.id}
+                                                                                    onChange={(event) => updateStatus(order, event.target.value)}
+                                                                                >
+                                                                                    {orderStatuses.map((status) => (
+                                                                                        <option key={status.value} value={status.value}>
+                                                                                            {status.label}
+                                                                                        </option>
+                                                                                    ))}
+                                                                                </select>
+                                                                            </div>
                                                                         </td>
                                                                         <td>{order.paymentMethod || 'Pending'}</td>
                                                                         <td>{order.orderStatus === 'shipping' || order.orderStatus === 'delivered' ? 'Shipped' : 'Not yet shipped'}</td>
