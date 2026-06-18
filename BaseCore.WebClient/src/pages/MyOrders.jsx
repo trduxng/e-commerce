@@ -13,6 +13,7 @@ const statusMeta = {
   return_requested: { label: "Đã yêu cầu trả hàng", className: "badge-info" },
   returned: { label: "Đã trả hàng", className: "badge-dark" },
   refunded: { label: "Đã hoàn tiền", className: "badge-danger" },
+  return_rejected: { label: "Yêu cầu trả hàng bị từ chối", className: "badge-secondary" },
 };
 
 const paymentLabels = {
@@ -40,11 +41,13 @@ const MyOrders = () => {
     searchParams.get("success") === "1" ? "Đặt hàng thành công." : ""
   );
   const [cancellingId, setCancellingId] = useState(null);
+  const [returningId, setReturningId] = useState(null);
   const [reviewTarget, setReviewTarget] = useState(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
+    // orderId trên URL cho phép tự mở đơn vừa tạo sau khi checkout thành công.
     loadOrders(searchParams.get("orderId"));
   }, []);
 
@@ -63,7 +66,7 @@ const MyOrders = () => {
     return value;
   };
   const getStatus = (status) => statusMeta[normalizeStatus(status)] || statusMeta.pending;
-  const canCancel = (order) => !["delivered", "cancelled", "return_requested", "returned", "refunded"].includes(normalizeStatus(order?.orderStatus));
+  const canCancel = (order) => !["delivered", "cancelled", "return_requested", "returned", "refunded", "return_rejected"].includes(normalizeStatus(order?.orderStatus));
   const canReturn = (order) => normalizeStatus(order?.orderStatus) === "delivered";
   const formatDate = (value) => (value ? new Date(value).toLocaleString("vi-VN") : "");
 
@@ -75,6 +78,7 @@ const MyOrders = () => {
     setSearchParams(nextParams, { replace: true });
   };
 
+  // Tải lại chi tiết để có đầy đủ OrderDetail và trạng thái đánh giá mới nhất.
   const loadOrderDetail = async (order) => {
     setSelectedOrder(order);
     setDetailLoading(true);
@@ -115,6 +119,7 @@ const MyOrders = () => {
     }
   };
 
+  // Hủy đơn cập nhật đồng thời danh sách và modal đang mở mà không tải lại toàn trang.
   const cancelOrder = async (order) => {
     if (!window.confirm(`Bạn có chắc muốn hủy đơn hàng ${order.orderCode} không?`)) return;
 
@@ -141,13 +146,15 @@ const MyOrders = () => {
     }
   };
 
+  // Chỉ đơn đã giao mới được backend chấp nhận yêu cầu trả hàng.
   const requestReturn = async (order) => {
     if (!window.confirm(`Bạn có chắc muốn yêu cầu trả đơn hàng ${order.orderCode} không?`)) return;
 
+    setReturningId(order.id);
     setError("");
     try {
       const response = await orderApi.requestReturn(order.id);
-      const updatedOrder = response.data;
+      const updatedOrder = response.data?.order || response.data;
       setOrders((current) => current.map((item) => (
         Number(item.id) === Number(order.id)
           ? { ...item, ...updatedOrder, orderDetails: item.orderDetails }
@@ -160,10 +167,15 @@ const MyOrders = () => {
       ));
       toast.success("Đã gửi yêu cầu trả hàng.");
     } catch (error) {
-      setError(getApiErrorMessage(error, "Không thể gửi yêu cầu trả hàng."));
+      const message = getApiErrorMessage(error, "Không thể gửi yêu cầu trả hàng.");
+      setError(message);
+      toast.error(message);
+    } finally {
+      setReturningId(null);
     }
   };
 
+  // Review gắn với OrderDetail để mỗi sản phẩm đã mua chỉ được đánh giá một lần.
   const openReview = (order, detail) => {
     if (detail.isReviewed) {
       toast.info("Bạn đã đánh giá đơn hàng này rồi.");
@@ -193,6 +205,7 @@ const MyOrders = () => {
     setReviewTarget(null);
   };
 
+  // Đánh dấu local ngay sau khi gửi thành công để nút đánh giá biến mất tức thì.
   const markDetailReviewed = (order, orderId, billDetailId, reviewId) => {
     if (!order || Number(order.id) !== Number(orderId)) return order;
 
@@ -371,9 +384,10 @@ const MyOrders = () => {
                           <button
                           className="btn btn-outline-info"
                           type="button"
+                          disabled={returningId === order.id}
                           onClick={() => requestReturn(order)}
                           >
-                          Yêu cầu trả hàng
+                          {returningId === order.id ? "Đang gửi..." : "Yêu cầu trả hàng"}
                           </button>
                           )}
                           </div>
@@ -472,9 +486,10 @@ const MyOrders = () => {
                     <button
                       className="btn btn-outline-info"
                       type="button"
+                      disabled={returningId === selectedOrder.id}
                       onClick={() => requestReturn(selectedOrder)}
                     >
-                      Yêu cầu trả hàng
+                      {returningId === selectedOrder.id ? "Đang gửi..." : "Yêu cầu trả hàng"}
                     </button>
                   )}
                   <button className="btn btn-primary" type="button" onClick={closeOrderDetail}>Đóng</button>

@@ -47,6 +47,7 @@ namespace BaseCore.Repository.Authen
 
         public async Task<User> GetByUsernameAsync(string username)
         {
+            // Tham số tên username nhưng hệ thống hiện đăng nhập bằng cột Email.
             return await _context.Users
                 .Where(u => u.Email == username && u.Status == "active" && u.DeletedAt == null)
                 .FirstOrDefaultAsync();
@@ -93,6 +94,7 @@ namespace BaseCore.Repository.Authen
             var user = await _context.Users.FindAsync(userId);
             if (user != null)
             {
+                // Soft-delete user để giữ quan hệ với đơn hàng và dữ liệu lịch sử.
                 user.Status = "banned";
                 user.DeletedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
@@ -123,6 +125,7 @@ namespace BaseCore.Repository.Authen
             int page,
             int pageSize)
         {
+            // Tích lũy các filter trên IQueryable để database xử lý trước khi phân trang.
             var query = _context.Users.AsQueryable();
 
             if (!string.IsNullOrEmpty(email))

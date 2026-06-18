@@ -311,7 +311,7 @@ CREATE TABLE orders.bills (
     CONSTRAINT FK_bills_users               FOREIGN KEY (user_id) REFERENCES auth.users(id),
     CONSTRAINT CK_bills_payment_method      CHECK       (payment_method  IN ('cod','vnpay','momo','bank_transfer')),
     CONSTRAINT CK_bills_payment_status      CHECK       (payment_status  IN ('pending','paid','refunded')),
-    CONSTRAINT CK_bills_order_status        CHECK       (order_status    IN ('pending','confirmed','shipping','delivered','cancelled')),
+    CONSTRAINT CK_bills_order_status        CHECK       (order_status    IN ('pending','confirmed','shipping','delivered','cancelled','return_requested','returned','refunded','return_rejected')),
     CONSTRAINT CK_bills_total_amount        CHECK       (total_amount >= 0)
 );
 GO

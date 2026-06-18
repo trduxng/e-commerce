@@ -176,6 +176,7 @@ export const getProductCategoryName = (product, categories = sampleCategories) =
   return category?.name || "Chưa phân loại";
 };
 
+// Hỗ trợ cả API trả mảng trực tiếp và response phân trang { items }.
 export const normalizeProductList = (responseData) => {
   if (Array.isArray(responseData)) return responseData;
   if (Array.isArray(responseData?.items)) return responseData.items;
@@ -303,6 +304,7 @@ const apiMessagePatterns = [
 
 const vietnameseCharacters = /[ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠƯẠ-ỹ]/i;
 
+// Ưu tiên bản dịch/pattern có sẵn; giữ nguyên thông báo nếu backend đã trả tiếng Việt.
 export const localizeApiMessage = (
   message,
   fallback = "Không thể hoàn tất yêu cầu. Vui lòng thử lại."
@@ -321,6 +323,7 @@ export const localizeApiMessage = (
   return vietnameseCharacters.test(value) ? value : fallback;
 };
 
+// Gom nhiều kiểu error response về một chuỗi thân thiện để các trang xử lý thống nhất.
 export const getApiErrorMessage = (error, fallback) => {
   const responseData = error?.response?.data;
   const message = typeof responseData === "string"

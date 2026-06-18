@@ -22,6 +22,7 @@ const SpecificationAttributes = () => {
         }
     };
 
+    // Thuộc tính này định nghĩa bộ lọc/thông số dùng lại cho nhiều sản phẩm.
     const handleSave = async (e) => {
         e.preventDefault();
         try {

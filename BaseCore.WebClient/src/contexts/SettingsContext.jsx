@@ -17,6 +17,7 @@ export const SettingsProvider = ({ children }) => {
         instagramLink: '#'
     });
 
+    // Nếu API lỗi, ứng dụng tiếp tục dùng cấu hình mặc định ở state phía trên.
     const loadSettings = async () => {
         try {
             const response = await settingApi.get();

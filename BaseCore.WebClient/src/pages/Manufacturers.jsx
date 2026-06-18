@@ -26,6 +26,7 @@ const Manufacturers = () => {
         }
     };
 
+    // Một modal dùng chung cho tạo mới và chỉnh sửa nhà sản xuất.
     const handleSave = async (e) => {
         e.preventDefault();
         try {

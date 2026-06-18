@@ -42,7 +42,8 @@ const queryClient = new QueryClient();
 const adminPaths = ['/admin'];
 const isAdminPath = (path) => adminPaths.some((adminPath) => path === adminPath || path.startsWith(`${adminPath}/`));
 
-// Wrapper to redirect authenticated users away from login
+// Không cho người dùng đã đăng nhập quay lại trang đăng nhập/đăng ký.
+// returnUrl chỉ được chấp nhận khi là đường dẫn nội bộ để tránh chuyển hướng ra website lạ.
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading, isStaff } = useAuth();
     const location = useLocation();
@@ -120,6 +121,7 @@ function AppRoutes() {
 }
 
 function App() {
+    // Thứ tự Provider quan trọng: Cart/Favorite cần Auth, còn mọi màn hình đều có thể dùng Toast/Theme/Settings.
     return (
         <QueryClientProvider client={queryClient}>
             <Router>

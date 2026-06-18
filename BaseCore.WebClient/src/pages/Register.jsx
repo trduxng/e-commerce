@@ -23,6 +23,7 @@ const Register = () => {
         setFormData((current) => ({ ...current, [name]: value }));
     };
 
+    // Kiểm tra form cơ bản ở client trước khi gửi yêu cầu tạo tài khoản.
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');

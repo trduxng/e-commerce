@@ -29,6 +29,7 @@ const Account = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Tải tổng quan, hồ sơ và sổ địa chỉ song song khi mở trang tài khoản.
   const loadAccount = async () => {
     setLoading(true);
     try {
@@ -51,6 +52,7 @@ const Account = () => {
     loadAccount();
   }, []);
 
+  // Sau khi lưu hồ sơ, cập nhật AuthContext để header và các trang khác thấy dữ liệu mới.
   const saveProfile = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -66,6 +68,7 @@ const Account = () => {
     }
   };
 
+  // Một form dùng chung cho cả tạo mới và chỉnh sửa địa chỉ.
   const saveAddress = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -88,6 +91,7 @@ const Account = () => {
     setAddressForm({ ...emptyAddress, ...address });
   };
 
+  // Sau khi xóa, tải lại vì backend có thể tự chọn địa chỉ mặc định mới.
   const deleteAddress = async () => {
     try {
       await addressApi.delete(deleteAddressId);

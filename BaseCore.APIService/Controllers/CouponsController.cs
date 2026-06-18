@@ -135,6 +135,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<ActionResult<object>> ApplyCoupon([FromBody] ApplyCouponDto dto)
         {
+            // Endpoint này chỉ xem trước mức giảm; checkout sẽ kiểm tra lại trước khi tạo đơn.
             var couponApplication = await CouponDiscountCalculator.ApplyAsync(_context, dto.Code, dto.OrderValue, requireCode: true);
             if (couponApplication.ErrorMessage != null)
                 return BadRequest(new { message = couponApplication.ErrorMessage });
@@ -154,6 +155,7 @@ namespace BaseCore.APIService.Controllers
 
         private static string? NormalizeCoupon(Coupon coupon)
         {
+            // Chuẩn hóa dữ liệu quản trị để logic áp dụng coupon chỉ phải xử lý một định dạng.
             coupon.Code = coupon.Code?.Trim().ToUpperInvariant() ?? "";
             if (string.IsNullOrWhiteSpace(coupon.Code))
                 return "Coupon code is required";

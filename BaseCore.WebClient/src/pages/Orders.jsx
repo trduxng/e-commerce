@@ -36,7 +36,12 @@ const orderStatuses = [
     { value: 'return_requested', label: 'Yêu cầu trả hàng', badge: 'badge-info' },
     { value: 'returned', label: 'Đã trả hàng', badge: 'badge-dark' },
     { value: 'refunded', label: 'Đã hoàn tiền', badge: 'badge-danger' },
+    { value: 'return_rejected', label: 'Từ chối trả hàng', badge: 'badge-secondary' },
 ];
+
+const editableOrderStatuses = orderStatuses.filter((status) => (
+    !['return_requested', 'returned', 'refunded', 'return_rejected'].includes(status.value)
+));
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -123,6 +128,7 @@ const Orders = () => {
         loadOrders();
     }, [page, pageSize, sortField, sortDir]);
 
+    // Backend trả cả danh sách phân trang và summary doanh thu theo bộ lọc hiện tại.
     const loadOrders = async () => {
         setLoading(true);
         setError('');
@@ -186,6 +192,7 @@ const Orders = () => {
 
     const getStatusMeta = (status) => orderStatuses.find((item) => item.value === status) || orderStatuses[0];
 
+    // Cập nhật trạng thái tại server rồi thay đúng dòng trong state để tránh tải lại toàn bảng.
     const updateStatus = async (order, status) => {
         if (status === order.orderStatus) return;
 
@@ -620,10 +627,16 @@ const Orders = () => {
                                                                                 <select
                                                                                     className="custom-select custom-select-sm order-status-select"
                                                                                     value={order.orderStatus || 'pending'}
-                                                                                    disabled={updatingOrderId === order.id}
+                                                                                    disabled={
+                                                                                        updatingOrderId === order.id
+                                                                                        || !editableOrderStatuses.some((status) => status.value === order.orderStatus)
+                                                                                    }
                                                                                     onChange={(event) => updateStatus(order, event.target.value)}
                                                                                 >
-                                                                                    {orderStatuses.map((status) => (
+                                                                                    {(editableOrderStatuses.some((status) => status.value === order.orderStatus)
+                                                                                        ? editableOrderStatuses
+                                                                                        : orderStatuses.filter((status) => status.value === order.orderStatus)
+                                                                                    ).map((status) => (
                                                                                         <option key={status.value} value={status.value}>
                                                                                             {status.label}
                                                                                         </option>

@@ -58,6 +58,7 @@ const Home = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Tải danh mục và sản phẩm nổi bật song song; khi lỗi sẽ dùng dữ liệu mẫu.
     const loadHomeData = async () => {
       setLoading(true);
       try {

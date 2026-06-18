@@ -49,6 +49,7 @@ const Users = () => {
         loadUsers();
     }, [page, pageSize]);
 
+    // Phân trang, tìm kiếm và lọc role đều được thực hiện ở backend.
     const loadUsers = async () => {
         setLoading(true);
         try {
@@ -103,6 +104,7 @@ const Users = () => {
         setSelectedCustomerRoleIds(values);
     };
 
+    // Khi sửa không yêu cầu nhập lại mật khẩu; khi tạo mới mật khẩu là bắt buộc.
     const openModal = (user = null) => {
         if (user) {
             setEditingUser(user);
@@ -130,6 +132,7 @@ const Users = () => {
         setError('');
     };
 
+    // Dùng cùng form cho POST tạo user và PUT cập nhật user.
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');

@@ -592,7 +592,10 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("bills", "orders");
+                    b.ToTable("bills", "orders", t =>
+                        {
+                            t.HasCheckConstraint("CK_bills_order_status", "[order_status] IN ('pending','confirmed','shipping','delivered','cancelled','return_requested','returned','refunded','return_rejected')");
+                        });
 
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });

@@ -33,7 +33,7 @@ namespace BaseCore.APIService.Services
         public async Task<bool> ClearAllDataAsync()
         {
             try {
-                // Cưỡng bức xóa sạch bằng SQL thuần, bất chấp ràng buộc phức tạp
+                // DEVELOPMENT ONLY: tạm tắt constraint và xóa dữ liệu theo thứ tự bảng phụ thuộc.
                 var sql = @"
                     EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
                     DELETE FROM [orders].[bill_details];
@@ -62,7 +62,7 @@ namespace BaseCore.APIService.Services
             var result = new SeedResult();
             var now = DateTime.Now;
 
-            // 0. Xóa SẠCH rác cũ
+            // Seeder luôn bắt đầu từ dữ liệu sạch, vì vậy không được chạy trên database production.
             await ClearAllDataAsync();
 
             // 1. Seed Users (Việt hóa)

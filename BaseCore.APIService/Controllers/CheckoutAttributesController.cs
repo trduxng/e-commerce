@@ -53,11 +53,10 @@ namespace BaseCore.APIService.Controllers
                 return NotFound();
             }
 
-            // Update parent properties
+            // Cập nhật entity cha nhưng đồng bộ collection Values thủ công để EF xử lý đúng add/update/delete.
             _context.Entry(existingAttribute).CurrentValues.SetValues(attribute);
 
-            // Synchronize child values
-            // 1. Remove deleted values
+            // Value không còn trong payload được xem là đã bị xóa khỏi form quản trị.
             var incomingIds = attribute.Values.Select(v => v.Id).ToList();
             var toRemove = existingAttribute.Values.Where(v => !incomingIds.Contains(v.Id)).ToList();
             foreach (var val in toRemove)
@@ -65,7 +64,7 @@ namespace BaseCore.APIService.Controllers
                 _context.CheckoutAttributeValues.Remove(val);
             }
 
-            // 2. Add or update incoming values
+            // ID có sẵn thì cập nhật; ID bằng 0 tạo lựa chọn mới.
             foreach (var val in attribute.Values)
             {
                 var existingVal = existingAttribute.Values.FirstOrDefault(v => v.Id == val.Id && val.Id != 0);

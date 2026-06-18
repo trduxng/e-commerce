@@ -50,6 +50,7 @@ namespace BaseCore.Repository.EFCore
             int page,
             int pageSize)
         {
+            // Dựng một IQueryable duy nhất để EF chuyển toàn bộ filter/sort/paging thành SQL.
             var query = _dbSet
                 .Include(p => p.Category)
                 .Include(p => p.Manufacturer)
@@ -60,6 +61,7 @@ namespace BaseCore.Repository.EFCore
 
             if (!string.IsNullOrEmpty(goDirectlyToSku))
             {
+                // Tìm chính xác SKU được ưu tiên và bỏ qua các filter tìm kiếm thông thường.
                 var sku = goDirectlyToSku.ToLower();
                 query = query.Where(p => p.ProductVariants.Any(v => v.Sku.ToLower() == sku));
             }
@@ -97,6 +99,7 @@ namespace BaseCore.Repository.EFCore
 
             if (specificationFilters != null && specificationFilters.Any())
             {
+                // Các attribute khác nhau kết hợp theo AND; nhiều value cùng attribute kết hợp theo OR.
                 foreach (var filter in specificationFilters)
                 {
                     var attrId = filter.Key;
@@ -173,6 +176,7 @@ namespace BaseCore.Repository.EFCore
 
         public async Task PopulateReviewSummariesAsync(IEnumerable<Product> products)
         {
+            // Gom rating của nhiều sản phẩm trong một query, tránh N+1 khi render danh sách.
             var productList = products.ToList();
             var productIds = productList.Select(product => product.Id).Distinct().ToList();
             if (productIds.Count == 0)

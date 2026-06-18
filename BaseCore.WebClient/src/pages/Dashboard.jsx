@@ -10,6 +10,10 @@ const orderStatuses = [
     { value: 'shipping', label: 'Đang giao', badge: 'badge-info', color: '#06b6d4' },
     { value: 'delivered', label: 'Đã giao', badge: 'badge-success', color: '#10b981' },
     { value: 'cancelled', label: 'Đã hủy', badge: 'badge-secondary', color: '#64748b' },
+    { value: 'return_requested', label: 'Yêu cầu trả hàng', badge: 'badge-info', color: '#0891b2' },
+    { value: 'returned', label: 'Đã trả hàng', badge: 'badge-dark', color: '#334155' },
+    { value: 'refunded', label: 'Đã hoàn tiền', badge: 'badge-danger', color: '#ef4444' },
+    { value: 'return_rejected', label: 'Từ chối trả hàng', badge: 'badge-secondary', color: '#64748b' },
 ];
 
 const Dashboard = () => {
@@ -57,6 +61,7 @@ const Dashboard = () => {
         return getListCount(data);
     };
 
+    // Dashboard gom nhiều endpoint độc lập và tải song song để dựng số liệu tổng quan.
     const loadStats = async () => {
         try {
             const [productsRes, categoriesRes] = await Promise.all([
@@ -86,7 +91,12 @@ const Dashboard = () => {
                     setStats((current) => ({
                         ...current,
                         orders: orders.length,
-                        revenue: orders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
+                        revenue: orders
+                            .filter((order) => (
+                                !['cancelled', 'returned', 'refunded'].includes(order.orderStatus)
+                                && order.paymentStatus !== 'refunded'
+                            ))
+                            .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
                     }));
                 } catch (e) {
                     console.log('Không thể lấy thống kê admin');
@@ -111,6 +121,7 @@ const Dashboard = () => {
 
     const canModifyOrder = (order) => order.orderStatus === 'pending';
 
+    // Chỉ thông tin giao nhận của đơn pending được phép chỉnh sửa.
     const startEditOrder = (order) => {
         setOrderError('');
         setEditingOrder(order);
@@ -159,6 +170,7 @@ const Dashboard = () => {
         }
     };
 
+    // Backend quyết định trạng thái nào được xóa và có cần hoàn tồn kho hay không.
     const deleteOrder = async (order) => {
         if (!window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.orderCode}?`)) return;
 
@@ -173,6 +185,7 @@ const Dashboard = () => {
         }
     };
 
+    // Thao tác quản trị thay đổi vòng đời đơn hàng.
     const updateOrderStatus = async (orderId, status) => {
         setUpdatingStatusId(orderId);
         setOrderError('');

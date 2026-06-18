@@ -12,6 +12,7 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
 
   useEffect(() => {
+    // data-theme điều khiển CSS toàn trang, localStorage giữ lựa chọn sau khi tải lại.
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("theme", theme);
   }, [theme]);

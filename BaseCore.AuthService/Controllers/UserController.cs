@@ -41,6 +41,7 @@ namespace BaseCore.AuthService.Controllers
             [FromQuery] int page = 1, 
             [FromQuery] int pageSize = 10)
         {
+            // Controller chỉ ánh xạ query/DTO; toàn bộ filter và phân trang nằm ở service/repository.
             var (users, totalCount) = await _userService.Search(
                 keyword, email, username, firstName, lastName, phone, company, ipAddress, zipPostalCode, 
                 isActive, userType, registrationFrom, registrationTo, sortField, sortDir, page, pageSize);
@@ -160,6 +161,7 @@ namespace BaseCore.AuthService.Controllers
             existingUser.UserType = request.UserType ?? existingUser.UserType;
             existingUser.IsActive = request.IsActive ?? existingUser.IsActive;
 
+            // Password rỗng giữ nguyên mật khẩu hiện tại; có giá trị thì service thay đổi.
             await _userService.Update(existingUser, request.Password);
 
             return Ok(new UserResponse

@@ -72,6 +72,7 @@ namespace BaseCore.APIService.Controllers
                 return NotFound(new { message = "Review not found" });
             }
 
+            // Chỉ review approved xuất hiện trong API review công khai của sản phẩm.
             if (dto.Status != "approved" && dto.Status != "rejected" && dto.Status != "pending")
             {
                 return BadRequest(new { message = "Invalid status" });

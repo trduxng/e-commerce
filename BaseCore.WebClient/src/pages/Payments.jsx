@@ -34,6 +34,7 @@ const Payments = () => {
         loadData();
     }, []);
 
+    // Hiện tại dữ liệu giao dịch/cổng thanh toán là mock và được lưu trong localStorage.
     const loadData = async () => {
         setLoading(true);
         try {
@@ -93,6 +94,7 @@ const Payments = () => {
         }
     };
 
+    // Đối soát file CSV hiện là mô phỏng UI, chưa gửi dữ liệu tới backend thanh toán thật.
     const runReconciliation = () => {
         if (!reconFile) return;
         setReconLoading(true);

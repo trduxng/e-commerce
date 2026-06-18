@@ -52,6 +52,7 @@ namespace BaseCore.APIService.Controllers
             if (dto.BillDetailId <= 0)
                 return BadRequest(new { message = "Please review this product from a delivered order." });
 
+            // Review chỉ hợp lệ khi OrderDetail thuộc user, đúng sản phẩm và đơn đã giao.
             var billDetail = await _db.OrderDetails
                 .Include(detail => detail.Order)
                 .Include(detail => detail.ProductVariant)
@@ -66,6 +67,7 @@ namespace BaseCore.APIService.Controllers
             if (billDetail == null)
                 return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only customers who bought and received this product can write a review." });
 
+            // Mỗi dòng đơn chỉ được đánh giá một lần.
             if (await _db.Reviews.AnyAsync(item => item.BillDetailId == billDetail.Id))
                 return Conflict(new { message = "Bạn đã đánh giá đơn hàng này rồi." });
 
@@ -88,6 +90,7 @@ namespace BaseCore.APIService.Controllers
             }
             catch (DbUpdateException)
             {
+                // Unique constraint là lớp bảo vệ cuối khi hai request review chạy đồng thời.
                 _db.ChangeTracker.Clear();
                 if (await _db.Reviews.AnyAsync(item => item.BillDetailId == billDetail.Id))
                     return Conflict(new { message = "Bạn đã đánh giá đơn hàng này rồi." });
@@ -100,6 +103,7 @@ namespace BaseCore.APIService.Controllers
 
         private async Task<ProductReviewResponseDto> BuildResponse(long productId, long? currentUserId = null)
         {
+            // Trả cùng lúc danh sách, điểm trung bình và phân bố sao để frontend chỉ gọi một API.
             var reviews = await _db.Reviews
                 .Where(review => review.ProductId == productId && review.Status == "approved")
                 .Include(review => review.User)
@@ -150,6 +154,7 @@ namespace BaseCore.APIService.Controllers
 
         private Task<bool> HasReviewableDeliveredPurchase(long userId, long productId)
         {
+            // Còn quyền review nếu tồn tại ít nhất một OrderDetail đã giao nhưng chưa có review.
             return _db.OrderDetails.AnyAsync(detail =>
                 detail.Order != null &&
                 detail.Order.UserId == userId &&

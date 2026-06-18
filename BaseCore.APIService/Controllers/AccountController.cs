@@ -24,6 +24,7 @@ namespace BaseCore.APIService.Controllers
             if (!TryGetCurrentUserId(out var userId))
                 return Unauthorized();
 
+            // Chỉ đơn delivered được tính vào tổng chi tiêu của khách hàng.
             var orders = _db.Orders.Where(order => order.UserId == userId);
             return Ok(new
             {
@@ -69,6 +70,7 @@ namespace BaseCore.APIService.Controllers
                 return BadRequest(new { message = "Email is required." });
 
             var email = dto.Email.Trim().ToLowerInvariant();
+            // Email phải duy nhất giữa các tài khoản khác.
             var emailExists = await _db.Users.AnyAsync(user => user.Id != userId && user.Email == email);
             if (emailExists)
                 return Conflict(new { message = "Email is already in use." });

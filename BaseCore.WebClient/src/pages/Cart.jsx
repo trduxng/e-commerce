@@ -26,18 +26,22 @@ const Cart = () => {
   const toast = useToast();
   const [quantityDrafts, setQuantityDrafts] = React.useState({});
   const selectAllRef = React.useRef(null);
+
+  // Dùng Set để kiểm tra nhanh sản phẩm nào đang được chọn.
   const selectedIdSet = React.useMemo(
     () => new Set(selectedCartItemIds.map((id) => String(id))),
     [selectedCartItemIds]
   );
   const selectedLineCount = selectedItems.length;
 
+  // Hiển thị trạng thái "chọn một phần" khi chỉ một số sản phẩm được chọn.
   React.useEffect(() => {
     if (selectAllRef.current) {
       selectAllRef.current.indeterminate = selectedLineCount > 0 && selectedLineCount < items.length;
     }
   }, [items.length, selectedLineCount]);
 
+  // Cập nhật số lượng trên backend rồi xóa giá trị người dùng đang nhập tạm.
   const changeQuantity = async (item, quantity) => {
     const result = await updateQuantity(item.productVariantId ?? item.cartItemId ?? item.id, quantity);
     setQuantityDrafts((drafts) => {
@@ -52,14 +56,17 @@ const Cart = () => {
     }
   };
 
+  // Chuẩn hóa số lượng thành số nguyên, tối thiểu là 1 trước khi gửi lên backend.
   const commitQuantityInput = (item, value) => {
     const nextQuantity = Math.max(1, Math.floor(Number(value) || 1));
     changeQuantity(item, nextQuantity);
   };
 
+  // Key phục vụ render có fallback; cartItemId là ID dùng để chọn sản phẩm checkout.
   const getItemKey = (item) => item.productVariantId ?? item.cartItemId ?? item.id;
   const getCartItemId = (item) => item.cartItemId;
 
+  // Xóa một sản phẩm khỏi giỏ hàng.
   const removeItem = async (item) => {
     const result = await removeFromCart(item.productVariantId ?? item.cartItemId ?? item.id);
     if (result?.message) {
@@ -69,6 +76,7 @@ const Cart = () => {
     }
   };
 
+  // Xóa toàn bộ giỏ hàng và dữ liệu số lượng đang nhập dở.
   const clearAllItems = async () => {
     const result = await clearCart();
     setQuantityDrafts({});
@@ -79,6 +87,7 @@ const Cart = () => {
     }
   };
 
+  // Chọn hoặc bỏ chọn toàn bộ sản phẩm trong giỏ.
   const handleSelectAll = (event) => {
     if (event.target.checked) {
       selectAllCartItems();
@@ -87,6 +96,7 @@ const Cart = () => {
     }
   };
 
+  // Chặn chuyển trang nếu người dùng chưa chọn sản phẩm để thanh toán.
   const handleCheckoutClick = (event) => {
     if (selectedLineCount > 0) return;
     event.preventDefault();

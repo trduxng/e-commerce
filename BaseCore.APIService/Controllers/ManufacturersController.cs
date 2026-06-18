@@ -87,7 +87,7 @@ namespace BaseCore.APIService.Controllers
             manufacturer.UpdatedAt = DateTime.Now;
             _context.Entry(manufacturer).State = EntityState.Modified;
             
-            // Don't update CreatedAt
+            // Giữ nguyên CreatedAt dù frontend gửi entity đầy đủ.
             _context.Entry(manufacturer).Property(x => x.CreatedAt).IsModified = false;
 
             try

@@ -26,6 +26,7 @@ const Categories = () => {
         loadCategories();
     }, [keyword, page, sortField, sortDir]);
 
+    // Danh mục được tải theo từ khóa và phân trang để phục vụ bảng quản trị.
     const loadCategories = async () => {
         setLoading(true);
         try {
@@ -83,6 +84,7 @@ const Categories = () => {
         setError('');
     };
 
+    // Một form dùng chung cho tạo mới và cập nhật danh mục.
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');

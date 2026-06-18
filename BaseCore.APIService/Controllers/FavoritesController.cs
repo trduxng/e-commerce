@@ -39,6 +39,7 @@ namespace BaseCore.APIService.Controllers
                     .OrderByDescending(item => item.CreatedAt)
                     .Select(item => item.Product)
                     .ToListAsync();
+            // Bổ sung rating/review count để response render được trực tiếp bằng ProductCard.
             await _productRepository.PopulateReviewSummariesAsync(favorites.OfType<Product>());
             return Ok(favorites);
         }
@@ -68,6 +69,7 @@ namespace BaseCore.APIService.Controllers
                 product.IsActive);
             if (!productExists)
                 return NotFound(new { message = "Product not found" });
+            // Thêm yêu thích là idempotent: gọi lặp lại vẫn trả thành công và không tạo bản ghi trùng.
             var alreadyExists = await _db.FavoriteProducts.AnyAsync(item =>
                 item.UserId == userId &&
                 item.ProductId == productId);
