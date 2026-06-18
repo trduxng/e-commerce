@@ -346,7 +346,13 @@ namespace BaseCore.Repository
 
             modelBuilder.Entity<Order>(entity =>
             {
-                entity.ToTable("bills", "orders", table => table.UseSqlOutputClause(false));
+                entity.ToTable("bills", "orders", table =>
+                {
+                    table.UseSqlOutputClause(false);
+                    table.HasCheckConstraint(
+                        "CK_bills_order_status",
+                        "[order_status] IN ('pending','confirmed','shipping','delivered','cancelled','return_requested','returned','refunded','return_rejected')");
+                });
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.OrderCode).HasColumnName("order_code").HasMaxLength(30).IsRequired();

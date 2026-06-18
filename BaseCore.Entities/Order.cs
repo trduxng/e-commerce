@@ -88,6 +88,7 @@ namespace BaseCore.Entities
                 "return_requested" => "return_requested",
                 "returned" => "returned",
                 "refunded" => "refunded",
+                "return_rejected" => "return_rejected",
                 _ => "pending"
             };
         }

@@ -12,7 +12,12 @@ const orderStatuses = [
     { value: 'return_requested', label: 'Return Requested', badge: 'badge-info' },
     { value: 'returned', label: 'Returned', badge: 'badge-dark' },
     { value: 'refunded', label: 'Refunded', badge: 'badge-danger' },
+    { value: 'return_rejected', label: 'Return Rejected', badge: 'badge-secondary' },
 ];
+
+const editableOrderStatuses = orderStatuses.filter((status) => (
+    !['return_requested', 'returned', 'refunded', 'return_rejected'].includes(status.value)
+));
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -412,10 +417,16 @@ const Orders = () => {
                                                                                 <select
                                                                                     className="custom-select custom-select-sm order-status-select"
                                                                                     value={order.orderStatus || 'pending'}
-                                                                                    disabled={updatingOrderId === order.id}
+                                                                                    disabled={
+                                                                                        updatingOrderId === order.id
+                                                                                        || !editableOrderStatuses.some((status) => status.value === order.orderStatus)
+                                                                                    }
                                                                                     onChange={(event) => updateStatus(order, event.target.value)}
                                                                                 >
-                                                                                    {orderStatuses.map((status) => (
+                                                                                    {(editableOrderStatuses.some((status) => status.value === order.orderStatus)
+                                                                                        ? editableOrderStatuses
+                                                                                        : orderStatuses.filter((status) => status.value === order.orderStatus)
+                                                                                    ).map((status) => (
                                                                                         <option key={status.value} value={status.value}>
                                                                                             {status.label}
                                                                                         </option>

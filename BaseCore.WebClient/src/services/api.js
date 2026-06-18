@@ -134,7 +134,8 @@ export const orderApi = {
     update: (id, data) => api.put(`/orders/${id}`, data),
     updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
     cancel: (id) => api.put(`/orders/${id}/cancel`),
-    requestReturn: (id) => api.put(`/orders/${id}/request-return`),
+    requestReturn: (id) => api.put(`/orders/${id}/request-return`, {}),
+    processReturn: (id, decision) => api.put(`/orders/${id}/return-decision`, { decision }),
     delete: (id) => api.delete(`/orders/${id}`),
 };
 

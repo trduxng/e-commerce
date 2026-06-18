@@ -178,8 +178,12 @@ namespace BaseCore.Repository.EFCore
             var today = DateTime.Today;
             var tomorrow = today.AddDays(1);
 
-            // Doanh thu loại đơn đã hủy nhưng vẫn giữ chúng trong tổng số/báo cáo trạng thái.
-            var validOrdersQuery = query.Where(o => o.OrderStatus != "cancelled");
+            // Đơn đã hủy/trả/hoàn tiền vẫn nằm trong báo cáo trạng thái nhưng không còn là doanh thu thực nhận.
+            var validOrdersQuery = query.Where(o =>
+                o.OrderStatus != "cancelled" &&
+                o.OrderStatus != "returned" &&
+                o.OrderStatus != "refunded" &&
+                o.PaymentStatus != "refunded");
             var byStatus = await query
                 .GroupBy(o => o.OrderStatus)
                 .Select(group => new { Status = group.Key, Count = group.Count() })
@@ -202,6 +206,7 @@ namespace BaseCore.Repository.EFCore
             {
                 "total" => isAscending ? query.OrderBy(o => o.TotalAmount) : query.OrderByDescending(o => o.TotalAmount),
                 "ordercode" => isAscending ? query.OrderBy(o => o.OrderCode) : query.OrderByDescending(o => o.OrderCode),
+                "updated" => isAscending ? query.OrderBy(o => o.UpdatedAt) : query.OrderByDescending(o => o.UpdatedAt),
                 "created" => isAscending ? query.OrderBy(o => o.CreatedAt) : query.OrderByDescending(o => o.CreatedAt),
                 _ => query.OrderByDescending(o => o.CreatedAt)
             };

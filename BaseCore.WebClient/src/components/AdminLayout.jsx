@@ -261,7 +261,7 @@ const MainLayout = ({ children }) => {
                                         <li className="nav-item">
                                             <Link to="/admin/current-carts" className={`nav-link ${isActive('/admin/current-carts')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Current Carts</span>
+                                                <span className="menu-text">Quản lý trả hàng</span>
                                             </Link>
                                         </li>
                                         <li className="nav-item">

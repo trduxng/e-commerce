@@ -10,6 +10,10 @@ const orderStatuses = [
     { value: 'shipping', label: 'Đang giao', badge: 'badge-info', color: '#06b6d4' },
     { value: 'delivered', label: 'Đã giao', badge: 'badge-success', color: '#10b981' },
     { value: 'cancelled', label: 'Đã hủy', badge: 'badge-secondary', color: '#64748b' },
+    { value: 'return_requested', label: 'Yêu cầu trả hàng', badge: 'badge-info', color: '#0891b2' },
+    { value: 'returned', label: 'Đã trả hàng', badge: 'badge-dark', color: '#334155' },
+    { value: 'refunded', label: 'Đã hoàn tiền', badge: 'badge-danger', color: '#ef4444' },
+    { value: 'return_rejected', label: 'Từ chối trả hàng', badge: 'badge-secondary', color: '#64748b' },
 ];
 
 const Dashboard = () => {
@@ -87,7 +91,12 @@ const Dashboard = () => {
                     setStats((current) => ({
                         ...current,
                         orders: orders.length,
-                        revenue: orders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
+                        revenue: orders
+                            .filter((order) => (
+                                !['cancelled', 'returned', 'refunded'].includes(order.orderStatus)
+                                && order.paymentStatus !== 'refunded'
+                            ))
+                            .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
                     }));
                 } catch (e) {
                     console.log('Không thể lấy thống kê admin');

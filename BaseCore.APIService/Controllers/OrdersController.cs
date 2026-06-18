@@ -5,6 +5,7 @@ using BaseCore.Repository.EFCore;
 using BaseCore.Repository;
 using BaseCore.APIService.Services;
 using System.Security.Claims;
+using System.Data;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -286,7 +287,23 @@ namespace BaseCore.APIService.Controllers
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return NotFound(new { message = "Order not found" });
 
-            order.OrderStatus = NormalizeStatus(dto.Status);
+            var currentStatus = NormalizeStatus(order.OrderStatus);
+            var nextStatus = NormalizeStatus(dto.Status);
+            var returnStatuses = new HashSet<string>
+            {
+                "return_requested",
+                "returned",
+                "refunded",
+                "return_rejected"
+            };
+
+            // Trạng thái trả hàng phải đi qua endpoint chuyên biệt để hoàn kho và hoàn tiền cùng lúc.
+            if (returnStatuses.Contains(currentStatus) || returnStatuses.Contains(nextStatus))
+            {
+                return BadRequest(new { message = "Use return management to process return statuses." });
+            }
+
+            order.OrderStatus = nextStatus;
             order.UpdatedAt = DateTime.Now;
             await _orderRepository.UpdateAsync(order);
 
@@ -422,7 +439,7 @@ namespace BaseCore.APIService.Controllers
             if (order == null) return NotFound(new { message = "Order not found" });
             if (!CanAccessOrder(order)) return Forbid();
 
-            if (order.OrderStatus != "delivered")
+            if (NormalizeStatus(order.OrderStatus) != "delivered")
             {
                 return BadRequest(new { message = "Only delivered orders can be returned" });
             }
@@ -432,6 +449,112 @@ namespace BaseCore.APIService.Controllers
             await _orderRepository.UpdateAsync(order);
 
             return Ok(order);
+        }
+
+        /// <summary>
+        /// Approve or reject a customer return request.
+        /// Approval restores stock, decreases sold count and records the payment as refunded atomically.
+        /// </summary>
+        [HttpPut("{id}/return-decision")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ProcessReturn(long id, [FromBody] ReturnDecisionDto dto)
+        {
+            var decision = dto.Decision?.Trim().ToLowerInvariant();
+            if (decision is not ("approve" or "reject"))
+                return BadRequest(new { message = "Return decision must be approve or reject." });
+
+            await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+
+            try
+            {
+                var order = await _db.Orders
+                    .Include(item => item.OrderDetails)
+                    .ThenInclude(detail => detail.ProductVariant)
+                    .ThenInclude(variant => variant!.Product)
+                    .FirstOrDefaultAsync(item => item.Id == id);
+
+                if (order == null)
+                    return NotFound(new { message = "Order not found" });
+
+                var currentStatus = NormalizeStatus(order.OrderStatus);
+
+                // Lặp lại thao tác duyệt không được cộng kho lần thứ hai.
+                if (decision == "approve" && currentStatus == "refunded")
+                {
+                    return Ok(BuildReturnDecisionResponse(
+                        order,
+                        "Return was already approved.",
+                        0));
+                }
+
+                if (currentStatus != "return_requested")
+                {
+                    return BadRequest(new { message = "This order does not have a pending return request." });
+                }
+
+                if (decision == "reject")
+                {
+                    order.OrderStatus = "return_rejected";
+                    order.UpdatedAt = DateTime.Now;
+                    await _db.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Ok(BuildReturnDecisionResponse(order, "Return request rejected.", 0));
+                }
+
+                var restoredItemCount = 0;
+                foreach (var detail in order.OrderDetails)
+                {
+                    var variant = detail.ProductVariant;
+                    if (variant == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return Conflict(new
+                        {
+                            message = $"Cannot restore stock for order item {detail.ProductNameSnapshot}."
+                        });
+                    }
+
+                    variant.StockQuantity += detail.Quantity;
+                    restoredItemCount += detail.Quantity;
+
+                    if (variant.Product != null)
+                    {
+                        variant.Product.SoldCount = Math.Max(
+                            0,
+                            variant.Product.SoldCount - detail.Quantity);
+                    }
+                }
+
+                // Giữ nguyên TotalAmount làm lịch sử; PaymentStatus=refunded khiến báo cáo trừ khoản này khỏi doanh thu.
+                order.OrderStatus = "refunded";
+                order.PaymentStatus = "refunded";
+                order.UpdatedAt = DateTime.Now;
+
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(BuildReturnDecisionResponse(
+                    order,
+                    "Return approved, payment refunded and stock restored.",
+                    restoredItemCount));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        private static object BuildReturnDecisionResponse(Order order, string message, int restoredItemCount)
+        {
+            return new
+            {
+                message,
+                order,
+                refundedAmount = order.PaymentStatus == "refunded" ? order.TotalAmount : 0,
+                restoredItemCount
+            };
         }
 
         private static string NormalizeStatus(string? status)
@@ -445,6 +568,7 @@ namespace BaseCore.APIService.Controllers
                 "return_requested" => "return_requested",
                 "returned" => "returned",
                 "refunded" => "refunded",
+                "return_rejected" => "return_rejected",
                 _ => "pending"
             };
         }
@@ -511,5 +635,10 @@ namespace BaseCore.APIService.Controllers
     public class UpdateStatusDto
     {
         public string Status { get; set; } = "";
+    }
+
+    public class ReturnDecisionDto
+    {
+        public string Decision { get; set; } = "";
     }
 }

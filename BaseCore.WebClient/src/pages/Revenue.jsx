@@ -8,6 +8,10 @@ const orderStatuses = [
     { value: 'shipping', label: 'Shipping' },
     { value: 'delivered', label: 'Delivered' },
     { value: 'cancelled', label: 'Cancelled' },
+    { value: 'return_requested', label: 'Return Requested' },
+    { value: 'returned', label: 'Returned' },
+    { value: 'refunded', label: 'Refunded' },
+    { value: 'return_rejected', label: 'Return Rejected' },
 ];
 
 const emptySummary = {
