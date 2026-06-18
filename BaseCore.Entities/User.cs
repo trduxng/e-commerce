@@ -58,8 +58,8 @@ namespace BaseCore.Entities
         [NotMapped]
         public int UserType
         {
-            get => Role == "admin" ? 1 : Role == "staff" ? 2 : 0;
-            set => Role = value == 1 ? "admin" : value == 2 ? "staff" : "customer";
+            get => Role == "admin" ? 1 : Role == "manager" ? 2 : 0;
+            set => Role = value == 1 ? "admin" : value == 2 ? "manager" : "customer";
         }
 
         public string? FirstName { get; set; }

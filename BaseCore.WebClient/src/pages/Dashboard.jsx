@@ -39,7 +39,7 @@ const Dashboard = () => {
     const [savingOrder, setSavingOrder] = useState(false);
     const [updatingStatusId, setUpdatingStatusId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const { isAdmin } = useAuth();
+    const { isStaff } = useAuth();
 
     useEffect(() => {
         loadStats();
@@ -74,7 +74,7 @@ const Dashboard = () => {
             }
 
             let usersCount = 0;
-            if (isAdmin()) {
+            if (isStaff()) {
                 try {
                     const [usersRes, ordersRes] = await Promise.all([
                         userApi.getAll({ page: 1, pageSize: 1 }),
@@ -234,7 +234,7 @@ const Dashboard = () => {
                     {/* Bento Grid KPIs */}
                     <div className="bento-dashboard-grid mb-4">
                         {/* KPI 1: Doanh thu */}
-                        {isAdmin() && (
+                        {isStaff() && (
                             <div className="bento-card bento-kpi-large bg-gradient-revenue">
                                 <div className="bento-card-body d-flex flex-column justify-content-between h-100">
                                     <div className="d-flex justify-content-between align-items-start">
@@ -257,7 +257,7 @@ const Dashboard = () => {
                         )}
 
                         {/* KPI 2: Đơn hàng */}
-                        {isAdmin() && (
+                        {isStaff() && (
                             <div className="bento-card bg-white border">
                                 <div className="bento-card-body d-flex flex-column justify-content-between h-100">
                                     <div className="d-flex justify-content-between align-items-start">
@@ -320,7 +320,7 @@ const Dashboard = () => {
                         </div>
 
                         {/* KPI 5: Người dùng */}
-                        {isAdmin() && (
+                        {isStaff() && (
                             <div className="bento-card bg-white border">
                                 <div className="bento-card-body d-flex flex-column justify-content-between h-100">
                                     <div className="d-flex justify-content-between align-items-start">
@@ -342,7 +342,7 @@ const Dashboard = () => {
                         )}
                         </div>
 
-                    {isAdmin() && (
+                    {isStaff() && (
                         <div className="row">
                             <div className="col-12">
                                 <div className="card">
@@ -412,7 +412,7 @@ const Dashboard = () => {
                         </div>
                     )}
 
-                    <div className="row">
+                    {/* <div className="row">
                         <div className="col-12">
                             <div className="card">
                                 <div className="card-header">
@@ -557,9 +557,9 @@ const Dashboard = () => {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                     {/* Charts & Analytics Section */}
-                    {isAdmin() && (
+                    {isStaff() && (
                         <div className="row mb-4">
                             {/* Biểu đồ doanh thu SVG */}
                             <div className="col-lg-8 mb-4 mb-lg-0">
@@ -706,7 +706,7 @@ const Dashboard = () => {
                     )}
 
                     {/* Table Đơn hàng Admin (Recent Purchases) */}
-                    {isAdmin() && (
+                    {isStaff() && (
                         <div className="card border-0 shadow-sm rounded-lg mb-4">
                             <div className="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
                                 <div>

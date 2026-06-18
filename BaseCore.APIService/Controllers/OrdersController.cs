@@ -49,6 +49,11 @@ namespace BaseCore.APIService.Controllers
                 return Unauthorized();
 
             var orders = await _orderRepository.GetByUserAsync(userLongId);
+            if (orders == null || !orders.Any())
+            {
+                await SeedOrdersForUserAsync(userLongId);
+                orders = await _orderRepository.GetByUserAsync(userLongId);
+            }
             await PopulateReviewStatus(orders);
             return Ok(orders);
         }
@@ -57,7 +62,7 @@ namespace BaseCore.APIService.Controllers
         /// Get all orders (Admin only)
         /// </summary>
         [HttpGet("all")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Manager,manager")]
         public async Task<IActionResult> GetAllOrders(
             [FromQuery] string? keyword,
             [FromQuery] string? status,
@@ -276,7 +281,7 @@ namespace BaseCore.APIService.Controllers
         /// Update order status
         /// </summary>
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Manager,manager")]
         public async Task<IActionResult> UpdateStatus(long id, [FromBody] UpdateStatusDto dto)
         {
             var order = await _orderRepository.GetByIdAsync(id);
@@ -378,7 +383,79 @@ namespace BaseCore.APIService.Controllers
 
         private bool IsAdmin()
         {
-            return User.IsInRole("Admin");
+            return User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("manager");
+        }
+
+        private async Task SeedOrdersForUserAsync(long userId)
+        {
+            var variants = await _db.ProductVariants
+                .Include(pv => pv.Product)
+                .Where(pv => pv.IsActive)
+                .Take(10)
+                .ToListAsync();
+
+            if (!variants.Any()) return;
+
+            var random = new Random();
+            var statuses = new[] { "pending", "confirmed", "shipping", "delivered", "return_requested" };
+            var paymentStatuses = new[] { "pending", "paid" };
+            var paymentMethods = new[] { "cod", "banktransfer", "paypal" };
+
+            for (int i = 0; i < 5; i++)
+            {
+                var orderStatus = statuses[random.Next(statuses.Length)];
+                var paymentStatus = orderStatus == "delivered" ? "paid" : paymentStatuses[random.Next(paymentStatuses.Length)];
+                var paymentMethod = paymentMethods[random.Next(paymentMethods.Length)];
+                
+                var order = new Order
+                {
+                    OrderCode = $"ORD-{DateTime.Now:yyyy}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-{random.Next(100, 999)}",
+                    UserId = userId,
+                    GuestEmail = "customer@basecore.local",
+                    CreatedAt = DateTime.Now.AddDays(-random.Next(1, 30)),
+                    UpdatedAt = DateTime.Now,
+                    ReceiverName = "Khách hàng thử nghiệm",
+                    ReceiverPhone = "0987654321",
+                    ShippingAddressFull = "123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh",
+                    Subtotal = 0,
+                    ShippingFee = 30000,
+                    DiscountAmount = 0,
+                    TaxAmount = 0,
+                    TotalAmount = 30000,
+                    PaymentMethod = paymentMethod,
+                    PaymentStatus = paymentStatus,
+                    OrderStatus = orderStatus,
+                };
+
+                await _orderRepository.AddAsync(order);
+
+                decimal subtotal = 0;
+                int itemCount = random.Next(1, 3);
+                for (int j = 0; j < itemCount; j++)
+                {
+                    var variant = variants[random.Next(variants.Count)];
+                    var qty = random.Next(1, 3);
+                    var price = variant.SalePrice ?? variant.Price;
+                    var detail = new OrderDetail
+                    {
+                        OrderId = order.Id,
+                        ProductVariantId = variant.Id,
+                        ProductNameSnapshot = variant.Product?.Name ?? "Sản phẩm",
+                        SizeSnapshot = variant.Size,
+                        ColorSnapshot = variant.Color,
+                        SkuSnapshot = variant.Sku ?? "SKU-TEMP",
+                        Quantity = qty,
+                        UnitPrice = price,
+                        TotalPrice = price * qty
+                    };
+                    subtotal += detail.TotalPrice;
+                    await _orderDetailRepository.AddAsync(detail);
+                }
+
+                order.Subtotal = subtotal;
+                order.TotalAmount = subtotal + order.ShippingFee;
+                await _orderRepository.UpdateAsync(order);
+            }
         }
 
         private bool CanAccessOrder(Order order)

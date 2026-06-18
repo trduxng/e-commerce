@@ -2,6 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { productApi, categoryApi, manufacturerApi, specificationAttributeApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, getProductImage } from '../data/shopData';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+export const removeVietnameseTones = (str) => {
+    if (!str) return '';
+    str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+    str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+    str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+    str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+    str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+    str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+    str = str.replace(/đ/g, "d");
+    str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+    str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+    str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+    str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+    str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+    str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+    str = str.replace(/Đ/g, "D");
+    // Some system encode vietnamese combining accent as individual utf-8 characters
+    str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
+    str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
+    return str;
+};
 
 const createEmptyVariant = (overrides = {}) => ({
     id: null,
@@ -63,7 +88,7 @@ const Products = () => {
     const [categoryError, setCategoryError] = useState('');
     const [newCategoryName, setNewCategoryName] = useState('');
     const [savingCategory, setSavingCategory] = useState(false);
-    const { isAdmin } = useAuth();
+    const { isStaff } = useAuth();
 
     useEffect(() => {
         loadCategories();
@@ -395,13 +420,139 @@ const Products = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Stop selling this product?')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn xoá sản phẩm này không?')) return;
         try {
             await productApi.delete(id);
             loadProducts();
         } catch (error) {
-            alert('Failed to delete');
+            alert('Xoá thất bại. Sản phẩm có thể đang có đơn hàng liên kết.');
         }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedIds.length === 0) {
+            alert('Vui lòng chọn ít nhất một sản phẩm để xoá.');
+            return;
+        }
+        if (!window.confirm(`Bạn có chắc chắn muốn xoá ${selectedIds.length} sản phẩm đã chọn không?`)) return;
+        
+        try {
+            for (const id of selectedIds) {
+                await productApi.delete(id);
+            }
+            setSelectedIds([]);
+            loadProducts();
+        } catch (error) {
+            alert('Xoá hàng loạt thất bại. Một số sản phẩm có thể đang có liên kết.');
+        }
+    };
+
+    const exportToExcel = () => {
+        const data = products.map(p => {
+            const variant = normalizeList(p.variants)[0] || {};
+            return {
+                'ID': p.id,
+                'Tên sản phẩm': p.name,
+                'Mã SKU': variant.sku || '',
+                'Danh mục': p.category?.name || '',
+                'Thương hiệu': p.manufacturer?.name || '',
+                'Giá gốc': p.basePrice || 0,
+                'Số lượng': variant.stockQuantity || 0,
+                'Trạng thái': p.isActive ? 'Hoạt động' : 'Đã ẩn',
+                'Ngày tạo': p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN') : ''
+            };
+        });
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+        XLSX.writeFile(workbook, 'Danh_sach_san_pham.xlsx');
+    };
+
+    const exportToPdf = () => {
+        const doc = new jsPDF('p', 'pt', 'a4');
+        doc.text(removeVietnameseTones('Danh sách sản phẩm'), 40, 40);
+        
+        const tableColumn = ["ID", removeVietnameseTones("Ten san pham"), "SKU", removeVietnameseTones("Danh muc"), removeVietnameseTones("Gia"), removeVietnameseTones("Trang thai")];
+        const tableRows = [];
+
+        products.forEach(p => {
+            const variant = normalizeList(p.variants)[0] || {};
+            const rowData = [
+                p.id,
+                removeVietnameseTones(p.name),
+                variant.sku || '',
+                removeVietnameseTones(p.category?.name || ''),
+                formatCurrency(p.basePrice || 0),
+                p.isActive ? "Active" : "Hidden"
+            ];
+            tableRows.push(rowData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+            styles: { font: 'helvetica' }
+        });
+        
+        doc.save('Danh_sach_san_pham.pdf');
+    };
+
+    const handleImportExcel = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws);
+                
+                let successCount = 0;
+                for (const row of data) {
+                    const categoryName = row['Tên danh mục'] || row['Danh mục'] || row['Category'];
+                    let foundCatId = categories.length > 0 ? categories[0].id : null;
+                    if (categoryName) {
+                        const matched = categories.find(c => c.name.toLowerCase() === String(categoryName).trim().toLowerCase());
+                        if (matched) foundCatId = matched.id;
+                    }
+                    
+                    const newProduct = {
+                        name: row['Tên sản phẩm'] || row['Name'] || 'Sản phẩm mới',
+                        shortDescription: row['Mô tả ngắn'] || '',
+                        description: row['Mô tả chi tiết'] || '',
+                        basePrice: Number(row['Giá gốc'] || row['Price'] || 0),
+                        categoryId: foundCatId,
+                        isActive: true,
+                        isFeatured: false,
+                        variants: [{
+                            sku: row['Mã SKU'] || row['SKU'] || `SKU-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+                            price: Number(row['Giá gốc'] || row['Price'] || 0),
+                            stockQuantity: Number(row['Số lượng'] || row['Stock'] || 0),
+                            isActive: true
+                        }],
+                        specifications: []
+                    };
+                    
+                    try {
+                        await productApi.create(newProduct);
+                        successCount++;
+                    } catch (err) {
+                        console.error('Error importing product:', err);
+                    }
+                }
+                alert(`Đã nhập thành công ${successCount}/${data.length} sản phẩm.`);
+                loadProducts();
+            } catch (error) {
+                console.error("Error reading file:", error);
+                alert('Lỗi đọc file Excel.');
+            }
+            e.target.value = null;
+        };
+        reader.readAsBinaryString(file);
     };
 
     const renderPagination = () => {
@@ -442,24 +593,27 @@ const Products = () => {
                     Sản phẩm
                 </h1>
                 <div className="float-right">
-                    {isAdmin() && (
+                    {isStaff() && (
                         <button className="btn btn-primary mr-1" onClick={() => openModal()}>
                             <i className="fas fa-plus-square"></i> Thêm mới
                         </button>
                     )}
-                    <button className="btn bg-info mr-1">
+                    <button className="btn bg-info mr-1" onClick={exportToPdf}>
                         <i className="fas fa-download"></i> Tải danh mục PDF
                     </button>
-                    <button className="btn btn-success mr-1">
-                        <i className="fas fa-file-export"></i> Xuất file
+                    <button className="btn btn-success mr-1" onClick={exportToExcel}>
+                        <i className="far fa-file-excel"></i> Xuất Excel
                     </button>
-                    <button className="btn bg-olive mr-1">
-                        <i className="fas fa-upload"></i> Nhập file
-                    </button>
-                    <button className="btn btn-danger" onClick={() => {
-                        if (selectedIds.length === 0) alert('Vui lòng chọn ít nhất một sản phẩm để xoá.');
-                        else if (window.confirm('Bạn có chắc chắn muốn xoá các sản phẩm đã chọn không?')) alert('Logic xoá đang phát triển');
-                    }}>
+                    {isStaff() && (
+                        <>
+                            <input type="file" accept=".xlsx, .xls" id="import-products" style={{ display: 'none' }} onChange={handleImportExcel} />
+                            <label htmlFor="import-products" className="btn bg-olive mr-1 mb-0" style={{ cursor: 'pointer', verticalAlign: 'baseline', height: '100%' }}>
+                                <i className="fas fa-upload"></i> Nhập Excel
+                            </label>
+                        </>
+                    )}
+                    
+                    <button className="btn btn-danger" onClick={handleDeleteSelected}>
                         <i className="far fa-trash-alt"></i> Xoá (đã chọn)
                     </button>
                 </div>
@@ -621,6 +775,15 @@ const Products = () => {
                                                                         <td>
                                                                             {p.name}
                                                                             {p.manufacturer?.name && <div className="text-muted text-sm">{p.manufacturer.name}</div>}
+                                                                            {p.variants && p.variants.length > 0 && (
+                                                                                <div className="mt-1">
+                                                                                    {p.variants.map((v, index) => (
+                                                                                        <span key={v.id || index} className="badge badge-info mr-1">
+                                                                                            {v.size && v.color ? `${v.size} - ${v.color}` : (v.size || v.color || `Mẫu ${index + 1}`)}
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
                                                                         </td>
                                                                         <td>{firstVariant(p).sku || p.sku}</td>
                                                                         <td>{formatCurrency(p.price)}</td>
@@ -633,8 +796,11 @@ const Products = () => {
                                                                             )}
                                                                         </td>
                                                                         <td className="text-center">
-                                                                            <button className="btn btn-default btn-sm" onClick={() => openModal(p)}>
+                                                                            <button className="btn btn-default btn-sm mr-1" onClick={() => openModal(p)}>
                                                                                 <i className="fas fa-pencil-alt"></i> Sửa
+                                                                            </button>
+                                                                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.id)}>
+                                                                                <i className="fas fa-trash-alt"></i> Xoá
                                                                             </button>
                                                                         </td>
                                                                     </tr>

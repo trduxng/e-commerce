@@ -44,7 +44,7 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            if (!User.IsInRole("Admin"))
+            if (!User.IsInRole("Admin") && !User.IsInRole("Manager") && !User.IsInRole("manager"))
             {
                 publishedId = 1;
             }
@@ -92,7 +92,7 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetById(long id, [FromQuery] bool includeInactive = false)
         {
             var product = await _productRepository.GetProductWithVariantsAsync(id);
-            var canViewInactive = includeInactive && User.IsInRole("Admin");
+            var canViewInactive = includeInactive && (User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("manager"));
             if (product == null || (!product.IsActive && !canViewInactive))
                 return NotFound(new { message = "Product not found" });
 
@@ -104,7 +104,7 @@ namespace BaseCore.APIService.Controllers
         /// Create new product (Admin only)
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Manager,manager")]
 
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
@@ -142,7 +142,7 @@ namespace BaseCore.APIService.Controllers
         /// Update product (Admin only)
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Manager,manager")]
 
         public async Task<IActionResult> Update(long id, [FromBody] ProductUpdateDto dto)
         {
@@ -214,7 +214,7 @@ namespace BaseCore.APIService.Controllers
         /// Delete product (Admin only)
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Manager,manager")]
         public async Task<IActionResult> Delete(long id)
         {
             var product = await _productRepository.GetProductWithVariantsAsync(id);

@@ -18,6 +18,7 @@ const Products = lazy(() => import('./pages/Products'));
 const Users = lazy(() => import('./pages/Users'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Orders = lazy(() => import('./pages/Orders'));
+const Returns = lazy(() => import('./pages/Returns'));
 const Revenue = lazy(() => import('./pages/Revenue'));
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -99,6 +100,7 @@ function AppRoutes() {
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="orders" element={<Orders />} />
+                <Route path="returns" element={<Returns />} />
                 <Route path="revenue" element={<Revenue />} />
                 <Route path="users" element={<Users />} />
                 <Route path="reviews" element={<Reviews />} />

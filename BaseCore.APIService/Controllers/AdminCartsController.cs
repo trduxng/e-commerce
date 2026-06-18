@@ -8,7 +8,7 @@ namespace BaseCore.APIService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Manager,manager")]
     public class AdminCartsController : ControllerBase
     {
         private readonly SQLServerDbContext _context;

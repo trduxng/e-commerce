@@ -15,7 +15,7 @@ const menuConfigs = {
 const MainLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout, isAdmin } = useAuth();
+    const { user, logout, isStaff } = useAuth();
     const { settings } = useSettings();
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -218,7 +218,7 @@ const MainLayout = ({ children }) => {
                                             <span className="menu-text">Sản phẩm</span>
                                         </Link>
                                     </li>
-                                    {isAdmin() && (
+                                    {isStaff() && (
                                         <li className="nav-item">
                                             <Link to="/admin/categories" className={`nav-link ${isActive('/admin/categories')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
@@ -243,9 +243,9 @@ const MainLayout = ({ children }) => {
                         </li>
 
                         {/* Sales */}
-                        {isAdmin() && (
+                        {isStaff() && (
                             <li className={`nav-item has-treeview ${openMenus.sales ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('sales')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/orders', '/admin/current-carts', '/admin/payments'].includes(location.pathname) ? 'active' : ''}`}>
+                                <div onClick={() => toggleMenu('sales')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/orders', '/admin/returns', '/admin/current-carts', '/admin/payments'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon fas fa-shopping-cart"></i>
                                     <span className="menu-text">Bán hàng</span>
                                     <i className="right fas fa-angle-left"></i>
@@ -256,6 +256,12 @@ const MainLayout = ({ children }) => {
                                             <Link to="/admin/orders" className={`nav-link ${isActive('/admin/orders')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
                                                 <span className="menu-text">Đơn hàng</span>
+                                            </Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link to="/admin/returns" className={`nav-link ${isActive('/admin/returns')}`}>
+                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                                <span className="menu-text">Yêu cầu trả hàng</span>
                                             </Link>
                                         </li>
                                         <li className="nav-item">
@@ -276,7 +282,7 @@ const MainLayout = ({ children }) => {
                         )}
 
                         {/* Customers */}
-                        {isAdmin() && (
+                        {isStaff() && (
                             <li className={`nav-item has-treeview ${openMenus.customers ? 'menu-open' : ''}`}>
                                 <div onClick={() => toggleMenu('customers')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/users'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon far fa-user"></i>
@@ -324,7 +330,7 @@ const MainLayout = ({ children }) => {
                             </div>
                             {openMenus.config && (
                                 <ul className="nav nav-treeview">
-                                    {isAdmin() && (
+                                    {isStaff() && (
                                         <li className="nav-item">
                                             <Link to="/admin/settings" className={`nav-link ${isActive('/admin/settings')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
@@ -349,7 +355,7 @@ const MainLayout = ({ children }) => {
                         </li>
 
                         {/* Reports */}
-                        {isAdmin() && (
+                        {isStaff() && (
                             <li className={`nav-item has-treeview ${openMenus.reports ? 'menu-open' : ''}`}>
                                 <div onClick={() => toggleMenu('reports')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/revenue'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon fas fa-chart-line"></i>

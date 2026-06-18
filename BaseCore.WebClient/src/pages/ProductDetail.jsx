@@ -317,13 +317,13 @@ const ProductDetail = () => {
                 <p className="mb-4"><strong>SKU:</strong> {selectedVariant.sku}</p>
               )}
 
-              {variants.length > 1 && variants.some(v => v.size || v.color) && (
+              {variants.length > 1 && (
                 <div className="mb-4">
                   <strong className="d-block mb-2">Phân loại sản phẩm</strong>
                   <div className="d-flex flex-wrap" style={{ gap: 10 }}>
                     {variants.map((variant, index) => {
                       const variantStock = getVariantStock(variant);
-                      const variantLabel = [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku || `Phân loại ${index + 1}`;
+                      const variantLabel = [variant.size, variant.color].filter(Boolean).join(" / ") || `Mẫu ${index + 1}`;
                       const isSelected = selectedVariant?.id === variant.id;
 
                       return (

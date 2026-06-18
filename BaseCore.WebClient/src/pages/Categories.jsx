@@ -20,7 +20,7 @@ const Categories = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [error, setError] = useState('');
-    const { isAdmin } = useAuth();
+    const { isStaff } = useAuth();
 
     useEffect(() => {
         loadCategories();
@@ -185,7 +185,7 @@ const Categories = () => {
                                     </form>
                                 </div>
                                 <div className="col-md-5 text-right">
-                                    {isAdmin() && (
+                                    {isStaff() && (
                                         <button className="btn btn-success" onClick={() => openModal()}>
                                             <i className="fas fa-plus"></i> Thêm Danh mục
                                         </button>
@@ -207,13 +207,13 @@ const Categories = () => {
                                                 <th style={{ width: '80px' }}>Mã (ID)</th>
                                                 <th>Tên danh mục</th>
                                                 <th>Mô tả</th>
-                                                {isAdmin() && <th style={{ width: '150px' }}>Thao tác</th>}
+                                                {isStaff() && <th style={{ width: '150px' }}>Thao tác</th>}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {categories.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={isAdmin() ? 4 : 3} className="text-center">
+                                                    <td colSpan={isStaff() ? 4 : 3} className="text-center">
                                                         {keyword ? 'Không tìm thấy danh mục nào phù hợp với tìm kiếm' : 'Không có danh mục nào'}
                                                     </td>
                                                 </tr>
@@ -223,7 +223,7 @@ const Categories = () => {
                                                         <td>{category.id}</td>
                                                         <td>{category.name}</td>
                                                         <td>{category.description}</td>
-                                                        {isAdmin() && (
+                                                        {isStaff() && (
                                                             <td>
                                                                 <button
                                                                     className="btn btn-sm btn-info mr-1"

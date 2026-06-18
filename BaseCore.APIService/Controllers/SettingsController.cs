@@ -36,7 +36,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Manager,manager")]
         public IActionResult UpdateSettings([FromBody] StoreSettingsDto settings)
         {
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
