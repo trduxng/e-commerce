@@ -1,24 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { orderApi, productApi } from "../services/api";
-import { formatCurrency } from "../data/shopData";
+import { formatCurrency, getApiErrorMessage } from "../data/shopData";
 import { useToast } from "../contexts/ToastContext";
 
 const statusMeta = {
-  pending: { label: "Pending", className: "badge-warning" },
-  confirmed: { label: "Confirmed", className: "badge-primary" },
-  shipping: { label: "Shipping", className: "badge-info" },
-  delivered: { label: "Delivered", className: "badge-success" },
-  cancelled: { label: "Cancelled", className: "badge-secondary" },
-  return_requested: { label: "Return Requested", className: "badge-info" },
-  returned: { label: "Returned", className: "badge-dark" },
-  refunded: { label: "Refunded", className: "badge-danger" },
+  pending: { label: "Chờ xác nhận", className: "badge-warning" },
+  confirmed: { label: "Đã xác nhận", className: "badge-primary" },
+  shipping: { label: "Đang giao hàng", className: "badge-info" },
+  delivered: { label: "Đã giao hàng", className: "badge-success" },
+  cancelled: { label: "Đã hủy", className: "badge-secondary" },
+  return_requested: { label: "Đã yêu cầu trả hàng", className: "badge-info" },
+  returned: { label: "Đã trả hàng", className: "badge-dark" },
+  refunded: { label: "Đã hoàn tiền", className: "badge-danger" },
 };
 
 const paymentLabels = {
-  cod: "Cash on Delivery",
-  banktransfer: "Bank Transfer",
-  paypal: "Paypal",
+  cod: "Thanh toán khi nhận hàng",
+  banktransfer: "Chuyển khoản ngân hàng",
+  paypal: "PayPal",
+};
+
+const paymentStatusLabels = {
+  pending: "Chờ thanh toán",
+  paid: "Đã thanh toán",
+  failed: "Thanh toán thất bại",
+  refunded: "Đã hoàn tiền",
 };
 
 const MyOrders = () => {
@@ -30,7 +37,7 @@ const MyOrders = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState(
-    searchParams.get("success") === "1" ? "Order placed successfully." : ""
+    searchParams.get("success") === "1" ? "Đặt hàng thành công." : ""
   );
   const [cancellingId, setCancellingId] = useState(null);
   const [reviewTarget, setReviewTarget] = useState(null);
@@ -79,7 +86,7 @@ const MyOrders = () => {
       const details = response.data?.details || orderData?.orderDetails || getOrderDetails(order);
       setSelectedOrder({ ...order, ...orderData, orderDetails: details });
     } catch (error) {
-      setError(error.response?.data?.message || "Cannot load order detail.");
+      setError(getApiErrorMessage(error, "Không thể tải chi tiết đơn hàng."));
     } finally {
       setDetailLoading(false);
     }
@@ -102,14 +109,14 @@ const MyOrders = () => {
       }
     } catch (error) {
       setOrders([]);
-      setError(error.response?.data?.message || "Cannot load your orders.");
+      setError(getApiErrorMessage(error, "Không thể tải danh sách đơn hàng."));
     } finally {
       setLoading(false);
     }
   };
 
   const cancelOrder = async (order) => {
-    if (!window.confirm(`Cancel order ${order.orderCode}?`)) return;
+    if (!window.confirm(`Bạn có chắc muốn hủy đơn hàng ${order.orderCode} không?`)) return;
 
     setCancellingId(order.id);
     setError("");
@@ -128,14 +135,14 @@ const MyOrders = () => {
           : current
       ));
     } catch (error) {
-      setError(error.response?.data?.message || "Cannot cancel this order.");
+      setError(getApiErrorMessage(error, "Không thể hủy đơn hàng này."));
     } finally {
       setCancellingId(null);
     }
   };
 
   const requestReturn = async (order) => {
-    if (!window.confirm(`Request a return for order ${order.orderCode}?`)) return;
+    if (!window.confirm(`Bạn có chắc muốn yêu cầu trả đơn hàng ${order.orderCode} không?`)) return;
 
     setError("");
     try {
@@ -151,9 +158,9 @@ const MyOrders = () => {
           ? { ...current, ...updatedOrder, orderDetails: getOrderDetails(current) }
           : current
       ));
-      toast.success("Return requested successfully.");
+      toast.success("Đã gửi yêu cầu trả hàng.");
     } catch (error) {
-      setError(error.response?.data?.message || "Cannot request return.");
+      setError(getApiErrorMessage(error, "Không thể gửi yêu cầu trả hàng."));
     }
   };
 
@@ -176,7 +183,7 @@ const MyOrders = () => {
       orderCode: order.orderCode,
       billDetailId: detail.id,
       productId,
-      productName: detail.productNameSnapshot || "Product",
+      productName: detail.productNameSnapshot || "Sản phẩm",
       imageUrl: getDetailImage(detail),
     });
   };
@@ -229,7 +236,7 @@ const MyOrders = () => {
       setReviewTarget(null);
       toast.success("Đánh giá sản phẩm thành công.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Không thể gửi đánh giá sản phẩm.");
+      toast.error(getApiErrorMessage(error, "Không thể gửi đánh giá sản phẩm."));
     } finally {
       setSubmittingReview(false);
     }
@@ -241,7 +248,7 @@ const MyOrders = () => {
         const productId = getProductId(detail);
         return (
           <div key={detail.id || `${order.id}-${detail.productVariantId}`} className="order-product-row">
-            <img src={getDetailImage(detail)} alt={detail.productNameSnapshot || "Product"} />
+            <img src={getDetailImage(detail)} alt={detail.productNameSnapshot || "Sản phẩm"} />
             <div className="order-product-info">
               {productId ? (
                 <Link to={`/product/${productId}`} className="order-product-name">
@@ -251,7 +258,7 @@ const MyOrders = () => {
                 <span className="order-product-name">{detail.productNameSnapshot}</span>
               )}
               <small className="text-muted">
-                Qty {detail.quantity}
+                Số lượng: {detail.quantity}
                 {detail.colorSnapshot ? ` - ${detail.colorSnapshot}` : ""}
                 {detail.sizeSnapshot ? ` - ${detail.sizeSnapshot}` : ""}
               </small>
@@ -283,8 +290,8 @@ const MyOrders = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
-              <Link className="breadcrumb-item text-dark" to="/">Home</Link>
-              <span className="breadcrumb-item active">My Orders</span>
+              <Link className="breadcrumb-item text-dark" to="/">Trang chủ</Link>
+              <span className="breadcrumb-item active">Đơn hàng của tôi</span>
             </nav>
           </div>
         </div>
@@ -294,14 +301,14 @@ const MyOrders = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <h2 className="section-title position-relative text-uppercase mb-4">
-              <span className="bg-secondary pe-3">My Orders</span>
+              <span className="bg-secondary pe-3">Đơn hàng của tôi</span>
             </h2>
           </div>
 
           <div className="col-12">
             {successMessage && (
               <div className="alert alert-success alert-dismissible fade show">
-                <button type="button" className="btn-close" onClick={() => setSuccessMessage("")} aria-label="Close"></button>
+                <button type="button" className="btn-close" onClick={() => setSuccessMessage("")} aria-label="Đóng"></button>
                 {successMessage}
               </div>
             )}
@@ -309,14 +316,14 @@ const MyOrders = () => {
             {loading ? (
               <div className="bg-light p-5 text-center">
                 <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+                  <span className="visually-hidden">Đang tải...</span>
                 </div>
               </div>
             ) : orders.length === 0 ? (
               <div className="my-orders-empty bg-light p-5 text-center">
-                <h5>No orders yet</h5>
-                <p className="mb-3">Your purchases will appear here after checkout.</p>
-                <Link className="btn btn-primary" to="/shop">Continue Shopping</Link>
+                <h5>Chưa có đơn hàng</h5>
+                <p className="mb-3">Các đơn mua hàng của bạn sẽ xuất hiện tại đây sau khi thanh toán.</p>
+                <Link className="btn btn-primary" to="/shop">Tiếp tục mua sắm</Link>
               </div>
             ) : (
               <div className="my-orders-list">
@@ -336,11 +343,11 @@ const MyOrders = () => {
 
                     <div className="order-card-footer">
                       <div>
-                        <small className="text-muted d-block">Ship to</small>
-                        <span>{order.receiverName} - {order.receiverPhone}</span>
+                        <small className="text-muted d-block">Giao đến</small>
+                        <span>{getCustomerName(order.receiverName)} - {order.receiverPhone}</span>
                       </div>
                       <div className="text-end">
-                        <small className="text-muted d-block">Total</small>
+                        <small className="text-muted d-block">Tổng cộng</small>
                         <strong>{formatCurrency(order.totalAmount)}</strong>
                       </div>
                       <button
@@ -348,7 +355,7 @@ const MyOrders = () => {
                         type="button"
                         onClick={() => loadOrderDetail(order)}
                       >
-                        View Details
+                        Xem chi tiết
                       </button>
                       {canCancel(order) && (
                         <button
@@ -357,7 +364,7 @@ const MyOrders = () => {
                           disabled={cancellingId === order.id}
                           onClick={() => cancelOrder(order)}
                           >
-                          {cancellingId === order.id ? "Cancelling..." : "Cancel Order"}
+                          {cancellingId === order.id ? "Đang hủy..." : "Hủy đơn hàng"}
                           </button>
                           )}
                           {canReturn(order) && (
@@ -366,7 +373,7 @@ const MyOrders = () => {
                           type="button"
                           onClick={() => requestReturn(order)}
                           >
-                          Request Return
+                          Yêu cầu trả hàng
                           </button>
                           )}
                           </div>
@@ -385,44 +392,44 @@ const MyOrders = () => {
               <div className="modal-content order-detail-modal">
                 <div className="modal-header">
                   <div>
-                    <h5 className="modal-title">Order {selectedOrder.orderCode}</h5>
+                    <h5 className="modal-title">Đơn hàng {selectedOrder.orderCode}</h5>
                     <small className="text-muted">{formatDate(selectedOrder.createdAt)}</small>
                   </div>
-                  <button type="button" className="btn-close" aria-label="Close" onClick={closeOrderDetail}></button>
+                  <button type="button" className="btn-close" aria-label="Đóng" onClick={closeOrderDetail}></button>
                 </div>
                 <div className="modal-body">
                   {detailLoading ? (
                     <div className="text-center py-5">
                       <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
+                        <span className="visually-hidden">Đang tải...</span>
                       </div>
                     </div>
                   ) : (
                     <>
                       <div className="order-detail-summary">
                         <div>
-                          <small className="text-muted d-block">Status</small>
+                          <small className="text-muted d-block">Trạng thái</small>
                           <span className={`badge ${getStatus(selectedOrder.orderStatus).className}`}>
                             {getStatus(selectedOrder.orderStatus).label}
                           </span>
                         </div>
                         <div>
-                          <small className="text-muted d-block">Payment</small>
+                          <small className="text-muted d-block">Phương thức thanh toán</small>
                           <strong>{paymentLabels[selectedOrder.paymentMethod] || selectedOrder.paymentMethod}</strong>
                         </div>
                         <div>
-                          <small className="text-muted d-block">Payment Status</small>
-                          <strong>{selectedOrder.paymentStatus || "pending"}</strong>
+                          <small className="text-muted d-block">Trạng thái thanh toán</small>
+                          <strong>{paymentStatusLabels[String(selectedOrder.paymentStatus || "pending").toLowerCase()] || selectedOrder.paymentStatus}</strong>
                         </div>
                         <div>
-                          <small className="text-muted d-block">Total</small>
+                          <small className="text-muted d-block">Tổng cộng</small>
                           <strong>{formatCurrency(selectedOrder.totalAmount)}</strong>
                         </div>
                       </div>
 
                       <div className="order-detail-section">
-                        <h6>Shipping Information</h6>
-                        <p className="mb-1"><strong>{selectedOrder.receiverName}</strong></p>
+                        <h6>Thông tin giao hàng</h6>
+                        <p className="mb-1"><strong>{getCustomerName(selectedOrder.receiverName)}</strong></p>
                         <p className="mb-1">{selectedOrder.receiverPhone}</p>
                         <p className="mb-1">{selectedOrder.guestEmail}</p>
                         <p className="mb-0">{selectedOrder.shippingAddressFull}</p>
@@ -430,22 +437,22 @@ const MyOrders = () => {
 
                       {selectedOrder.note && (
                         <div className="order-detail-section">
-                          <h6>Order Note</h6>
+                          <h6>Ghi chú đơn hàng</h6>
                           <p className="mb-0">{selectedOrder.note}</p>
                         </div>
                       )}
 
                       <div className="order-detail-section">
-                        <h6>Products</h6>
+                        <h6>Sản phẩm</h6>
                         {renderOrderProducts(selectedOrder)}
                       </div>
 
                       <div className="order-detail-totals">
-                        <div><span>Subtotal</span><strong>{formatCurrency(selectedOrder.subtotal)}</strong></div>
-                        <div><span>Shipping</span><strong>{formatCurrency(selectedOrder.shippingFee)}</strong></div>
-                        <div><span>Discount</span><strong>-{formatCurrency(selectedOrder.discountAmount || 0)}</strong></div>
-                        <div><span>Tax</span><strong>{formatCurrency(selectedOrder.taxAmount)}</strong></div>
-                        <div className="order-detail-total"><span>Total</span><strong>{formatCurrency(selectedOrder.totalAmount)}</strong></div>
+                        <div><span>Tạm tính</span><strong>{formatCurrency(selectedOrder.subtotal)}</strong></div>
+                        <div><span>Phí vận chuyển</span><strong>{formatCurrency(selectedOrder.shippingFee)}</strong></div>
+                        <div><span>Giảm giá</span><strong>-{formatCurrency(selectedOrder.discountAmount || 0)}</strong></div>
+                        <div><span>Thuế</span><strong>{formatCurrency(selectedOrder.taxAmount)}</strong></div>
+                        <div className="order-detail-total"><span>Tổng cộng</span><strong>{formatCurrency(selectedOrder.totalAmount)}</strong></div>
                       </div>
                     </>
                   )}
@@ -458,7 +465,7 @@ const MyOrders = () => {
                       disabled={cancellingId === selectedOrder.id}
                       onClick={() => cancelOrder(selectedOrder)}
                     >
-                      {cancellingId === selectedOrder.id ? "Cancelling..." : "Cancel Order"}
+                      {cancellingId === selectedOrder.id ? "Đang hủy..." : "Hủy đơn hàng"}
                     </button>
                   )}
                   {canReturn(selectedOrder) && (
@@ -467,10 +474,10 @@ const MyOrders = () => {
                       type="button"
                       onClick={() => requestReturn(selectedOrder)}
                     >
-                      Request Return
+                      Yêu cầu trả hàng
                     </button>
                   )}
-                  <button className="btn btn-primary" type="button" onClick={closeOrderDetail}>Close</button>
+                  <button className="btn btn-primary" type="button" onClick={closeOrderDetail}>Đóng</button>
                 </div>
               </div>
             </div>
@@ -489,7 +496,7 @@ const MyOrders = () => {
                     <h5 className="modal-title">Đánh giá sản phẩm</h5>
                     <small className="text-muted">Đơn hàng {reviewTarget.orderCode}</small>
                   </div>
-                  <button type="button" className="btn-close" aria-label="Close" onClick={closeReview}></button>
+                  <button type="button" className="btn-close" aria-label="Đóng" onClick={closeReview}></button>
                 </div>
                 <div className="modal-body">
                   <div className="review-order-product">
@@ -540,3 +547,6 @@ const MyOrders = () => {
 };
 
 export default MyOrders;
+
+const getCustomerName = (name) =>
+  String(name || "").trim().toLowerCase() === "customer" ? "Khách hàng" : name;

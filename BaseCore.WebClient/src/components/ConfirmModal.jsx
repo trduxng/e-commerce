@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", type = "danger" }) => {
+const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Xác nhận", cancelText = "Hủy", type = "danger" }) => {
     if (!isOpen) return null;
 
     return (
@@ -9,7 +9,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText
                 <div className="modal-content">
                     <div className={`modal-header bg-${type} text-white`}>
                         <h5 className="modal-title">{title}</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onCancel} aria-label="Close"></button>
+                        <button type="button" className="btn-close btn-close-white" onClick={onCancel} aria-label="Đóng"></button>
                     </div>
                     <div className="modal-body text-start">
                         <p>{message}</p>

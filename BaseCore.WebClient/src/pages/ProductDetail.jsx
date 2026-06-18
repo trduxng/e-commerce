@@ -64,8 +64,8 @@ const ProductDetail = () => {
         setSelectedVariantId(null);
         setActiveImage(getProductImage(demoProduct));
         setQuantity("1");
-        setError("API is not available, so this product is shown from demo data.");
-        toast.warning("API is not available, so this product is shown from demo data.", {
+        setError("Không thể kết nối API, sản phẩm này đang được hiển thị từ dữ liệu mẫu.");
+        toast.warning("Không thể kết nối API, sản phẩm này đang được hiển thị từ dữ liệu mẫu.", {
           dedupeKey: `product-api-fallback-${id}`,
         });
       } finally {
@@ -119,7 +119,7 @@ const ProductDetail = () => {
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-      toast.info("Please sign in before adding products to cart.");
+      toast.info("Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ hàng.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
@@ -127,22 +127,22 @@ const ProductDetail = () => {
     const safeQty = getSafeQuantity(quantity);
     if (stock !== null && safeQty > stock) {
       setQuantity(String(Math.max(1, stock)));
-      toast.warning(`Cannot add more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
+      toast.warning(`Không thể thêm quá ${stock} sản phẩm hiện có trong kho.`);
       return;
     }
 
     const result = await addToCart(product, safeQty, selectedVariant?.id);
     if (result.success) {
-      toast.success(result.message || "Product added to cart.");
+      toast.success(result.message || "Đã thêm sản phẩm vào giỏ hàng.");
     } else {
-      toast.error(result.message || "Cannot add this product.");
+      toast.error(result.message || "Không thể thêm sản phẩm này.");
     }
   };
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-      toast.info("Please sign in before buying this product.");
+      toast.info("Vui lòng đăng nhập trước khi mua sản phẩm này.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
@@ -150,7 +150,7 @@ const ProductDetail = () => {
     const safeQty = getSafeQuantity(quantity);
     if (stock !== null && safeQty > stock) {
       setQuantity(String(Math.max(1, stock)));
-      toast.warning(`Cannot buy more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
+      toast.warning(`Không thể mua quá ${stock} sản phẩm hiện có trong kho.`);
       return;
     }
 
@@ -240,7 +240,7 @@ const ProductDetail = () => {
   }
 
   if (!product) {
-    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">Product not found.</div></div>;
+    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">Không tìm thấy sản phẩm.</div></div>;
   }
 
   return (
@@ -249,8 +249,8 @@ const ProductDetail = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
-              <Link className="breadcrumb-item text-dark" to="/">Home</Link>
-              <Link className="breadcrumb-item text-dark" to="/shop">Shop</Link>
+              <Link className="breadcrumb-item text-dark" to="/">Trang chủ</Link>
+              <Link className="breadcrumb-item text-dark" to="/shop">Cửa hàng</Link>
               <span className="breadcrumb-item active">{product.name}</span>
             </nav>
           </div>
@@ -271,7 +271,7 @@ const ProductDetail = () => {
                     type="button"
                     className={`product-detail-thumb ${normalizeImageUrl(activeImage) === normalizeImageUrl(image) ? "is-active" : ""}`}
                     onClick={() => selectGalleryImage(image)}
-                    aria-label={`View ${product.name}`}
+                    aria-label={`Xem ${product.name}`}
                   >
                     <img src={image} alt={product.name} />
                   </button>
@@ -290,23 +290,23 @@ const ProductDetail = () => {
                     <small key={index} className={`fa ${index < Math.floor(rating) ? "fa-star" : index < rating ? "fa-star-half-alt" : "far fa-star"} me-1`}></small>
                   ))}
                 </div>
-                <small className="pt-1">({reviewCount} reviews)</small>
+                <small className="pt-1">({reviewCount} đánh giá)</small>
               </div>
               <div className="product-detail-price mb-4">
                 <h3>{formatCurrency(selectedPrice)}</h3>
                 {oldPrice && <del>{formatCurrency(oldPrice)}</del>}
               </div>
-              <p className="mb-4">{product.description || "A quality product ready for everyday use."}</p>
-              <p className="mb-2"><strong>Category:</strong> {getProductCategoryName(product, [])}</p>
-              <p className="mb-4"><strong>Stock:</strong> {stock ?? "Available"}</p>
+              <p className="mb-4">{product.description || "Sản phẩm chất lượng, phù hợp cho nhu cầu sử dụng hằng ngày."}</p>
+              <p className="mb-2"><strong>Danh mục:</strong> {getProductCategoryName(product, [])}</p>
+              <p className="mb-4"><strong>Tồn kho:</strong> {stock ?? "Còn hàng"}</p>
 
               {variants.length > 0 && (
                 <div className="mb-4">
-                  <strong className="d-block mb-2">Variant</strong>
+                  <strong className="d-block mb-2">Phân loại sản phẩm</strong>
                   <div className="d-flex flex-wrap" style={{ gap: 10 }}>
                     {variants.map((variant, index) => {
                       const variantStock = getVariantStock(variant);
-                      const variantLabel = [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku || `Variant ${index + 1}`;
+                      const variantLabel = [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku || `Phân loại ${index + 1}`;
                       const isSelected = selectedVariant?.id === variant.id;
 
                       return (
@@ -320,7 +320,7 @@ const ProductDetail = () => {
                         >
                           <span className="d-flex flex-column align-items-start">
                             <span>{variantLabel}</span>
-                            <small>{variantStock > 0 ? `${variantStock} in stock` : "Out of stock"}</small>
+                            <small>{variantStock > 0 ? `Còn ${variantStock} sản phẩm` : "Hết hàng"}</small>
                           </span>
                         </button>
                       );
@@ -335,8 +335,8 @@ const ProductDetail = () => {
                   <input type="text" className="form-control bg-white text-center text-dark" value={quantity} onChange={handleQuantityInput} onBlur={handleQuantityBlur} />
                   <button type="button" className="btn btn-primary btn-plus" disabled={!canIncreaseQuantity} onClick={() => setQuantitySafely(safeQuantity + 1)}><i className="fa fa-plus"></i></button>
                 </div>
-                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}><i className="fa fa-shopping-cart me-1"></i> Add To Cart</button>
-                <button type="button" className="btn btn-outline-primary px-3 ms-2 mb-2" disabled={!canAddToCart} onClick={handleBuyNow}><i className="fa fa-bolt me-1"></i> Buy Now</button>
+                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}><i className="fa fa-shopping-cart me-1"></i> Thêm vào giỏ hàng</button>
+                <button type="button" className="btn btn-outline-primary px-3 ms-2 mb-2" disabled={!canAddToCart} onClick={handleBuyNow}><i className="fa fa-bolt me-1"></i> Mua ngay</button>
               </div>
             </div>
           </div>
@@ -349,23 +349,25 @@ const ProductDetail = () => {
             <div className="product-tabs">
               <div className="product-tab-list" role="tablist">
                 {["description", "specifications", "reviews"].map((tab) => (
-                  <button key={tab} className={activeTab === tab ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab)}>{tab}</button>
+                  <button key={tab} className={activeTab === tab ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab)}>
+                    {{ description: "Mô tả", specifications: "Thông số kỹ thuật", reviews: "Đánh giá" }[tab]}
+                  </button>
                 ))}
               </div>
               <div className="product-tab-content">
                 {activeTab === "description" && (
                   <div>
-                    <h4>Product Description</h4>
-                    <p>{product.shortDescription || product.description || "A quality product ready for everyday use."}</p>
+                    <h4>Mô tả sản phẩm</h4>
+                    <p>{product.shortDescription || product.description || "Sản phẩm chất lượng, phù hợp cho nhu cầu sử dụng hằng ngày."}</p>
                   </div>
                 )}
                 {activeTab === "specifications" && (
                   <div>
-                    <h4>Specifications</h4>
+                    <h4>Thông số kỹ thuật</h4>
                     <table className="table product-spec-table"><tbody>
                       {[
-                        ["Brand", product.brand || "BaseShop"],
-                        ["Model", selectedVariant?.sku || product.slug || `Product-${product.id}`],
+                        ["Thương hiệu", product.brand || "BaseShop"],
+                        ["Mẫu sản phẩm", selectedVariant?.sku || product.slug || `Sản phẩm-${product.id}`],
                       ].map(([label, value]) => <tr key={label}><th>{label}</th><td>{value}</td></tr>)}
                     </tbody></table>
                   </div>
@@ -373,12 +375,12 @@ const ProductDetail = () => {
                 {activeTab === "reviews" && (
                   <div className="row">
                     <div className="col-lg-4">
-                      <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{reviewCount} customer reviews</p></div>
+                      <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>trên 5</span><p>{reviewCount} đánh giá từ khách hàng</p></div>
                     </div>
                     <div className="col-lg-8">
                       <div className="review-list">
-                        <h4>Customer Reviews</h4>
-                        {reviewsLoading ? <p>Loading reviews...</p> : reviewData.items.length === 0 ? <p>No reviews yet.</p> : reviewData.items.map((item) => (
+                        <h4>Đánh giá của khách hàng</h4>
+                        {reviewsLoading ? <p>Đang tải đánh giá...</p> : reviewData.items.length === 0 ? <p>Chưa có đánh giá nào.</p> : reviewData.items.map((item) => (
                           <article className="review-item" key={item.id}>
                             <div className="review-item-header"><strong>{item.reviewerName}</strong> <time>{formatReviewDate(item.createdAt)}</time></div>
                             <div className="text-primary">{Array.from({ length: 5 }).map((_, i) => (<small key={i} className={`fa ${i < item.rating ? "fa-star" : "far fa-star"}`}></small>))}</div>
@@ -406,7 +408,19 @@ const getVariantPrice = (variant, product) => !variant ? (product?.price ?? prod
 const getSafeQuantity = (v) => { const q = Number(v); return Number.isFinite(q) && q > 0 ? Math.floor(q) : 1; };
 const normalizeImageUrl = (value) => String(value || "").trim().toLowerCase();
 const createEmptyReviewData = () => ({ averageRating: 0, totalCount: 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: [] });
-const normalizeReviewData = (data) => ({ averageRating: Number(data?.averageRating) || 0, totalCount: Number(data?.totalCount) || 0, breakdown: Array.isArray(data?.breakdown) ? data.breakdown : [], items: Array.isArray(data?.items) ? data.items : [] });
+const normalizeReviewData = (data) => ({
+  averageRating: Number(data?.averageRating) || 0,
+  totalCount: Number(data?.totalCount) || 0,
+  breakdown: Array.isArray(data?.breakdown) ? data.breakdown : [],
+  items: Array.isArray(data?.items)
+    ? data.items.map((item) => ({
+        ...item,
+        reviewerName: String(item.reviewerName || "").trim().toLowerCase() === "customer"
+          ? "Khách hàng"
+          : item.reviewerName,
+      }))
+    : [],
+});
 const formatReviewDate = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN"); };
 
 export default ProductDetail;

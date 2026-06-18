@@ -4,7 +4,7 @@ import ProductCard from "../components/ProductCard";
 import { favoriteApi } from "../services/api";
 import { useFavorites } from "../contexts/FavoriteContext";
 import { useToast } from "../contexts/ToastContext";
-import { normalizeProductList } from "../data/shopData";
+import { getApiErrorMessage, normalizeProductList } from "../data/shopData";
 
 const Favorites = () => {
   const toast = useToast();
@@ -19,8 +19,7 @@ const Favorites = () => {
       setProducts(normalizeProductList(response.data));
       await reloadFavorites();
     } catch (error) {
-      const message = error.response?.data?.message || error.response?.data?.Message || "Cannot load favorite products.";
-      toast.error(message);
+      toast.error(getApiErrorMessage(error, "Không thể tải danh sách sản phẩm yêu thích."));
       setProducts([]);
     } finally {
       setLoading(false);
@@ -43,9 +42,9 @@ const Favorites = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb shop-breadcrumb bg-light mb-30">
-              <Link className="breadcrumb-item text-dark" to="/">Home</Link>
-              <Link className="breadcrumb-item text-dark" to="/shop">Shop</Link>
-              <span className="breadcrumb-item active">Favorites</span>
+              <Link className="breadcrumb-item text-dark" to="/">Trang chủ</Link>
+              <Link className="breadcrumb-item text-dark" to="/shop">Cửa hàng</Link>
+              <span className="breadcrumb-item active">Yêu thích</span>
             </nav>
           </div>
         </div>
@@ -56,13 +55,13 @@ const Favorites = () => {
           <div className="col-12">
             <div className="shop-toolbar d-flex flex-column flex-lg-row align-items-lg-center justify-content-between mb-4">
               <div>
-                <h4 className="mb-1">Favorite products</h4>
+                <h4 className="mb-1">Sản phẩm yêu thích</h4>
                 <small className="text-muted">
-                  {loading ? "Loading favorites..." : `${products.length} saved products`}
+                  {loading ? "Đang tải danh sách yêu thích..." : `${products.length} sản phẩm đã lưu`}
                 </small>
               </div>
               <Link to="/shop" className="btn btn-outline-dark mt-3 mt-lg-0">
-                Continue Shopping
+                Tiếp tục mua sắm
               </Link>
             </div>
           </div>
@@ -70,15 +69,15 @@ const Favorites = () => {
           {loading ? (
             <div className="col-12 text-center py-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">Đang tải...</span>
               </div>
             </div>
           ) : products.length === 0 ? (
             <div className="col-12">
               <div className="shop-empty-state bg-light p-5 text-center">
-                <h5>No favorite products yet</h5>
-                <p>Add products from the shop to see them here.</p>
-                <Link to="/shop" className="btn btn-primary">Browse Products</Link>
+                <h5>Chưa có sản phẩm yêu thích</h5>
+                <p>Hãy thêm sản phẩm từ cửa hàng để xem lại tại đây.</p>
+                <Link to="/shop" className="btn btn-primary">Khám phá sản phẩm</Link>
               </div>
             </div>
           ) : (

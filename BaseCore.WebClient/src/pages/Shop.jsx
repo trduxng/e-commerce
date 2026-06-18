@@ -83,7 +83,7 @@ const Shop = () => {
   const draftMaxPrice = normalizePrice(priceDraft.max);
   const priceError =
     draftMinPrice && draftMaxPrice && Number(draftMinPrice) > Number(draftMaxPrice)
-      ? "Minimum price must be less than or equal to maximum price."
+      ? "Giá tối thiểu phải nhỏ hơn hoặc bằng giá tối đa."
       : "";
 
   useEffect(() => {
@@ -147,8 +147,8 @@ const Shop = () => {
         setProducts(filteredProducts.slice(startIndex, startIndex + pageSize));
         setTotalCount(filteredProducts.length);
         setTotalPages(Math.ceil(filteredProducts.length / pageSize));
-        setError("API is not available, so the catalog is showing demo products.");
-        toast.warning("API is not available, so the catalog is showing demo products.", {
+        setError("Không thể kết nối API, danh mục đang hiển thị sản phẩm mẫu.");
+        toast.warning("Không thể kết nối API, danh mục đang hiển thị sản phẩm mẫu.", {
           dedupeKey: "shop-api-fallback",
         });
       } finally {
@@ -251,14 +251,14 @@ const Shop = () => {
       <div className="col-12">
         <div className="shop-pagination d-flex flex-column flex-md-row align-items-md-center justify-content-between">
           <span className="shop-page-summary">
-            Page {page} of {totalPages} - {totalCount} products
+            Trang {page}/{totalPages} - {totalCount} sản phẩm
           </span>
-          <nav aria-label="Shop pagination">
+          <nav aria-label="Phân trang cửa hàng">
             <ul className="pagination mb-0">
               <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
                 <button className="page-link" type="button" onClick={() => changePage(page - 1)}>
                   <i className="fa fa-chevron-left me-1"></i>
-                  Previous
+                  Trước
                 </button>
               </li>
               {buildPageItems(page, totalPages).map((pageItem, index) =>
@@ -276,7 +276,7 @@ const Shop = () => {
               )}
               <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
                 <button className="page-link" type="button" onClick={() => changePage(page + 1)}>
-                  Next
+                  Sau
                   <i className="fa fa-chevron-right ms-1"></i>
                 </button>
               </li>
@@ -293,8 +293,8 @@ const Shop = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb shop-breadcrumb bg-light mb-30">
-              <Link className="breadcrumb-item text-dark" to="/">Home</Link>
-              <span className="breadcrumb-item active">Shop</span>
+              <Link className="breadcrumb-item text-dark" to="/">Trang chủ</Link>
+              <span className="breadcrumb-item active">Cửa hàng</span>
             </nav>
           </div>
         </div>
@@ -304,7 +304,7 @@ const Shop = () => {
         <div className="row px-xl-5">
           <div className="col-lg-3 col-md-4">
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pe-3">Categories</span>
+              <span className="bg-secondary pe-3">Danh mục</span>
             </h5>
             <div className="shop-filter-panel bg-light p-4 mb-30">
               <div className="shop-filter-option">
@@ -315,7 +315,7 @@ const Shop = () => {
                   checked={!categoryId}
                   onChange={() => updateCategory("")}
                 />
-                <label className="shop-filter-option-label" htmlFor="category-all">All Categories</label>
+                <label className="shop-filter-option-label" htmlFor="category-all">Tất cả danh mục</label>
                 <span className="badge border fw-normal">{!categoryId ? totalCount : ""}</span>
               </div>
               {categories.map((category) => (
@@ -334,7 +334,7 @@ const Shop = () => {
             </div>
 
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pe-3">Brands</span>
+              <span className="bg-secondary pe-3">Thương hiệu</span>
             </h5>
             <div className="shop-filter-panel bg-light p-4 mb-30">
               <div className="shop-filter-option">
@@ -345,7 +345,7 @@ const Shop = () => {
                   checked={!manufacturerId}
                   onChange={() => updateManufacturer("")}
                 />
-                <label className="shop-filter-option-label" htmlFor="brand-all">All Brands</label>
+                <label className="shop-filter-option-label" htmlFor="brand-all">Tất cả thương hiệu</label>
                 <span className="badge border fw-normal">{!manufacturerId ? totalCount : ""}</span>
               </div>
               {manufacturers.map((brand) => (
@@ -364,11 +364,11 @@ const Shop = () => {
             </div>
 
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pe-3">Filter by price</span>
+              <span className="bg-secondary pe-3">Lọc theo giá</span>
             </h5>
             <form className="shop-filter-panel bg-light p-4 mb-30" onSubmit={applyPriceFilter}>
               <div className="form-group">
-                <label className="shop-filter-label" htmlFor="min-price">Minimum price</label>
+                <label className="shop-filter-label" htmlFor="min-price">Giá tối thiểu</label>
                 <div className="input-group">
                   <input
                     id="min-price"
@@ -384,7 +384,7 @@ const Shop = () => {
                 </div>
               </div>
               <div className="form-group">
-                <label className="shop-filter-label" htmlFor="max-price">Maximum price</label>
+                <label className="shop-filter-label" htmlFor="max-price">Giá tối đa</label>
                 <div className="input-group">
                   <input
                     id="max-price"
@@ -392,7 +392,7 @@ const Shop = () => {
                     min="0"
                     step="1000"
                     className="form-control"
-                    placeholder="No limit"
+                    placeholder="Không giới hạn"
                     value={priceDraft.max}
                     onChange={(event) => setPriceDraft((current) => ({ ...current, max: event.target.value }))}
                   />
@@ -402,15 +402,15 @@ const Shop = () => {
               {priceError && <div className="text-danger small mb-3">{priceError}</div>}
               {hasPriceFilter && (
                 <div className="shop-active-filter mb-3">
-                  {minPrice ? formatCurrency(minPrice) : "0 VND"} - {maxPrice ? formatCurrency(maxPrice) : "No limit"}
+                  {minPrice ? formatCurrency(minPrice) : "0 VND"} - {maxPrice ? formatCurrency(maxPrice) : "Không giới hạn"}
                 </div>
               )}
               <div className="d-flex">
                 <button className="btn btn-primary flex-fill" type="submit" disabled={Boolean(priceError)}>
-                  Apply
+                  Áp dụng
                 </button>
                 <button className="btn btn-outline-dark ms-2" type="button" onClick={clearPriceFilter}>
-                  Clear
+                  Xóa lọc
                 </button>
               </div>
             </form>
@@ -455,22 +455,22 @@ const Shop = () => {
               <div className="col-12 pb-1">
                 <div className="shop-toolbar d-flex flex-column flex-lg-row align-items-lg-center justify-content-between mb-4">
                   <div>
-                    <h4 className="mb-1">Product catalog</h4>
+                    <h4 className="mb-1">Danh mục sản phẩm</h4>
                     <small className="text-muted">
-                      {loading ? "Loading products..." : `${totalCount} products available`}
+                      {loading ? "Đang tải sản phẩm..." : `${totalCount} sản phẩm hiện có`}
                     </small>
                     {error && <small className="shop-demo-note d-block">{error}</small>}
                   </div>
                   <div className="shop-sort d-flex align-items-center mt-3 mt-lg-0">
-                    <span className="text-muted me-2">Sort by</span>
+                    <span className="text-muted me-2">Sắp xếp theo</span>
                     <select className="form-select form-select-sm" value={sort} onChange={(event) => setSort(event.target.value)}>
-                      <option value="latest">Latest</option>
-                      <option value="best-selling">Best selling</option>
-                      <option value="rating">Top rated</option>
-                      <option value="sale">On sale</option>
-                      <option value="name">Name</option>
-                      <option value="price-asc">Price low to high</option>
-                      <option value="price-desc">Price high to low</option>
+                      <option value="latest">Mới nhất</option>
+                      <option value="best-selling">Bán chạy nhất</option>
+                      <option value="rating">Đánh giá cao nhất</option>
+                      <option value="sale">Đang giảm giá</option>
+                      <option value="name">Tên sản phẩm</option>
+                      <option value="price-asc">Giá từ thấp đến cao</option>
+                      <option value="price-desc">Giá từ cao đến thấp</option>
                     </select>
                   </div>
                 </div>
@@ -481,8 +481,8 @@ const Shop = () => {
               ) : visibleProducts.length === 0 ? (
                 <div className="col-12">
                   <div className="shop-empty-state bg-light p-5 text-center">
-                    <h5>No products found</h5>
-                    <p className="mb-0">Try another category, keyword or price range.</p>
+                    <h5>Không tìm thấy sản phẩm</h5>
+                    <p className="mb-0">Hãy thử danh mục, từ khóa hoặc khoảng giá khác.</p>
                   </div>
                 </div>
               ) : (

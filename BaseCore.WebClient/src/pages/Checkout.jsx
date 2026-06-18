@@ -4,36 +4,36 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { addressApi, cartApi, couponApi, checkoutAttributeApi, orderApi } from "../services/api";
-import { formatCurrency, getProductPrice } from "../data/shopData";
+import { formatCurrency, getApiErrorMessage, getProductPrice } from "../data/shopData";
 
 const shippingOptions = [
   {
     id: "standard",
-    title: "Standard Delivery",
-    description: "Receive in 2-4 business days",
+    title: "Giao hàng tiêu chuẩn",
+    description: "Nhận hàng trong 2-4 ngày làm việc",
     fee: 30000,
     icon: "fa-truck-fast",
   },
   {
     id: "express",
-    title: "Express Delivery",
-    description: "Receive in 1-2 business days",
+    title: "Giao hàng hỏa tốc",
+    description: "Nhận hàng trong 1-2 ngày làm việc",
     fee: 55000,
     icon: "fa-bolt",
   },
   {
     id: "pickup",
-    title: "Store Pickup",
-    description: "Pick up at BaseShop counter",
+    title: "Nhận tại cửa hàng",
+    description: "Nhận hàng trực tiếp tại quầy BaseShop",
     fee: 0,
     icon: "fa-store",
   },
 ];
 
 const paymentOptions = [
-  ["cod", "Cash on Delivery", "Pay when the package arrives", "fa-money-bill-wave"],
-  ["banktransfer", "Bank Transfer", "Transfer after order confirmation", "fa-building-columns"],
-  ["paypal", "Paypal", "Pay securely with Paypal", "fa-wallet"],
+  ["cod", "Thanh toán khi nhận hàng", "Thanh toán khi đơn hàng được giao đến", "fa-money-bill-wave"],
+  ["banktransfer", "Chuyển khoản ngân hàng", "Chuyển khoản sau khi đơn hàng được xác nhận", "fa-building-columns"],
+  ["paypal", "PayPal", "Thanh toán an toàn qua PayPal", "fa-wallet"],
 ];
 
 const createInitialBillingData = (user = {}) => ({
@@ -213,12 +213,12 @@ const Checkout = () => {
   });
 
   const validateAddress = (address) => {
-    if (!address.receiverName?.trim()) return "Receiver name is required.";
-    if (!address.phone?.trim()) return "Phone number is required.";
-    if (!address.addressDetail?.trim()) return "Address detail is required.";
-    if (!address.ward?.trim()) return "Ward is required.";
-    if (!address.district?.trim()) return "District is required.";
-    if (!address.province?.trim()) return "Province is required.";
+    if (!address.receiverName?.trim()) return "Vui lòng nhập tên người nhận.";
+    if (!address.phone?.trim()) return "Vui lòng nhập số điện thoại.";
+    if (!address.addressDetail?.trim()) return "Vui lòng nhập địa chỉ chi tiết.";
+    if (!address.ward?.trim()) return "Vui lòng nhập phường/xã.";
+    if (!address.district?.trim()) return "Vui lòng nhập quận/huyện.";
+    if (!address.province?.trim()) return "Vui lòng nhập tỉnh/thành phố.";
     return null;
   };
 
@@ -242,11 +242,9 @@ const Checkout = () => {
       setSelectedAddressId(String(createdAddress.id));
       setAddressMode("saved");
       setBillingData((current) => ({ ...current, isDefault: false }));
-      toast.success("Address saved.");
+      toast.success("Đã lưu địa chỉ.");
     } catch (error) {
-      const responseData = error.response?.data;
-      const message = typeof responseData === "string" ? responseData : responseData?.message;
-      toast.error(message || "Address could not be saved.");
+      toast.error(getApiErrorMessage(error, "Không thể lưu địa chỉ."));
     } finally {
       setSavingAddress(false);
     }
@@ -260,42 +258,41 @@ const Checkout = () => {
       );
       setSelectedAddressId(String(addressId));
       setAddressMode("saved");
-      toast.success("Default address updated.");
+      toast.success("Đã cập nhật địa chỉ mặc định.");
     } catch (error) {
-      const responseData = error.response?.data;
-      const message = typeof responseData === "string" ? responseData : responseData?.message;
-      toast.error(message || "Default address could not be updated.");
+      toast.error(getApiErrorMessage(error, "Không thể cập nhật địa chỉ mặc định."));
     }
   };
 
   const handleVoucher = async () => {
     if (checkoutItems.length === 0) {
-      toast.warning("Please select at least one product before applying a voucher.");
+      toast.warning("Vui lòng chọn ít nhất một sản phẩm trước khi áp dụng mã giảm giá.");
       return;
     }
 
     if (!voucherCode.trim()) {
-      toast.warning("Please enter a voucher code.");
+      toast.warning("Vui lòng nhập mã giảm giá.");
       return;
     }
 
-    setVoucherMessage("Applying...");
+    setVoucherMessage("Đang áp dụng...");
     try {
       const response = await couponApi.apply(voucherCode, checkoutSubtotal);
       setDiscountAmount(response.data.discountAmount);
-      setVoucherMessage(`Voucher applied! Discount: ${formatCurrency(response.data.discountAmount)}`);
-      toast.success("Voucher applied successfully.");
+      setVoucherMessage(`Áp dụng mã thành công! Giảm: ${formatCurrency(response.data.discountAmount)}`);
+      toast.success("Đã áp dụng mã giảm giá.");
     } catch (error) {
       setDiscountAmount(0);
-      setVoucherMessage(error.response?.data?.message || "Invalid voucher code.");
-      toast.error(error.response?.data?.message || "Invalid voucher code.");
+      const message = getApiErrorMessage(error, "Mã giảm giá không hợp lệ.");
+      setVoucherMessage(message);
+      toast.error(message);
     }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (checkoutItems.length === 0) {
-      toast.warning(!isBuyNow && items.length === 0 ? "Your cart is empty." : "Please select at least one product to checkout.");
+      toast.warning(!isBuyNow && items.length === 0 ? "Giỏ hàng của bạn đang trống." : "Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
       return;
     }
 
@@ -306,7 +303,7 @@ const Checkout = () => {
     }
 
     setSubmitting(true);
-    loadingToastRef.current = toast.loading("Placing your order...");
+    loadingToastRef.current = toast.loading("Đang tạo đơn hàng...");
     const checkoutPayload = {
       receiverName,
       email: billingData.email,
@@ -342,18 +339,14 @@ const Checkout = () => {
         toast.dismissToast(loadingToastRef.current);
         loadingToastRef.current = null;
       }
-      toast.success("Order placed successfully.");
+      toast.success("Đặt hàng thành công.");
       navigate(orderId ? `/my-orders?orderId=${orderId}&success=1` : "/my-orders?success=1");
     } catch (error) {
-      const responseData = error.response?.data;
-      const detail = typeof responseData === "string"
-        ? responseData.slice(0, 240)
-        : responseData?.message;
       if (loadingToastRef.current) {
         toast.dismissToast(loadingToastRef.current);
         loadingToastRef.current = null;
       }
-      toast.error(detail || "Order could not be submitted.");
+      toast.error(getApiErrorMessage(error, "Không thể gửi đơn hàng."));
     } finally {
       setSubmitting(false);
     }
@@ -368,9 +361,9 @@ const Checkout = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
-              <Link className="breadcrumb-item text-dark" to="/">Home</Link>
-              <Link className="breadcrumb-item text-dark" to="/shop">Shop</Link>
-              <span className="breadcrumb-item active">Checkout</span>
+              <Link className="breadcrumb-item text-dark" to="/">Trang chủ</Link>
+              <Link className="breadcrumb-item text-dark" to="/shop">Cửa hàng</Link>
+              <span className="breadcrumb-item active">Thanh toán</span>
             </nav>
           </div>
         </div>
@@ -382,18 +375,18 @@ const Checkout = () => {
             <div className="checkout-panel checkout-address-panel">
               <div className="checkout-panel-header">
                 <div>
-                  <span className="checkout-step">Delivery</span>
-                  <h4>Delivery Address</h4>
+                  <span className="checkout-step">Giao hàng</span>
+                  <h4>Địa chỉ giao hàng</h4>
                 </div>
                 <i className="fa fa-location-dot"></i>
               </div>
 
               <div className="checkout-address-preview">
                 <div>
-                  <strong>{receiverName || "Receiver name"}</strong>
-                  <span>{receiverPhone || "Phone number"}</span>
+                  <strong>{receiverName || "Tên người nhận"}</strong>
+                  <span>{receiverPhone || "Số điện thoại"}</span>
                 </div>
-                <p>{addressPreview || "Enter your delivery address below."}</p>
+                <p>{addressPreview || "Vui lòng nhập địa chỉ giao hàng bên dưới."}</p>
               </div>
 
               <div className="checkout-address-actions">
@@ -403,12 +396,12 @@ const Checkout = () => {
                   onClick={handleUseNewAddress}
                 >
                   <i className="fa fa-plus mr-2"></i>
-                  Add New Address
+                  Thêm địa chỉ mới
                 </button>
               </div>
 
               {addressLoading ? (
-                <div className="checkout-address-loading">Loading saved addresses...</div>
+                <div className="checkout-address-loading">Đang tải địa chỉ đã lưu...</div>
               ) : savedAddresses.length > 0 && (
                 <div className="checkout-address-book">
                   {savedAddresses.map((address) => (
@@ -426,7 +419,7 @@ const Checkout = () => {
                         />
                         <span>
                           <strong>{address.receiverName}</strong>
-                          {address.isDefault && <small>Default</small>}
+                          {address.isDefault && <small>Mặc định</small>}
                           <em>{address.phone}</em>
                           <p>{getAddressText(address)}</p>
                         </span>
@@ -437,7 +430,7 @@ const Checkout = () => {
                           type="button"
                           onClick={() => handleSetDefaultAddress(address.id)}
                         >
-                          Set Default
+                          Đặt làm mặc định
                         </button>
                       )}
                     </div>
@@ -447,7 +440,7 @@ const Checkout = () => {
 
               <div className="row">
                 <div className="col-md-6 form-group">
-                  <label>E-mail</label>
+                  <label>Email</label>
                   <input
                     className="form-control"
                     type="email"
@@ -462,12 +455,12 @@ const Checkout = () => {
                 {addressMode === "new" && (
                   <>
                     {[
-                      ["receiverName", "Receiver Name", "Nguyen Van A", "text"],
-                      ["phone", "Mobile No", "+84 909 123 456", "text"],
-                      ["addressDetail", "Address Detail", "123 Street", "text"],
-                      ["ward", "Ward", "Ben Nghe", "text"],
-                      ["district", "District", "District 1", "text"],
-                      ["province", "Province/City", "Ho Chi Minh City", "text"],
+                      ["receiverName", "Tên người nhận", "Nguyễn Văn A", "text"],
+                      ["phone", "Số điện thoại", "+84 909 123 456", "text"],
+                      ["addressDetail", "Địa chỉ chi tiết", "123 đường Nguyễn Huệ", "text"],
+                      ["ward", "Phường/Xã", "Phường Bến Nghé", "text"],
+                      ["district", "Quận/Huyện", "Quận 1", "text"],
+                      ["province", "Tỉnh/Thành phố", "Thành phố Hồ Chí Minh", "text"],
                     ].map(([name, label, placeholder, type]) => (
                       <div key={name} className="col-md-6 form-group">
                         <label>{label}</label>
@@ -493,7 +486,7 @@ const Checkout = () => {
                             checked={billingData.isDefault}
                             onChange={handleInputChange}
                           />
-                          <span>Set as default delivery address</span>
+                          <span>Đặt làm địa chỉ giao hàng mặc định</span>
                         </label>
                         <button
                           className="btn btn-outline-primary"
@@ -501,7 +494,7 @@ const Checkout = () => {
                           onClick={handleSaveAddress}
                           disabled={savingAddress}
                         >
-                          {savingAddress ? "Saving..." : "Save Address"}
+                          {savingAddress ? "Đang lưu..." : "Lưu địa chỉ"}
                         </button>
                       </div>
                     </div>
@@ -509,12 +502,12 @@ const Checkout = () => {
                 )}
 
                 <div className="col-md-12 form-group mb-0">
-                  <label>Order Note</label>
+                  <label>Ghi chú đơn hàng</label>
                   <textarea
                     className="form-control"
                     rows={4}
                     name="note"
-                    placeholder="Delivery instructions"
+                    placeholder="Hướng dẫn giao hàng"
                     value={billingData.note}
                     onChange={handleInputChange}
                   ></textarea>
@@ -524,7 +517,7 @@ const Checkout = () => {
 
             <div className="checkout-panel">
                 <h5 className="section-title position-relative text-uppercase mb-3">
-                    <span className="bg-secondary pe-3">Additional Options</span>
+                    <span className="bg-secondary pe-3">Tùy chọn bổ sung</span>
                 </h5>
                 <div className="bg-light p-30 mb-4">
                     {checkoutAttributes.map(attr => (
@@ -532,7 +525,7 @@ const Checkout = () => {
                             <label className="fw-bold">{attr.name}{attr.isRequired && <span className="text-danger">*</span>}</label>
                             {attr.controlType === 'DropdownList' && (
                                 <select className="form-control" value={selectedAttributes[attr.id] || ''} onChange={e => setSelectedAttributes({...selectedAttributes, [attr.id]: e.target.value})}>
-                                    <option value="">Select an option</option>
+                                    <option value="">Chọn một tùy chọn</option>
                                     {attr.values.map(v => <option key={v.id} value={v.id}>{v.name} {v.priceAdjustment > 0 ? `(+${formatCurrency(v.priceAdjustment)})` : ''}</option>)}
                                 </select>
                             )}
@@ -548,24 +541,24 @@ const Checkout = () => {
                             )}
                         </div>
                     ))}
-                    {checkoutAttributes.length === 0 && <p className="text-muted small mb-0">No additional services available.</p>}
+                    {checkoutAttributes.length === 0 && <p className="text-muted small mb-0">Hiện chưa có dịch vụ bổ sung.</p>}
                 </div>
             </div>
 
             <div className="checkout-panel">
               <div className="checkout-panel-header">
                 <div>
-                  <span className="checkout-step">Order</span>
-                  <h4>Products Ordered</h4>
+                  <span className="checkout-step">Đơn hàng</span>
+                  <h4>Sản phẩm đặt mua</h4>
                 </div>
-                <span className="checkout-count">{itemCount} items</span>
+                <span className="checkout-count">{itemCount} sản phẩm</span>
               </div>
 
               {checkoutItems.length === 0 ? (
                 <div className="checkout-empty">
-                  <h5>{!isBuyNow && items.length === 0 ? "Your cart is empty" : "No products selected"}</h5>
+                  <h5>{!isBuyNow && items.length === 0 ? "Giỏ hàng của bạn đang trống" : "Chưa chọn sản phẩm"}</h5>
                   <Link to={!isBuyNow && items.length === 0 ? "/shop" : "/cart"} className="btn btn-primary">
-                    {!isBuyNow && items.length === 0 ? "Continue Shopping" : "Select Products"}
+                    {!isBuyNow && items.length === 0 ? "Tiếp tục mua sắm" : "Chọn sản phẩm"}
                   </Link>
                 </div>
               ) : (
@@ -577,7 +570,7 @@ const Checkout = () => {
                         <h6>{item.name}</h6>
                         {(item.size || item.color) && (
                           <small>
-                            {[item.size && `Size: ${item.size}`, item.color && `Color: ${item.color}`]
+                            {[item.size && `Kích thước: ${item.size}`, item.color && `Màu sắc: ${item.color}`]
                               .filter(Boolean)
                               .join(" | ")}
                           </small>
@@ -595,8 +588,8 @@ const Checkout = () => {
             <div className="checkout-panel">
               <div className="checkout-panel-header">
                 <div>
-                  <span className="checkout-step">Shipping</span>
-                  <h4>Shipping Option</h4>
+                  <span className="checkout-step">Vận chuyển</span>
+                  <h4>Phương thức vận chuyển</h4>
                 </div>
               </div>
               <div className="checkout-option-grid">
@@ -621,8 +614,8 @@ const Checkout = () => {
             <div className="checkout-panel">
               <div className="checkout-panel-header">
                 <div>
-                  <span className="checkout-step">Payment</span>
-                  <h4>Payment Method</h4>
+                  <span className="checkout-step">Thanh toán</span>
+                  <h4>Phương thức thanh toán</h4>
                 </div>
               </div>
               <div className="checkout-option-grid payment-grid">
@@ -656,18 +649,18 @@ const Checkout = () => {
               <div className="checkout-voucher">
                 <div className="checkout-summary-title">
                   <i className="fa fa-ticket"></i>
-                  Voucher
+                  Mã giảm giá
                 </div>
                 <div className="input-group">
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Enter code"
+                    placeholder="Nhập mã giảm giá"
                     value={voucherCode}
                     onChange={(event) => setVoucherCode(event.target.value)}
                   />
                   <button className="btn btn-outline-primary" type="button" onClick={handleVoucher}>
-                    Apply
+                    Áp dụng
                   </button>
                 </div>
                 {voucherMessage && <small className={discountAmount > 0 ? "text-success" : "text-danger"}>{voucherMessage}</small>}
@@ -676,30 +669,30 @@ const Checkout = () => {
               <div className="checkout-summary-card">
                 <div className="checkout-summary-title">
                   <i className="fa fa-receipt"></i>
-                  Order Summary
+                  Tóm tắt đơn hàng
                 </div>
                 <div className="checkout-summary-row">
-                  <span>Subtotal</span>
+                  <span>Tạm tính</span>
                   <strong>{formatCurrency(checkoutSubtotal)}</strong>
                 </div>
                 <div className="checkout-summary-row">
-                  <span>Shipping</span>
+                  <span>Phí vận chuyển</span>
                   <strong>{formatCurrency(shippingFee)}</strong>
                 </div>
                 {discountAmount > 0 && (
                   <div className="checkout-summary-row text-success">
-                    <span>Discount</span>
+                    <span>Giảm giá</span>
                     <strong>-{formatCurrency(discountAmount)}</strong>
                   </div>
                 )}
                 {attrAdjustment > 0 && (
                   <div className="checkout-summary-row text-info">
-                    <span>Add-ons</span>
+                    <span>Dịch vụ bổ sung</span>
                     <strong>+{formatCurrency(attrAdjustment)}</strong>
                   </div>
                 )}
                 <div className="checkout-summary-row border-top mt-2 pt-2">
-                  <span><strong>Total</strong></span>
+                  <span><strong>Tổng cộng</strong></span>
                   <strong className="text-primary h5 mb-0">{formatCurrency(total)}</strong>
                 </div>
                 <button
@@ -707,7 +700,7 @@ const Checkout = () => {
                   type="submit"
                   disabled={submitting || checkoutItems.length === 0}
                 >
-                  {submitting ? "Placing Order..." : "Place Order"}
+                  {submitting ? "Đang đặt hàng..." : "Đặt hàng"}
                 </button>
               </div>
             </aside>

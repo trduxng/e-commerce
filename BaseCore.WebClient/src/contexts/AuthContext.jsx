@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../services/api';
+import { getApiErrorMessage } from '../data/shopData';
 
 const AuthContext = createContext(null);
 
@@ -52,7 +53,7 @@ export const AuthProvider = ({ children }) => {
                 setUser(mockUserData);
                 return { success: true, user: mockUserData };
             }
-            const message = error.response?.data?.message || 'Login failed';
+            const message = getApiErrorMessage(error, 'Đăng nhập không thành công.');
             return { success: false, message };
         }
     };
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }) => {
             await authApi.register(data);
             return { success: true };
         } catch (error) {
-            const message = error.response?.data?.message || 'Registration failed';
+            const message = getApiErrorMessage(error, 'Đăng ký không thành công.');
             return { success: false, message };
         }
     };

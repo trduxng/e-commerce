@@ -4,7 +4,7 @@ import { useTheme } from "../contexts/ThemeContext";
 const ThemeToggle = ({ className = "" }) => {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
-  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+  const label = isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối";
 
   return (
     <button

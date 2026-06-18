@@ -86,20 +86,20 @@ const Topbar = () => {
               data-bs-target="#storefrontCompactNavbar"
               aria-controls="storefrontCompactNavbar"
               aria-expanded="false"
-              aria-label="Toggle navigation"
+              aria-label="Mở hoặc đóng menu điều hướng"
             >
               <span className="navbar-toggler-icon"></span>
             </button>
 
             <div className="collapse navbar-collapse" id="storefrontCompactNavbar">
               <div className="navbar-nav compact-main-links">
-                <NavLink to="/" end className={navLinkClass}>Home</NavLink>
-                <NavLink to="/shop" className={navLinkClass}>Shop</NavLink>
-                <NavLink to="/cart" className={navLinkClass}>Cart</NavLink>
-                {isAuthenticated && <NavLink to="/favorites" className={navLinkClass}>Favorites</NavLink>}
-                {isAuthenticated && <NavLink to="/my-orders" className={navLinkClass}>My Orders</NavLink>}
-                <NavLink to="/checkout" className={navLinkClass}>Checkout</NavLink>
-                <NavLink to="/contact" className={navLinkClass}>Contact</NavLink>
+                <NavLink to="/" end className={navLinkClass}>Trang chủ</NavLink>
+                <NavLink to="/shop" className={navLinkClass}>Cửa hàng</NavLink>
+                <NavLink to="/cart" className={navLinkClass}>Giỏ hàng</NavLink>
+                {isAuthenticated && <NavLink to="/favorites" className={navLinkClass}>Yêu thích</NavLink>}
+                {isAuthenticated && <NavLink to="/my-orders" className={navLinkClass}>Đơn hàng của tôi</NavLink>}
+                <NavLink to="/checkout" className={navLinkClass}>Thanh toán</NavLink>
+                <NavLink to="/contact" className={navLinkClass}>Liên hệ</NavLink>
               </div>
 
               <form className="store-search compact-header-search" onSubmit={handleSearch}>
@@ -107,12 +107,12 @@ const Topbar = () => {
                   <input
                     type="search"
                     className="form-control"
-                    placeholder="Search for products"
+                    placeholder="Tìm kiếm sản phẩm"
                     value={keyword}
                     onChange={handleSearchChange}
                   />
                   <div className="input-group-text p-0">
-                    <button type="submit" className="btn" aria-label="Search products">
+                    <button type="submit" className="btn" aria-label="Tìm kiếm sản phẩm">
                       <i className="fa fa-search"></i>
                     </button>
                   </div>
@@ -122,12 +122,12 @@ const Topbar = () => {
               <div className="compact-header-actions">
                 <ThemeToggle />
                 {isAuthenticated && (
-                  <Link to="/favorites" className="cart-button" aria-label="Favorite products">
+                  <Link to="/favorites" className="cart-button" aria-label="Sản phẩm yêu thích">
                     <i className="fas fa-heart"></i>
                     <span className="badge">{favoriteCount}</span>
                   </Link>
                 )}
-                <Link to="/cart" className="cart-button" aria-label="Shopping cart">
+                <Link to="/cart" className="cart-button" aria-label="Giỏ hàng">
                   <i className="fas fa-shopping-cart"></i>
                   <span className="badge">{count}</span>
                 </Link>
@@ -138,7 +138,7 @@ const Topbar = () => {
                       type="button"
                       onClick={() => setShowAccountMenu(!showAccountMenu)}
                       aria-expanded={showAccountMenu}
-                      aria-label="Account menu"
+                      aria-label="Menu tài khoản"
                     >
                       <i className="far fa-user"></i>
                     </button>
@@ -146,26 +146,26 @@ const Topbar = () => {
                       <span className="dropdown-item-text">{user?.name || user?.username}</span>
                       <Link className="dropdown-item" to="/account" onClick={() => setShowAccountMenu(false)}>
                         <i className="fa fa-user-gear me-2"></i>
-                        My Account
+                        Tài khoản của tôi
                       </Link>
                       <Link className="dropdown-item" to="/my-orders" onClick={() => setShowAccountMenu(false)}>
                         <i className="fa fa-receipt me-2"></i>
-                        My Orders
+                        Đơn hàng của tôi
                       </Link>
                       {isAdmin() && (
                         <Link className="dropdown-item" to="/admin/dashboard" onClick={() => setShowAccountMenu(false)}>
                           <i className="fa fa-chart-line me-2"></i>
-                          Dashboard
+                          Bảng điều khiển
                         </Link>
                       )}
                       <button className="dropdown-item text-danger" type="button" onClick={() => { setShowAccountMenu(false); handleLogout(); }}>
                         <i className="fa fa-right-from-bracket me-2"></i>
-                        Logout
+                        Đăng xuất
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <Link to="/login" className="cart-button" aria-label="Sign in">
+                  <Link to="/login" className="cart-button" aria-label="Đăng nhập">
                     <i className="far fa-user"></i>
                   </Link>
                 )}

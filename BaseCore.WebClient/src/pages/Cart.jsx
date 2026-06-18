@@ -48,7 +48,7 @@ const Cart = () => {
     if (result?.message) {
       toast.error(result.message);
     } else {
-      toast.success("Cart quantity updated.");
+      toast.success("Đã cập nhật số lượng sản phẩm.");
     }
   };
 
@@ -65,7 +65,7 @@ const Cart = () => {
     if (result?.message) {
       toast.error(result.message);
     } else {
-      toast.success("Product removed from cart.");
+      toast.success("Đã xóa sản phẩm khỏi giỏ hàng.");
     }
   };
 
@@ -75,7 +75,7 @@ const Cart = () => {
     if (result?.message) {
       toast.error(result.message);
     } else {
-      toast.success("Cart cleared.");
+      toast.success("Đã xóa toàn bộ giỏ hàng.");
     }
   };
 
@@ -90,7 +90,7 @@ const Cart = () => {
   const handleCheckoutClick = (event) => {
     if (selectedLineCount > 0) return;
     event.preventDefault();
-    toast.warning("Please select at least one product to checkout.");
+    toast.warning("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
   };
 
   return (
@@ -99,9 +99,9 @@ const Cart = () => {
         <div className="row px-xl-5">
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
-              <Link className="breadcrumb-item text-dark" to="/">Home</Link>
-              <Link className="breadcrumb-item text-dark" to="/shop">Shop</Link>
-              <span className="breadcrumb-item active">Shopping Cart</span>
+              <Link className="breadcrumb-item text-dark" to="/">Trang chủ</Link>
+              <Link className="breadcrumb-item text-dark" to="/shop">Cửa hàng</Link>
+              <span className="breadcrumb-item active">Giỏ hàng</span>
             </nav>
           </div>
         </div>
@@ -113,21 +113,21 @@ const Cart = () => {
             {loading ? (
               <div className="cart-empty-state bg-light p-5 text-center">
                 <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+                  <span className="visually-hidden">Đang tải...</span>
                 </div>
               </div>
             ) : items.length === 0 ? (
               <div className="cart-empty-state bg-light p-5 text-center">
-                <h4>Your cart is empty</h4>
-                <p>Add products from the shop before checkout.</p>
-                <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
+                <h4>Giỏ hàng của bạn đang trống</h4>
+                <p>Hãy thêm sản phẩm từ cửa hàng trước khi thanh toán.</p>
+                <Link to="/shop" className="btn btn-primary">Tiếp tục mua sắm</Link>
               </div>
             ) : (
               <div className="cart-panel bg-light">
                 <div className="cart-panel-header">
                   <div>
-                    <h4>Shopping Cart</h4>
-                    <span>{selectedLineCount} of {items.length} product lines selected</span>
+                    <h4>Giỏ hàng</h4>
+                    <span>Đã chọn {selectedLineCount}/{items.length} sản phẩm</span>
                   </div>
                   <label className="cart-select-all">
                     <input
@@ -136,11 +136,11 @@ const Cart = () => {
                       checked={hasSelectedAllCartItems}
                       onChange={handleSelectAll}
                     />
-                    <span>Select all</span>
+                    <span>Chọn tất cả</span>
                   </label>
                   <button className="btn btn-outline-dark" type="button" onClick={clearAllItems}>
                     <i className="fa fa-trash me-1"></i>
-                    Clear
+                    Xóa tất cả
                   </button>
                 </div>
 
@@ -154,20 +154,20 @@ const Cart = () => {
                           checked={selectedIdSet.has(String(getCartItemId(item)))}
                           onChange={(event) => toggleCartItemSelection(getCartItemId(item), event.target.checked)}
                         />
-                        <span className="visually-hidden">Select {item.name}</span>
+                        <span className="visually-hidden">Chọn {item.name}</span>
                       </label>
                       <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
                       <div className="cart-line-info">
                         <Link to={`/product/${item.productId || item.id}`}>{item.name}</Link>
                         {(item.size || item.color || item.sku) && (
                           <small>
-                            {[item.size && `Size: ${item.size}`, item.color && `Color: ${item.color}`, item.sku && `SKU: ${item.sku}`]
+                            {[item.size && `Kích thước: ${item.size}`, item.color && `Màu sắc: ${item.color}`, item.sku && `SKU: ${item.sku}`]
                               .filter(Boolean)
                               .join(" | ")}
                           </small>
                         )}
                         {item.stock !== null && item.stock !== undefined && (
-                          <small>Stock: {item.stock}</small>
+                          <small>Tồn kho: {item.stock}</small>
                         )}
                       </div>
                       <div className="cart-line-price">{formatCurrency(item.price)}</div>
@@ -201,7 +201,7 @@ const Cart = () => {
                                 event.currentTarget.blur();
                               }
                             }}
-                            aria-label="Quantity"
+                            aria-label="Số lượng"
                           />
                           <div>
                             <button
@@ -229,27 +229,27 @@ const Cart = () => {
           <div className="col-lg-4">
             <form className="mb-30" onSubmit={(event) => event.preventDefault()}>
               <div className="input-group">
-                <input type="text" className="form-control border-0 p-4" placeholder="Coupon Code" />
-                <button className="btn btn-primary" type="submit">Apply Coupon</button>
+                <input type="text" className="form-control border-0 p-4" placeholder="Mã giảm giá" />
+                <button className="btn btn-primary" type="submit">Áp dụng mã</button>
               </div>
             </form>
             <h5 className="section-title position-relative text-uppercase mb-3">
-              <span className="bg-secondary pe-3">Cart Summary</span>
+              <span className="bg-secondary pe-3">Tóm tắt giỏ hàng</span>
             </h5>
             <div className="bg-light p-30 mb-5">
               <div className="border-bottom pb-2">
                 <div className="d-flex justify-content-between mb-3">
-                  <h6>Selected Subtotal</h6>
+                  <h6>Tạm tính sản phẩm đã chọn</h6>
                   <h6>{formatCurrency(selectedSubtotal)}</h6>
                 </div>
                 <div className="d-flex justify-content-between">
-                  <h6 className="fw-medium">Shipping</h6>
+                  <h6 className="fw-medium">Phí vận chuyển</h6>
                   <h6 className="fw-medium">{formatCurrency(selectedShipping)}</h6>
                 </div>
               </div>
               <div className="pt-2">
                 <div className="d-flex justify-content-between mt-2">
-                  <h5>Total</h5>
+                  <h5>Tổng cộng</h5>
                   <h5>{formatCurrency(selectedTotal)}</h5>
                 </div>
                 <Link
@@ -257,7 +257,7 @@ const Cart = () => {
                   className={`btn w-100 btn-primary fw-bold my-3 py-3 ${selectedLineCount === 0 ? "disabled" : ""}`}
                   onClick={handleCheckoutClick}
                 >
-                  {isAuthenticated ? `Checkout Selected (${selectedLineCount})` : "Login To Checkout"}
+                  {isAuthenticated ? `Thanh toán sản phẩm đã chọn (${selectedLineCount})` : "Đăng nhập để thanh toán"}
                 </Link>
               </div>
             </div>
