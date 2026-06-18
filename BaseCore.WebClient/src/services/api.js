@@ -39,7 +39,7 @@ api.interceptors.response.use(
             return api(config);
         }
 
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && !config?.url?.includes('/auth/login')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
@@ -172,6 +172,51 @@ export const manufacturerApi = {
     create: (data) => api.post('/manufacturers', data),
     update: (id, data) => api.put(`/manufacturers/${id}`, data),
     delete: (id) => api.delete(`/manufacturers/${id}`),
+};
+
+// Payment Management APIs (Mock data handler for UI/UX demonstration)
+export const paymentApi = {
+    getAllTransactions: async () => {
+        // Mock server response
+        const stored = localStorage.getItem('mock_transactions');
+        if (stored) return { data: JSON.parse(stored) };
+        
+        const initialMock = [
+            { id: 1001, orderCode: 'ORD-5892', amount: 1250000, gatewayFee: 18750, method: 'VNPAY', status: 'Paid', reference: 'VNP29384729', createdAt: new Date(Date.now() - 3600000 * 2).toISOString(), customerName: 'Nguyễn Văn A' },
+            { id: 1002, orderCode: 'ORD-9281', amount: 450000, gatewayFee: 0, method: 'COD', status: 'Pending', reference: 'N/A', createdAt: new Date(Date.now() - 3600000 * 5).toISOString(), customerName: 'Trần Thị B' },
+            { id: 1003, orderCode: 'ORD-1029', amount: 3200000, gatewayFee: 48000, method: 'PayPal', status: 'Paid', reference: 'PAYID-M928374', createdAt: new Date(Date.now() - 3600000 * 18).toISOString(), customerName: 'Lê Hoàng C' },
+            { id: 1004, orderCode: 'ORD-3829', amount: 890000, gatewayFee: 13350, method: 'MoMo', status: 'Failed', reference: 'MOMO-ERR-99', createdAt: new Date(Date.now() - 3600000 * 24).toISOString(), customerName: 'Phạm Minh D' },
+            { id: 1005, orderCode: 'ORD-8821', amount: 1500000, gatewayFee: 0, method: 'BankTransfer', status: 'Paid', reference: 'FT2628109283', createdAt: new Date(Date.now() - 3600000 * 30).toISOString(), customerName: 'Hoàng Văn E' },
+            { id: 1006, orderCode: 'ORD-4491', amount: 600000, gatewayFee: 9000, method: 'VNPAY', status: 'Refunded', reference: 'VNP29384210', createdAt: new Date(Date.now() - 3600000 * 48).toISOString(), customerName: 'Vũ Thu H' }
+        ];
+        localStorage.setItem('mock_transactions', JSON.stringify(initialMock));
+        return { data: initialMock };
+    },
+    updateTransactionStatus: async (id, status) => {
+        const stored = JSON.parse(localStorage.getItem('mock_transactions') || '[]');
+        const updated = stored.map(t => t.id === id ? { ...t, status } : t);
+        localStorage.setItem('mock_transactions', JSON.stringify(updated));
+        return { data: updated.find(t => t.id === id) };
+    },
+    getGateways: async () => {
+        const stored = localStorage.getItem('mock_gateways');
+        if (stored) return { data: JSON.parse(stored) };
+        const initialGateways = [
+            { id: 'cod', name: 'Thanh toán khi nhận hàng (COD)', active: true, environment: 'Production', testMode: false, clientId: '', clientSecret: '', merchantId: '' },
+            { id: 'banktransfer', name: 'Chuyển khoản Ngân hàng', active: true, environment: 'Production', testMode: false, clientId: '', clientSecret: '', merchantId: '' },
+            { id: 'vnpay', name: 'Cổng thanh toán VNPAY', active: true, environment: 'Sandbox', testMode: true, clientId: 'VNPAY_MERCHANT_01', clientSecret: 'SECRET_VNPAY_API_KEY_123', merchantId: 'VNPAY_TMN_CODE' },
+            { id: 'momo', name: 'Ví điện tử MoMo', active: false, environment: 'Sandbox', testMode: true, clientId: 'MOMO_PARTNER_01', clientSecret: 'SECRET_MOMO_API_KEY_456', merchantId: 'MOMO_MERCHANT_ID' },
+            { id: 'paypal', name: 'Cổng thanh toán PayPal', active: true, environment: 'Sandbox', testMode: true, clientId: 'PAYPAL_CLIENT_ID_XYZ', clientSecret: 'SECRET_PAYPAL_API_KEY_789', merchantId: 'PAYPAL_MERCHANT_XYZ' }
+        ];
+        localStorage.setItem('mock_gateways', JSON.stringify(initialGateways));
+        return { data: initialGateways };
+    },
+    updateGateway: async (id, data) => {
+        const stored = JSON.parse(localStorage.getItem('mock_gateways') || '[]');
+        const updated = stored.map(g => g.id === id ? { ...g, ...data } : g);
+        localStorage.setItem('mock_gateways', JSON.stringify(updated));
+        return { data: updated.find(g => g.id === id) };
+    }
 };
 
 export default api;

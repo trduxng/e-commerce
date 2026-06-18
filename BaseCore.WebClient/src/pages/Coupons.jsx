@@ -96,19 +96,25 @@ const Coupons = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {coupons.map(c => (
-                                            <tr key={c.id}>
-                                                <td><strong>{c.code}</strong></td>
-                                                <td>{c.type}</td>
-                                                <td>{c.value}</td>
-                                                <td>{c.minOrderValue}</td>
-                                                <td>{c.isActive ? 'Yes' : 'No'}</td>
-                                                <td>
-                                                    <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(c)}>Edit</button>
-                                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
-                                                </td>
+                                        {coupons.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="text-center py-4">No coupons found</td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            coupons.map(c => (
+                                                <tr key={c.id}>
+                                                    <td><strong>{c.code}</strong></td>
+                                                    <td>{c.type}</td>
+                                                    <td>{c.value}</td>
+                                                    <td>{c.minOrderValue}</td>
+                                                    <td>{c.isActive ? 'Yes' : 'No'}</td>
+                                                    <td>
+                                                        <button className="btn btn-sm btn-info mr-2" onClick={() => openModal(c)}>Edit</button>
+                                                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             )}
