@@ -40,6 +40,61 @@ const Orders = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(true);
     const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
+    // Order detail modal states
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+
+    const getOrderDetails = (order) => order?.orderDetails || order?.details || [];
+    const getDetailImage = (detail) => (
+        detail.productImageUrl
+        || detail.productVariant?.imageUrl
+        || detail.productVariant?.product?.imageUrl
+        || "/img/product-1.jpg"
+    );
+    const getProductId = (detail) => detail.productId || detail.productVariant?.productId || detail.productVariant?.product?.id;
+    const normalizeStatus = (status) => {
+        const value = String(status || "pending").trim().toLowerCase();
+        if (value === "cancel" || value === "canceled") return "cancelled";
+        if (value === "completed") return "delivered";
+        return value;
+    };
+    const getStatus = (status) => {
+        const statuses = {
+            pending: { label: "Pending", className: "badge-warning" },
+            confirmed: { label: "Confirmed", className: "badge-primary" },
+            shipping: { label: "Shipping", className: "badge-info" },
+            delivered: { label: "Delivered", className: "badge-success" },
+            cancelled: { label: "Cancelled", className: "badge-secondary" },
+            return_requested: { label: "Return Requested", className: "badge-info" },
+            returned: { label: "Returned", className: "badge-dark" },
+            refunded: { label: "Refunded", className: "badge-danger" },
+        };
+        return statuses[normalizeStatus(status)] || statuses.pending;
+    };
+    const formatDate = (value) => (value ? new Date(value).toLocaleString("vi-VN") : "");
+
+    const closeOrderDetail = () => {
+        setSelectedOrder(null);
+    };
+
+    const loadOrderDetail = async (order) => {
+        setSelectedOrder(order);
+        setDetailLoading(true);
+        setError("");
+
+        try {
+            const response = await orderApi.getById(order.id);
+            const orderData = response.data?.order || response.data;
+            const details = response.data?.details || orderData?.orderDetails || getOrderDetails(order);
+            setSelectedOrder({ ...order, ...orderData, orderDetails: details });
+        } catch (error) {
+            setError(error.response?.data?.message || "Cannot load order detail.");
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
+
     useEffect(() => {
         loadOrders();
     }, [page, pageSize, sortField, sortDir]);
@@ -430,9 +485,10 @@ const Orders = () => {
                                                                         <td>{order.createdAt ? new Date(order.createdAt).toLocaleString('en-GB') : ''}</td>
                                                                         <td>{formatCurrency(order.totalAmount)}</td>
                                                                         <td className="text-center button-column">
-                                                                            <Link className="btn btn-default" to={`/admin/orders/edit/${order.id}`}>
+                                                                            <button className="btn btn-default" type="button" onClick={() => loadOrderDetail(order)}>
                                                                                 <i className="fas fa-eye"></i> View
-                                                                            </Link>
+                                                                            </button>
+
                                                                         </td>
                                                                     </tr>
                                                                 ))
@@ -471,8 +527,149 @@ const Orders = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Modal xem chi tiết đơn hàng cho Admin */}
+            {selectedOrder && (
+                <>
+                    <div className="modal fade show" style={{ display: 'block', zIndex: 1050 }} tabIndex={-1} role="dialog" aria-modal="true">
+                        <div className="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title">Chi tiết đơn hàng {selectedOrder.orderCode || selectedOrder.id}</h5>
+                                    <button type="button" className="close" onClick={closeOrderDetail} aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div className="modal-body">
+                                    {detailLoading ? (
+                                        <div className="text-center py-5">
+                                            <div className="spinner-border text-primary" role="status">
+                                                <span className="visually-hidden">Đang tải...</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="row mb-4">
+                                                <div className="col-md-6">
+                                                    <h6><strong>Thông tin giao nhận</strong></h6>
+                                                    <table className="table table-sm table-borderless">
+                                                        <tbody>
+                                                            <tr><td><strong>Người nhận:</strong></td><td>{selectedOrder.receiverName}</td></tr>
+                                                            <tr><td><strong>Số điện thoại:</strong></td><td>{selectedOrder.receiverPhone}</td></tr>
+                                                            <tr><td><strong>Email:</strong></td><td>{selectedOrder.receiverEmail || selectedOrder.guestEmail || 'N/A'}</td></tr>
+                                                            <tr><td><strong>Địa chỉ:</strong></td><td>{selectedOrder.shippingAddressFull || selectedOrder.receiverAddress || 'N/A'}</td></tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <h6><strong>Thông tin đơn hàng</strong></h6>
+                                                    <table className="table table-sm table-borderless">
+                                                        <tbody>
+                                                            <tr><td><strong>Ngày tạo:</strong></td><td>{formatDate(selectedOrder.createdAt)}</td></tr>
+                                                            <tr><td><strong>Trạng thái:</strong></td><td>
+                                                                <span className={`badge ${getStatus(selectedOrder.orderStatus).className}`}>
+                                                                    {getStatus(selectedOrder.orderStatus).label}
+                                                                </span>
+                                                            </td></tr>
+                                                            <tr><td><strong>Thanh toán:</strong></td><td>{selectedOrder.paymentMethod}</td></tr>
+                                                            <tr><td><strong>Trạng thái TT:</strong></td><td>
+                                                                <span className={`badge ${selectedOrder.paymentStatus === 'paid' ? 'badge-success' : 'badge-warning'}`}>
+                                                                    {selectedOrder.paymentStatus || 'pending'}
+                                                                </span>
+                                                            </td></tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            {selectedOrder.note && (
+                                                <div className="alert alert-info">
+                                                    <strong>Ghi chú:</strong> {selectedOrder.note}
+                                                </div>
+                                            )}
+
+                                            <h6><strong>Danh sách sản phẩm ({getOrderDetails(selectedOrder).length})</strong></h6>
+                                            <div className="table-responsive">
+                                                <table className="table table-bordered table-striped table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style={{ width: '60px' }}>Hình ảnh</th>
+                                                            <th>Sản phẩm</th>
+                                                            <th>Sku</th>
+                                                            <th>Đơn giá</th>
+                                                            <th style={{ width: '80px' }}>Số lượng</th>
+                                                            <th style={{ width: '120px' }}>Thành tiền</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {getOrderDetails(selectedOrder).map((detail) => (
+                                                            <tr key={detail.id || detail.productVariantId}>
+                                                                <td className="text-center">
+                                                                    <img 
+                                                                        src={getDetailImage(detail)} 
+                                                                        alt={detail.productNameSnapshot} 
+                                                                        style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} 
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <div>{detail.productNameSnapshot}</div>
+                                                                    {detail.colorSnapshot || detail.sizeSnapshot ? (
+                                                                        <small className="text-muted">
+                                                                            Phân loại: {[detail.colorSnapshot, detail.sizeSnapshot].filter(Boolean).join(' - ')}
+                                                                        </small>
+                                                                    ) : null}
+                                                                </td>
+                                                                <td><code>{detail.skuSnapshot || 'N/A'}</code></td>
+                                                                <td>{formatCurrency(detail.unitPrice)}</td>
+                                                                <td className="text-center">{detail.quantity}</td>
+                                                                <td>{formatCurrency(detail.totalPrice || (detail.unitPrice * detail.quantity))}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <div className="row justify-content-end">
+                                                <div className="col-md-5">
+                                                    <table className="table table-sm table-borderless">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Tạm tính:</td>
+                                                                <td className="text-right">{formatCurrency(selectedOrder.subtotal || selectedOrder.totalAmount)}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Phí vận chuyển:</td>
+                                                                <td className="text-right">{formatCurrency(selectedOrder.shippingFee || 0)}</td>
+                                                            </tr>
+                                                            {selectedOrder.discountAmount > 0 && (
+                                                                <tr>
+                                                                    <td>Giảm giá:</td>
+                                                                    <td className="text-right text-danger">-{formatCurrency(selectedOrder.discountAmount)}</td>
+                                                                </tr>
+                                                            )}
+                                                            <tr className="border-top">
+                                                                <td><strong>Tổng cộng:</strong></td>
+                                                                <td className="text-right"><strong>{formatCurrency(selectedOrder.totalAmount)}</strong></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" onClick={closeOrderDetail}>Đóng</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ zIndex: 1040 }}></div>
+                </>
+            )}
         </div>
     );
 };
+
 
 export default Orders;
