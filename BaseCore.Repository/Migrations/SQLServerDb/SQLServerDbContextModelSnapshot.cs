@@ -943,12 +943,11 @@ namespace BaseCore.Repository.Migrations.SQLServerDb
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BillDetailId");
+                    b.HasIndex("BillDetailId")
+                        .IsUnique()
+                        .HasFilter("[bill_detail_id] IS NOT NULL");
 
                     b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId", "ProductId")
-                        .IsUnique();
 
                     b.ToTable("product_reviews", "catalog", t =>
                         {

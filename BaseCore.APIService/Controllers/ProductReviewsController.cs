@@ -30,7 +30,7 @@ namespace BaseCore.APIService.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Upsert(long productId, [FromBody] SaveProductReviewDto dto)
+        public async Task<IActionResult> Create(long productId, [FromBody] SaveProductReviewDto dto)
         {
             if (!TryGetCurrentUserId(out var userId))
                 return Unauthorized();
@@ -49,44 +49,52 @@ namespace BaseCore.APIService.Controllers
             if (title?.Length > 150)
                 return BadRequest(new { message = "Review title cannot exceed 150 characters." });
 
+            if (dto.BillDetailId <= 0)
+                return BadRequest(new { message = "Please review this product from a delivered order." });
+
             var billDetail = await _db.OrderDetails
                 .Include(detail => detail.Order)
                 .Include(detail => detail.ProductVariant)
-                .Where(detail =>
+                .FirstOrDefaultAsync(detail =>
+                    detail.Id == dto.BillDetailId &&
                     detail.Order != null &&
                     detail.Order.UserId == userId &&
                     detail.Order.OrderStatus.ToLower() == "delivered" &&
                     detail.ProductVariant != null &&
-                    detail.ProductVariant.ProductId == productId)
-                .OrderByDescending(detail => detail.Order!.CreatedAt)
-                .FirstOrDefaultAsync();
+                    detail.ProductVariant.ProductId == productId);
 
             if (billDetail == null)
                 return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only customers who bought and received this product can write a review." });
 
-            var review = await _db.Reviews.FirstOrDefaultAsync(item =>
-                item.UserId == userId &&
-                item.ProductId == productId);
+            if (await _db.Reviews.AnyAsync(item => item.BillDetailId == billDetail.Id))
+                return Conflict(new { message = "Bạn đã đánh giá đơn hàng này rồi." });
 
-            if (review == null)
+            _db.Reviews.Add(new Review
             {
-                review = new Review
-                {
-                    UserId = userId,
-                    ProductId = productId,
-                    CreatedAt = DateTime.Now
-                };
-                _db.Reviews.Add(review);
+                UserId = userId,
+                ProductId = productId,
+                BillDetailId = billDetail.Id,
+                Rating = dto.Rating,
+                Title = string.IsNullOrWhiteSpace(title) ? null : title,
+                Content = content,
+                IsVerifiedPurchase = true,
+                Status = "approved",
+                CreatedAt = DateTime.Now
+            });
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                _db.ChangeTracker.Clear();
+                if (await _db.Reviews.AnyAsync(item => item.BillDetailId == billDetail.Id))
+                    return Conflict(new { message = "Bạn đã đánh giá đơn hàng này rồi." });
+
+                throw;
             }
 
-            review.BillDetailId = billDetail?.Id;
-            review.Rating = dto.Rating;
-            review.Title = string.IsNullOrWhiteSpace(title) ? null : title;
-            review.Content = content;
-            review.IsVerifiedPurchase = billDetail != null;
-            review.Status = "approved";
-
-            await _db.SaveChangesAsync();
             return Ok(await BuildResponse(productId, userId));
         }
 
@@ -99,6 +107,7 @@ namespace BaseCore.APIService.Controllers
                 .Select(review => new ProductReviewItemDto
                 {
                     Id = review.Id,
+                    BillDetailId = review.BillDetailId,
                     Rating = review.Rating,
                     Title = review.Title,
                     Content = review.Content ?? "",
@@ -124,7 +133,7 @@ namespace BaseCore.APIService.Controllers
                 })
                 .ToList();
 
-            var canWriteReview = currentUserId.HasValue && await HasDeliveredPurchase(currentUserId.Value, productId);
+            var canWriteReview = currentUserId.HasValue && await HasReviewableDeliveredPurchase(currentUserId.Value, productId);
 
             return new ProductReviewResponseDto
             {
@@ -135,18 +144,19 @@ namespace BaseCore.APIService.Controllers
                 CanWriteReview = canWriteReview,
                 ReviewEligibilityMessage = canWriteReview
                     ? ""
-                    : "Only customers who bought and received this product can write a review."
+                    : "Review this product from a delivered order in My Orders."
             };
         }
 
-        private Task<bool> HasDeliveredPurchase(long userId, long productId)
+        private Task<bool> HasReviewableDeliveredPurchase(long userId, long productId)
         {
             return _db.OrderDetails.AnyAsync(detail =>
                 detail.Order != null &&
                 detail.Order.UserId == userId &&
                 detail.Order.OrderStatus.ToLower() == "delivered" &&
                 detail.ProductVariant != null &&
-                detail.ProductVariant.ProductId == productId);
+                detail.ProductVariant.ProductId == productId &&
+                !_db.Reviews.Any(review => review.BillDetailId == detail.Id));
         }
 
         private Task<bool> ProductExists(long productId)
@@ -166,6 +176,7 @@ namespace BaseCore.APIService.Controllers
 
     public class SaveProductReviewDto
     {
+        public long BillDetailId { get; set; }
         public byte Rating { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
@@ -191,6 +202,7 @@ namespace BaseCore.APIService.Controllers
     public class ProductReviewItemDto
     {
         public long Id { get; set; }
+        public long? BillDetailId { get; set; }
         public byte Rating { get; set; }
         public string? Title { get; set; }
         public string Content { get; set; } = "";

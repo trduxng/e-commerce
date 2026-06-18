@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { addressApi, cartApi, couponApi, checkoutAttributeApi } from "../services/api";
+import { addressApi, cartApi, couponApi, checkoutAttributeApi, orderApi } from "../services/api";
 import { formatCurrency, getProductPrice } from "../data/shopData";
 
 const shippingOptions = [
@@ -63,7 +63,8 @@ const sortAddresses = (addresses) =>
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, subtotal, reloadCart } = useCart();
+  const location = useLocation();
+  const { items, selectedItems, selectedSubtotal, selectedCartItemIds, reloadCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
   const loadingToastRef = useRef(null);
@@ -81,6 +82,8 @@ const Checkout = () => {
   const [checkoutAttributes, setCheckoutAttributes] = useState([]);
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const buyNowItem = useMemo(() => normalizeBuyNowItem(location.state?.buyNowItem), [location.state]);
+  const isBuyNow = buyNowItem !== null;
 
   useEffect(() => {
     const loadCheckoutData = async () => {
@@ -166,14 +169,23 @@ const Checkout = () => {
     return adjustment;
   }, [selectedAttributes, checkoutAttributes]);
 
-  const shippingFee = items.length > 0 ? selectedShipping.fee : 0;
-  const total = Math.max(0, subtotal + shippingFee + attrAdjustment - discountAmount);
-  const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const checkoutItems = isBuyNow ? [buyNowItem] : selectedItems;
+  const checkoutSubtotal = isBuyNow
+    ? Number(buyNowItem.price || 0) * Number(buyNowItem.quantity || 0)
+    : selectedSubtotal;
+  const shippingFee = checkoutItems.length > 0 ? selectedShipping.fee : 0;
+  const total = Math.max(0, checkoutSubtotal + shippingFee + attrAdjustment - discountAmount);
+  const itemCount = checkoutItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const selectedAddress = savedAddresses.find((address) => String(address.id) === String(selectedAddressId));
   const activeAddress = addressMode === "saved" && selectedAddress ? selectedAddress : billingData;
   const receiverName = activeAddress.receiverName?.trim() || "";
   const receiverPhone = activeAddress.phone?.trim() || "";
   const addressPreview = getAddressText(activeAddress);
+
+  useEffect(() => {
+    setDiscountAmount(0);
+    setVoucherMessage("");
+  }, [checkoutSubtotal]);
 
   const handleInputChange = (event) => {
     const { checked, name, type, value } = event.target;
@@ -257,6 +269,11 @@ const Checkout = () => {
   };
 
   const handleVoucher = async () => {
+    if (checkoutItems.length === 0) {
+      toast.warning("Please select at least one product before applying a voucher.");
+      return;
+    }
+
     if (!voucherCode.trim()) {
       toast.warning("Please enter a voucher code.");
       return;
@@ -264,7 +281,7 @@ const Checkout = () => {
 
     setVoucherMessage("Applying...");
     try {
-      const response = await couponApi.apply(voucherCode, subtotal);
+      const response = await couponApi.apply(voucherCode, checkoutSubtotal);
       setDiscountAmount(response.data.discountAmount);
       setVoucherMessage(`Voucher applied! Discount: ${formatCurrency(response.data.discountAmount)}`);
       toast.success("Voucher applied successfully.");
@@ -277,8 +294,8 @@ const Checkout = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (items.length === 0) {
-      toast.warning("Your cart is empty.");
+    if (checkoutItems.length === 0) {
+      toast.warning(!isBuyNow && items.length === 0 ? "Your cart is empty." : "Please select at least one product to checkout.");
       return;
     }
 
@@ -290,7 +307,7 @@ const Checkout = () => {
 
     setSubmitting(true);
     loadingToastRef.current = toast.loading("Placing your order...");
-    const payload = {
+    const checkoutPayload = {
       receiverName,
       email: billingData.email,
       receiverPhone,
@@ -304,9 +321,23 @@ const Checkout = () => {
     };
 
     try {
-      const response = await cartApi.checkout(payload);
+      const response = isBuyNow
+        ? await orderApi.create({
+            ...checkoutPayload,
+            items: [{
+              productId: buyNowItem.productId,
+              productVariantId: buyNowItem.productVariantId,
+              quantity: buyNowItem.quantity,
+            }],
+          })
+        : await cartApi.checkout({
+            ...checkoutPayload,
+            cartItemIds: selectedCartItemIds,
+          });
       const orderId = response.data?.order?.id || response.data?.id;
-      await reloadCart();
+      if (!isBuyNow) {
+        await reloadCart();
+      }
       if (loadingToastRef.current) {
         toast.dismissToast(loadingToastRef.current);
         loadingToastRef.current = null;
@@ -481,7 +512,7 @@ const Checkout = () => {
                   <label>Order Note</label>
                   <textarea
                     className="form-control"
-                    rows="4"
+                    rows={4}
                     name="note"
                     placeholder="Delivery instructions"
                     value={billingData.note}
@@ -530,14 +561,16 @@ const Checkout = () => {
                 <span className="checkout-count">{itemCount} items</span>
               </div>
 
-              {items.length === 0 ? (
+              {checkoutItems.length === 0 ? (
                 <div className="checkout-empty">
-                  <h5>Your cart is empty</h5>
-                  <Link to="/shop" className="btn btn-primary">Continue Shopping</Link>
+                  <h5>{!isBuyNow && items.length === 0 ? "Your cart is empty" : "No products selected"}</h5>
+                  <Link to={!isBuyNow && items.length === 0 ? "/shop" : "/cart"} className="btn btn-primary">
+                    {!isBuyNow && items.length === 0 ? "Continue Shopping" : "Select Products"}
+                  </Link>
                 </div>
               ) : (
                 <div className="checkout-items">
-                  {items.map((item, index) => (
+                  {checkoutItems.map((item, index) => (
                     <div key={getItemKey(item, index)} className="checkout-item">
                       <img src={item.imageUrl || "/img/product-1.jpg"} alt={item.name} />
                       <div className="checkout-item-info">
@@ -647,7 +680,7 @@ const Checkout = () => {
                 </div>
                 <div className="checkout-summary-row">
                   <span>Subtotal</span>
-                  <strong>{formatCurrency(subtotal)}</strong>
+                  <strong>{formatCurrency(checkoutSubtotal)}</strong>
                 </div>
                 <div className="checkout-summary-row">
                   <span>Shipping</span>
@@ -672,7 +705,7 @@ const Checkout = () => {
                 <button
                   className="btn w-100 btn-primary checkout-submit mt-3"
                   type="submit"
-                  disabled={submitting || items.length === 0}
+                  disabled={submitting || checkoutItems.length === 0}
                 >
                   {submitting ? "Placing Order..." : "Place Order"}
                 </button>
@@ -683,6 +716,26 @@ const Checkout = () => {
       </form>
     </>
   );
+};
+
+const normalizeBuyNowItem = (item) => {
+  if (!item) return null;
+
+  const productId = Number(item.productId ?? item.id);
+  const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+  const price = Number(item.price);
+  if (!Number.isFinite(productId) || productId <= 0 || !Number.isFinite(price) || price < 0) {
+    return null;
+  }
+
+  return {
+    ...item,
+    id: productId,
+    productId,
+    productVariantId: item.productVariantId ? Number(item.productVariantId) : null,
+    quantity,
+    price,
+  };
 };
 
 export default Checkout;

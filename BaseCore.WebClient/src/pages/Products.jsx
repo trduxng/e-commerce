@@ -750,27 +750,89 @@ const Products = () => {
                                             </div>
                                             <div className="col-12 mt-2">
                                                 <div className="form-group"><label>Short Description</label><input className="form-control" value={formData.shortDescription} onChange={e => setField('shortDescription', e.target.value)} /></div>
-                                                <div className="form-group"><label>Full Description</label><textarea className="form-control" rows="4" value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
+                                                <div className="form-group"><label>Full Description</label><textarea className="form-control" rows={4} value={formData.description} onChange={e => setField('description', e.target.value)} /></div>
                                             </div>
                                         </div>
                                     )}
                                     {modalTab === 'variants' && (
-                                        <table className="table table-sm table-bordered">
-                                            <thead><tr><th>Size</th><th>Color</th><th>Price</th><th>Sale</th><th>Stock</th><th>SKU</th><th><button type="button" className="btn btn-xs btn-primary" onClick={addVariant}>+</button></th></tr></thead>
-                                            <tbody>
-                                                {formData.variants.map((v, i) => (
-                                                    <tr key={i}>
-                                                        <td><input className="form-control form-control-sm" value={v.size} onChange={e => setVariantField(i, 'size', e.target.value)} /></td>
-                                                        <td><input className="form-control form-control-sm" value={v.color} onChange={e => setVariantField(i, 'color', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={v.price} onChange={e => setVariantField(i, 'price', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={v.salePrice} onChange={e => setVariantField(i, 'salePrice', e.target.value)} /></td>
-                                                        <td><input type="number" className="form-control form-control-sm" value={v.stockQuantity} onChange={e => setVariantField(i, 'stockQuantity', e.target.value)} /></td>
-                                                        <td><input className="form-control form-control-sm" value={v.sku} onChange={e => setVariantField(i, 'sku', e.target.value)} /></td>
-                                                        <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeVariant(i)} disabled={formData.variants.length <= 1}>x</button></td>
+                                        <div className="table-responsive">
+                                            <table className="table table-sm table-bordered align-middle">
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ width: 92 }}>Image</th>
+                                                        <th style={{ minWidth: 240 }}>Image URL</th>
+                                                        <th style={{ minWidth: 100 }}>Size</th>
+                                                        <th style={{ minWidth: 100 }}>Color</th>
+                                                        <th style={{ minWidth: 110 }}>Price</th>
+                                                        <th style={{ minWidth: 110 }}>Sale</th>
+                                                        <th style={{ minWidth: 90 }}>Stock</th>
+                                                        <th style={{ minWidth: 150 }}>SKU</th>
+                                                        <th style={{ width: 70 }}>Active</th>
+                                                        <th style={{ width: 52 }}>
+                                                            <button type="button" className="btn btn-xs btn-primary" onClick={addVariant}>+</button>
+                                                        </th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    {formData.variants.map((v, i) => {
+                                                        const variantImage = v.imageUrl || formData.imageUrl || '/img/product-1.jpg';
+
+                                                        return (
+                                                            <tr key={i}>
+                                                                <td>
+                                                                    <img
+                                                                        src={variantImage}
+                                                                        alt={`Variant ${i + 1}`}
+                                                                        className="img-thumbnail"
+                                                                        style={{ width: 64, height: 64, objectFit: 'cover' }}
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        className="form-control form-control-sm mb-1"
+                                                                        placeholder="https://.../variant-image.jpg"
+                                                                        value={v.imageUrl}
+                                                                        onChange={e => setVariantField(i, 'imageUrl', e.target.value)}
+                                                                    />
+                                                                    <div className="btn-group btn-group-xs">
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-outline-secondary"
+                                                                            onClick={() => setVariantField(i, 'imageUrl', formData.imageUrl)}
+                                                                            disabled={!formData.imageUrl}
+                                                                        >
+                                                                            Use product image
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-outline-secondary"
+                                                                            onClick={() => setVariantField(i, 'imageUrl', '')}
+                                                                            disabled={!v.imageUrl}
+                                                                        >
+                                                                            Clear
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                                <td><input className="form-control form-control-sm" value={v.size} onChange={e => setVariantField(i, 'size', e.target.value)} /></td>
+                                                                <td><input className="form-control form-control-sm" value={v.color} onChange={e => setVariantField(i, 'color', e.target.value)} /></td>
+                                                                <td><input type="number" className="form-control form-control-sm" value={v.price} onChange={e => setVariantField(i, 'price', e.target.value)} /></td>
+                                                                <td><input type="number" className="form-control form-control-sm" value={v.salePrice} onChange={e => setVariantField(i, 'salePrice', e.target.value)} /></td>
+                                                                <td><input type="number" className="form-control form-control-sm" value={v.stockQuantity} onChange={e => setVariantField(i, 'stockQuantity', e.target.value)} /></td>
+                                                                <td><input className="form-control form-control-sm" value={v.sku} onChange={e => setVariantField(i, 'sku', e.target.value)} /></td>
+                                                                <td className="text-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={v.isActive}
+                                                                        onChange={e => setVariantField(i, 'isActive', e.target.checked)}
+                                                                    />
+                                                                </td>
+                                                                <td><button type="button" className="btn btn-xs btn-danger" onClick={() => removeVariant(i)} disabled={formData.variants.length <= 1}>x</button></td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     )}
                                     {modalTab === 'specs' && (
                                         <table className="table table-sm table-bordered">

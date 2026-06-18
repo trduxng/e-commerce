@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { productApi, addressApi, cartApi } from "../services/api";
+import { productApi } from "../services/api";
 import {
   formatCurrency,
   getProductCategoryName,
@@ -34,10 +34,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("description");
-  const [review, setReview] = useState({ rating: "5", comment: "" });
   const [reviewData, setReviewData] = useState(createEmptyReviewData());
   const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -150,56 +148,28 @@ const ProductDetail = () => {
     }
 
     const safeQty = getSafeQuantity(quantity);
-    const result = await addToCart(product, safeQty, selectedVariant?.id);
-    if (result.success) {
-      toast.success(result.message || "Product added to cart.");
-      navigate("/checkout");
+    if (stock !== null && safeQty > stock) {
+      setQuantity(String(Math.max(1, stock)));
+      toast.warning(`Cannot buy more than ${stock} item${stock === 1 ? "" : "s"} in stock.`);
       return;
     }
 
-    toast.error(result.message || "Cannot add this product.");
-  };
-
-  const submitReview = async (event) => {
-    event.preventDefault();
-    if (!isAuthenticated) {
-      const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-      toast.info("Please sign in before writing a review.");
-      navigate(`/login?returnUrl=${returnUrl}`);
-      return;
-    }
-
-    if (!reviewData.canWriteReview) {
-      toast.warning(reviewData.reviewEligibilityMessage || "Only customers who bought and received this product can write a review.");
-      return;
-    }
-
-    setSubmittingReview(true);
-    try {
-      const response = await productApi.saveReview(id, {
-        rating: Number(review.rating),
-        content: review.comment,
-      });
-      
-      toast.success("Review submitted! It will appear after admin approval.");
-      setReview({ rating: "5", comment: "" });
-      
-      // Reload reviews to show the updated list/status
-      const reviewResponse = await productApi.getReviews(id);
-      const nextReviewData = normalizeReviewData(reviewResponse.data);
-      setReviewData(nextReviewData);
-      
-      setProduct((current) => current ? {
-        ...current,
-        averageRating: nextReviewData.averageRating,
-        reviewCount: nextReviewData.totalCount,
-      } : current);
-      
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to submit review.");
-    } finally {
-      setSubmittingReview(false);
-    }
+    navigate("/checkout", {
+      state: {
+        buyNowItem: {
+          id: product.id,
+          productId: product.id,
+          productVariantId: selectedVariant?.id ?? null,
+          name: product.name,
+          price: selectedPrice,
+          imageUrl: selectedVariant?.imageUrl || selectedVariant?.image || getProductImage(product),
+          size: selectedVariant?.size || null,
+          color: selectedVariant?.color || null,
+          stock,
+          quantity: safeQty,
+        },
+      },
+    });
   };
 
   const setQuantitySafely = (value) => {
@@ -272,8 +242,6 @@ const ProductDetail = () => {
   if (!product) {
     return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">Product not found.</div></div>;
   }
-
-  const reviewAccessMessage = !isAuthenticated ? "Sign in to write a review." : !reviewData.canWriteReview ? reviewData.reviewEligibilityMessage : null;
 
   return (
     <>
@@ -404,23 +372,10 @@ const ProductDetail = () => {
                 )}
                 {activeTab === "reviews" && (
                   <div className="row">
-                    <div className="col-lg-5">
+                    <div className="col-lg-4">
                       <div className="review-summary"><strong>{rating.toFixed(1)}</strong><span>out of 5</span><p>{reviewCount} customer reviews</p></div>
                     </div>
-                    <div className="col-lg-7">
-                      <form className="review-form" onSubmit={submitReview}>
-                        <h4>Write a Review</h4>
-                        {reviewAccessMessage && <p className="review-access-note">{reviewAccessMessage}</p>}
-                        <div className="review-rating-control">
-                          {[1, 2, 3, 4, 5].map((value) => (
-                            <button key={value} type="button" className={value <= Number(review.rating) ? "is-active" : ""} disabled={!reviewData.canWriteReview} onClick={() => setReview((current) => ({ ...current, rating: String(value) }))}><i className="fa fa-star"></i></button>
-                          ))}
-                        </div>
-                        <textarea className="form-control" rows={4} placeholder="Share your experience" value={review.comment} onChange={(e) => setReview((c) => ({ ...c, comment: e.target.value }))} required disabled={!reviewData.canWriteReview} />
-                        <button className="btn btn-primary" disabled={!reviewData.canWriteReview || submittingReview}>{submittingReview ? "Saving..." : "Submit review"}</button>
-                      </form>
-                    </div>
-                    <div className="col-12 mt-4">
+                    <div className="col-lg-8">
                       <div className="review-list">
                         <h4>Customer Reviews</h4>
                         {reviewsLoading ? <p>Loading reviews...</p> : reviewData.items.length === 0 ? <p>No reviews yet.</p> : reviewData.items.map((item) => (
@@ -450,8 +405,8 @@ const getVariantStock = (variant) => { const s = Number(variant?.stockQuantity ?
 const getVariantPrice = (variant, product) => !variant ? (product?.price ?? product?.basePrice ?? 0) : (variant.salePrice ?? variant.price ?? product?.price ?? 0);
 const getSafeQuantity = (v) => { const q = Number(v); return Number.isFinite(q) && q > 0 ? Math.floor(q) : 1; };
 const normalizeImageUrl = (value) => String(value || "").trim().toLowerCase();
-const createEmptyReviewData = () => ({ averageRating: 0, totalCount: 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: [], canWriteReview: false, reviewEligibilityMessage: "Only customers who bought and received this product can write a review." });
-const normalizeReviewData = (data) => ({ averageRating: Number(data?.averageRating) || 0, totalCount: Number(data?.totalCount) || 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: Array.isArray(data?.items) ? data.items : [], canWriteReview: !!data?.canWriteReview, reviewEligibilityMessage: data?.reviewEligibilityMessage || "Only verified customers can write reviews." });
+const createEmptyReviewData = () => ({ averageRating: 0, totalCount: 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: [] });
+const normalizeReviewData = (data) => ({ averageRating: Number(data?.averageRating) || 0, totalCount: Number(data?.totalCount) || 0, breakdown: Array.isArray(data?.breakdown) ? data.breakdown : [], items: Array.isArray(data?.items) ? data.items : [] });
 const formatReviewDate = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN"); };
 
 export default ProductDetail;

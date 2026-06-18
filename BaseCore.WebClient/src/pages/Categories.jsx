@@ -272,7 +272,7 @@ const Categories = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+                <div className="modal fade show" style={{ display: 'block' }} tabIndex={-1}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -302,7 +302,7 @@ const Categories = () => {
                                             className="form-control"
                                             value={formData.description}
                                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                            rows="3"
+                                            rows={3}
                                         />
                                     </div>
                                 </div>

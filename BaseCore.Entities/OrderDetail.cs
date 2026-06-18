@@ -43,5 +43,11 @@ namespace BaseCore.Entities
 
         [NotMapped]
         public string? ProductImageUrl => ProductVariant?.ImageUrl ?? ProductVariant?.Product?.ImageUrl;
+
+        [NotMapped]
+        public bool IsReviewed { get; set; }
+
+        [NotMapped]
+        public long? ReviewId { get; set; }
     }
 }

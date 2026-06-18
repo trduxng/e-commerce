@@ -38,6 +38,7 @@ const Orders = () => {
     const [sortDir, setSortDir] = useState('desc');
     const [selectedIds, setSelectedIds] = useState([]);
     const [isSearchOpen, setIsSearchOpen] = useState(true);
+    const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
     useEffect(() => {
         loadOrders();
@@ -48,10 +49,15 @@ const Orders = () => {
         setError('');
 
         try {
-            // Mapping existing state to API if possible, else just pass what we have
             const response = await orderApi.getAll({
-                keyword: billingEmail || billingPhone || billingLastName || undefined, // Temp mapping
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
                 status: orderStatusIds || undefined,
+                paymentStatus: paymentStatusIds || undefined,
+                shippingStatus: shippingStatusIds || undefined,
+                billingEmail: billingEmail || undefined,
+                billingLastName: billingLastName || undefined,
+                billingPhone: billingPhone || undefined,
                 orderCode: goDirectlyToCustomOrderNumber || undefined,
                 sortField,
                 sortDir,
@@ -78,8 +84,11 @@ const Orders = () => {
 
     const handleSearch = (event) => {
         event.preventDefault();
-        setPage(1);
-        loadOrders();
+        if (page === 1) {
+            loadOrders();
+        } else {
+            setPage(1);
+        }
     };
 
     const handleSelectAll = (event) => {
@@ -97,6 +106,27 @@ const Orders = () => {
     };
 
     const getStatusMeta = (status) => orderStatuses.find((item) => item.value === status) || orderStatuses[0];
+
+    const updateStatus = async (order, status) => {
+        if (status === order.orderStatus) return;
+
+        setUpdatingOrderId(order.id);
+        setError('');
+
+        try {
+            const response = await orderApi.updateStatus(order.id, status);
+            const updatedOrder = response.data;
+            setOrders((current) => current.map((item) => (
+                Number(item.id) === Number(order.id)
+                    ? { ...item, ...updatedOrder }
+                    : item
+            )));
+        } catch (error) {
+            setError(error.response?.data?.message || 'Failed to update order status.');
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
 
     const renderPagination = () => {
         const pages = [];
@@ -373,9 +403,23 @@ const Orders = () => {
                                                                         </td>
                                                                         <td>{order.orderCode || order.id}</td>
                                                                         <td>
-                                                                            <span className={`grid-report-item ${getStatusMeta(order.orderStatus).badge.replace('badge-', 'text-')}`}>
-                                                                                {getStatusMeta(order.orderStatus).label}
-                                                                            </span>
+                                                                            <div className="d-flex align-items-center">
+                                                                                <span className={`grid-report-item mr-2 ${getStatusMeta(order.orderStatus).badge.replace('badge-', 'text-')}`}>
+                                                                                    {getStatusMeta(order.orderStatus).label}
+                                                                                </span>
+                                                                                <select
+                                                                                    className="custom-select custom-select-sm order-status-select"
+                                                                                    value={order.orderStatus || 'pending'}
+                                                                                    disabled={updatingOrderId === order.id}
+                                                                                    onChange={(event) => updateStatus(order, event.target.value)}
+                                                                                >
+                                                                                    {orderStatuses.map((status) => (
+                                                                                        <option key={status.value} value={status.value}>
+                                                                                            {status.label}
+                                                                                        </option>
+                                                                                    ))}
+                                                                                </select>
+                                                                            </div>
                                                                         </td>
                                                                         <td>{order.paymentMethod || 'Pending'}</td>
                                                                         <td>{order.orderStatus === 'shipping' || order.orderStatus === 'delivered' ? 'Shipped' : 'Not yet shipped'}</td>

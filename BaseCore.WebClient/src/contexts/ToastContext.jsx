@@ -33,7 +33,7 @@ export const ToastProvider = ({ children }) => {
   }, []);
 
   const showToast = useCallback(
-    ({ type = "info", title, message, duration = 4000, dedupeKey }) => {
+    ({ type = "info", title = null, message, duration = 4000, dedupeKey = null }) => {
       if (dedupeKey && dedupeKeys.current.has(dedupeKey)) {
         return null;
       }

@@ -340,6 +340,225 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         )}
+                        </div>
+                    )}
+
+                    {isAdmin() && (
+                        <div className="row">
+                            <div className="col-12">
+                                <div className="card">
+                                    <div className="card-header">
+                                        <h3 className="card-title">Recent Purchases</h3>
+                                    </div>
+                                    <div className="card-body table-responsive p-0">
+                                        <table className="table table-hover text-nowrap mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order Code</th>
+                                                    <th>Customer</th>
+                                                    <th>Phone</th>
+                                                    <th>Products</th>
+                                                    <th>Total</th>
+                                                    <th>Status</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {recentOrders.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={7} className="text-center py-4">No purchase data yet.</td>
+                                                    </tr>
+                                                ) : (
+                                                    recentOrders.map((order) => (
+                                                        <tr key={order.id}>
+                                                            <td>{order.orderCode}</td>
+                                                            <td>{order.receiverName}</td>
+                                                            <td>{order.receiverPhone}</td>
+                                                            <td>
+                                                                {getOrderDetails(order).map((detail) => (
+                                                                    <div key={detail.id || `${order.id}-${detail.productVariantId}`}>
+                                                                        {detail.productNameSnapshot} x {detail.quantity}
+                                                                    </div>
+                                                                ))}
+                                                            </td>
+                                                            <td>{formatCurrency(order.totalAmount)}</td>
+                                                            <td>
+                                                                <div className="d-flex align-items-center">
+                                                                    <span className={`badge mr-2 ${getStatusMeta(order.orderStatus).badge}`}>
+                                                                        {getStatusMeta(order.orderStatus).label}
+                                                                    </span>
+                                                                    <select
+                                                                        className="custom-select custom-select-sm order-status-select"
+                                                                        value={order.orderStatus}
+                                                                        disabled={updatingStatusId === order.id}
+                                                                        onChange={(event) => updateOrderStatus(order, event.target.value)}
+                                                                    >
+                                                                        {orderStatuses.map((status) => (
+                                                                            <option key={status.value} value={status.value}>
+                                                                                {status.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </td>
+                                                            <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : ''}</td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="row">
+                        <div className="col-12">
+                            <div className="card">
+                                <div className="card-header">
+                                    <h3 className="card-title">My Orders</h3>
+                                </div>
+                                <div className="card-body table-responsive p-0">
+                                    {orderError && <div className="alert alert-warning m-3">{orderError}</div>}
+                                    <table className="table table-hover text-nowrap mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Order Code</th>
+                                                <th>Receiver</th>
+                                                <th>Products</th>
+                                                <th>Total</th>
+                                                <th>Payment</th>
+                                                <th>Status</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {myOrders.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={8} className="text-center py-4">No orders found</td>
+                                                </tr>
+                                            ) : (
+                                                myOrders.map((order) => (
+                                                    <tr key={order.id}>
+                                                        <td>{order.orderCode}</td>
+                                                        <td>
+                                                            <div>{order.receiverName}</div>
+                                                            <small className="text-muted">{order.receiverPhone}</small>
+                                                        </td>
+                                                        <td>
+                                                            {getOrderDetails(order).map((detail) => (
+                                                                <div key={detail.id || `${order.id}-${detail.productVariantId}`}>
+                                                                    {detail.productNameSnapshot} x {detail.quantity}
+                                                                </div>
+                                                            ))}
+                                                        </td>
+                                                        <td>{formatCurrency(order.totalAmount)}</td>
+                                                        <td>{order.paymentMethod}</td>
+                                                        <td>
+                                                            <span className={`badge ${getStatusMeta(order.orderStatus).badge}`}>
+                                                                {getStatusMeta(order.orderStatus).label}
+                                                            </span>
+                                                        </td>
+                                                        <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : ''}</td>
+                                                        <td>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-primary mr-2"
+                                                                disabled={!canModifyOrder(order)}
+                                                                onClick={() => startEditOrder(order)}
+                                                            >
+                                                                <i className="fas fa-edit"></i>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-danger"
+                                                                disabled={!canModifyOrder(order) && order.orderStatus !== 'cancelled'}
+                                                                onClick={() => deleteOrder(order)}
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {editingOrder && (
+                                    <form className="card-body border-top" onSubmit={saveOrder}>
+                                        <h5 className="mb-3">Edit {editingOrder.orderCode}</h5>
+                                        <div className="row">
+                                            <div className="col-md-4 form-group">
+                                                <label>Receiver Name</label>
+                                                <input
+                                                    className="form-control"
+                                                    value={orderForm.receiverName}
+                                                    onChange={(event) => setOrderField('receiverName', event.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="col-md-4 form-group">
+                                                <label>Phone</label>
+                                                <input
+                                                    className="form-control"
+                                                    value={orderForm.receiverPhone}
+                                                    onChange={(event) => setOrderField('receiverPhone', event.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="col-md-4 form-group">
+                                                <label>Email</label>
+                                                <input
+                                                    className="form-control"
+                                                    type="email"
+                                                    value={orderForm.email}
+                                                    onChange={(event) => setOrderField('email', event.target.value)}
+                                                />
+                                            </div>
+                                            <div className="col-md-8 form-group">
+                                                <label>Shipping Address</label>
+                                                <input
+                                                    className="form-control"
+                                                    value={orderForm.shippingAddress}
+                                                    onChange={(event) => setOrderField('shippingAddress', event.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="col-md-4 form-group">
+                                                <label>Payment</label>
+                                                <select
+                                                    className="custom-select"
+                                                    value={orderForm.paymentMethod}
+                                                    onChange={(event) => setOrderField('paymentMethod', event.target.value)}
+                                                >
+                                                    <option value="cod">Cash on Delivery</option>
+                                                    <option value="banktransfer">Bank Transfer</option>
+                                                    <option value="paypal">Paypal</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-12 form-group">
+                                                <label>Note</label>
+                                                <textarea
+                                                    className="form-control"
+                                                    rows={3}
+                                                    value={orderForm.note}
+                                                    onChange={(event) => setOrderField('note', event.target.value)}
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                        <button className="btn btn-primary mr-2" type="submit" disabled={savingOrder}>
+                                            {savingOrder ? 'Saving...' : 'Save Order'}
+                                        </button>
+                                        <button className="btn btn-secondary" type="button" onClick={cancelEditOrder}>
+                                            Cancel
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
+                        </div>
+>>>>>>> 76372a3090e5c6212d2917ee03bebe61d663b860
                     </div>
 
                     {/* Charts & Analytics Section */}
