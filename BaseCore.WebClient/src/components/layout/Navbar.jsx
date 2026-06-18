@@ -40,7 +40,7 @@ const Navbar = () => {
             style={{ height: "65px", padding: "0 30px" }}
           >
             <h6 className="text-dark m-0">
-              <i className="fa fa-bars me-2"></i>Categories
+              <i className="fa fa-bars me-2"></i>Danh mục
             </h6>
             <i className={`fa ${categoriesOpen ? "fa-angle-up" : "fa-angle-down"} text-dark`}></i>
           </button>
@@ -76,7 +76,7 @@ const Navbar = () => {
               data-bs-target="#navbarCollapse"
               aria-controls="navbarCollapse"
               aria-expanded="false"
-              aria-label="Toggle navigation"
+              aria-label="Mở hoặc đóng menu điều hướng"
             >
               <span className="navbar-toggler-icon"></span>
             </button>
@@ -84,42 +84,42 @@ const Navbar = () => {
             <div className="collapse navbar-collapse justify-content-between" id="navbarCollapse">
               <div className="navbar-nav me-auto py-0">
                 <NavLink to="/" end className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                  Home
+                  Trang chủ
                 </NavLink>
                 <NavLink to="/shop" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                  Shop
+                  Cửa hàng
                 </NavLink>
                 <NavLink to="/cart" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                  Cart
+                  Giỏ hàng
                 </NavLink>
                 {isAuthenticated && (
                   <NavLink to="/favorites" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                    Favorites
+                    Yêu thích
                   </NavLink>
                 )}
                 {isAuthenticated && (
                   <NavLink to="/my-orders" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                    My Orders
+                    Đơn hàng của tôi
                   </NavLink>
                 )}
                 <NavLink to="/checkout" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                  Checkout
+                  Thanh toán
                 </NavLink>
                 <NavLink to="/contact" className={({ isActive }) => `nav-item nav-link ${isActive ? "active" : ""}`}>
-                  Contact
+                  Liên hệ
                 </NavLink>
               </div>
 
               <div className="navbar-nav ms-auto py-0 d-none d-lg-block">
                 {isAuthenticated && (
-                  <Link to="/favorites" className="cart-button ms-3" aria-label="Favorite products">
+                  <Link to="/favorites" className="cart-button ms-3" aria-label="Sản phẩm yêu thích">
                     <i className="fas fa-heart"></i>
                     <span className="badge">
                       {favoriteCount}
                     </span>
                   </Link>
                 )}
-                <Link to="/cart" className="cart-button ms-3" aria-label="Shopping cart">
+                <Link to="/cart" className="cart-button ms-3" aria-label="Giỏ hàng">
                   <i className="fas fa-shopping-cart"></i>
                   <span className="badge">
                     {count}

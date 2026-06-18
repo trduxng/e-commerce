@@ -11,7 +11,7 @@ export const SettingsProvider = ({ children }) => {
         logoUrl: '',
         contactEmail: 'info@baseshop.com',
         contactPhone: '+012 345 6789',
-        address: '123 Street, City, Country',
+        address: '123 Đường Nguyễn Huệ, Thành phố Hồ Chí Minh, Việt Nam',
         facebookLink: '#',
         twitterLink: '#',
         instagramLink: '#'
@@ -24,7 +24,7 @@ export const SettingsProvider = ({ children }) => {
                 setSettings(response.data);
             }
         } catch (error) {
-            console.error("Failed to load settings", error);
+            console.error("Không thể tải cấu hình cửa hàng", error);
         }
     };
 

@@ -35,6 +35,7 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] bool searchIncludeSubCategories,
             [FromQuery] int? manufacturerId,
             [FromQuery] int? publishedId,
+            [FromQuery] bool? isFeatured,
             [FromQuery] string? goDirectlyToSku,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
@@ -43,6 +44,11 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                publishedId = 1;
+            }
+
             var specFilters = new Dictionary<int, List<string>>();
             foreach (var key in Request.Query.Keys)
             {
@@ -59,6 +65,7 @@ namespace BaseCore.APIService.Controllers
                 searchIncludeSubCategories,
                 manufacturerId, 
                 publishedId,
+                isFeatured,
                 goDirectlyToSku,
                 specFilters.Any() ? specFilters : null,
                 minPrice, 
@@ -82,10 +89,11 @@ namespace BaseCore.APIService.Controllers
         /// Get product by ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(long id)
+        public async Task<IActionResult> GetById(long id, [FromQuery] bool includeInactive = false)
         {
             var product = await _productRepository.GetProductWithVariantsAsync(id);
-            if (product == null)
+            var canViewInactive = includeInactive && User.IsInRole("Admin");
+            if (product == null || (!product.IsActive && !canViewInactive))
                 return NotFound(new { message = "Product not found" });
 
             return Ok(product);

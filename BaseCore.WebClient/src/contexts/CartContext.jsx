@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { cartApi } from "../services/api";
+import { getApiErrorMessage, localizeApiMessage } from "../data/shopData";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
@@ -16,12 +17,6 @@ const normalizeItems = (data) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
   return [];
-};
-
-const getErrorMessage = (error, fallback) => {
-  const responseData = error?.response?.data;
-  if (typeof responseData === "string") return responseData;
-  return responseData?.message || fallback;
 };
 
 const getCartItemId = (item) => item?.cartItemId;
@@ -80,7 +75,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product, quantity = 1, productVariantId = null) => {
     if (!user) {
-      return { success: false, message: "Please sign in before adding products to cart." };
+      return { success: false, message: "Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ hàng." };
     }
 
     const safeQuantity = Math.max(1, Number(quantity) || 1);
@@ -93,11 +88,14 @@ export const CartProvider = ({ children }) => {
         quantity: safeQuantity,
       });
       applyCartResponse(response.data);
-      return { success: true, message: response.data?.message || "Product added to cart." };
+      return {
+        success: true,
+        message: localizeApiMessage(response.data?.message, "Đã thêm sản phẩm vào giỏ hàng."),
+      };
     } catch (error) {
       return {
         success: false,
-        message: getErrorMessage(error, "Cannot add this product."),
+        message: getApiErrorMessage(error, "Không thể thêm sản phẩm này vào giỏ hàng."),
       };
     }
   };
@@ -105,7 +103,7 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (id, quantity) => {
     const safeQuantity = Number(quantity);
     if (!Number.isFinite(safeQuantity) || safeQuantity < 1) {
-      return { success: false, message: "Quantity must be at least 1." };
+      return { success: false, message: "Số lượng phải từ 1 trở lên." };
     }
 
     try {
@@ -115,7 +113,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: getErrorMessage(error, "Cannot update cart item."),
+        message: getApiErrorMessage(error, "Không thể cập nhật sản phẩm trong giỏ hàng."),
       };
     }
   };
@@ -128,7 +126,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: getErrorMessage(error, "Cannot remove cart item."),
+        message: getApiErrorMessage(error, "Không thể xóa sản phẩm khỏi giỏ hàng."),
       };
     }
   };
@@ -148,7 +146,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: getErrorMessage(error, "Cannot clear cart."),
+        message: getApiErrorMessage(error, "Không thể xóa toàn bộ giỏ hàng."),
       };
     }
   };

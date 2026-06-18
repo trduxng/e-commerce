@@ -14,6 +14,7 @@ namespace BaseCore.Repository.EFCore
             bool searchIncludeSubCategories,
             int? manufacturerId,
             int? publishedId,
+            bool? isFeatured,
             string? goDirectlyToSku,
             Dictionary<int, List<string>>? specificationFilters,
             decimal? minPrice,
@@ -39,6 +40,7 @@ namespace BaseCore.Repository.EFCore
             bool searchIncludeSubCategories,
             int? manufacturerId,
             int? publishedId,
+            bool? isFeatured,
             string? goDirectlyToSku,
             Dictionary<int, List<string>>? specificationFilters,
             decimal? minPrice,
@@ -80,12 +82,17 @@ namespace BaseCore.Repository.EFCore
                 {
                     query = query.Where(p => p.ManufacturerId == manufacturerId);
                 }
+            }
 
-                if (publishedId.HasValue && publishedId > 0)
-                {
-                    if (publishedId == 1) query = query.Where(p => p.IsActive);
-                    else if (publishedId == 2) query = query.Where(p => !p.IsActive);
-                }
+            if (publishedId.HasValue && publishedId > 0)
+            {
+                if (publishedId == 1) query = query.Where(p => p.IsActive);
+                else if (publishedId == 2) query = query.Where(p => !p.IsActive);
+            }
+
+            if (isFeatured.HasValue)
+            {
+                query = query.Where(p => p.IsFeatured == isFeatured.Value);
             }
 
             if (specificationFilters != null && specificationFilters.Any())

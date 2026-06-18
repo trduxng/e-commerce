@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { favoriteApi } from "../services/api";
+import { getApiErrorMessage, localizeApiMessage } from "../data/shopData";
 import { useAuth } from "./AuthContext";
 
 const FavoriteContext = createContext(null);
@@ -15,12 +16,6 @@ export const useFavorites = () => {
 const normalizeIds = (data) => {
   if (!Array.isArray(data)) return [];
   return data.map((id) => Number(id)).filter((id) => Number.isFinite(id));
-};
-
-const getErrorMessage = (error, fallback) => {
-  const responseData = error?.response?.data;
-  if (typeof responseData === "string") return responseData;
-  return responseData?.message || responseData?.Message || fallback;
 };
 
 export const FavoriteProvider = ({ children }) => {
@@ -54,7 +49,7 @@ export const FavoriteProvider = ({ children }) => {
 
   const addFavorite = async (productId) => {
     if (!user) {
-      return { success: false, message: "Please sign in before adding favorites." };
+      return { success: false, message: "Vui lòng đăng nhập trước khi thêm sản phẩm yêu thích." };
     }
 
     try {
@@ -66,19 +61,22 @@ export const FavoriteProvider = ({ children }) => {
       return {
         success: true,
         isFavorite: true,
-        message: response.data?.message || response.data?.Message || "Product added to favorites.",
+        message: localizeApiMessage(
+          response.data?.message || response.data?.Message,
+          "Đã thêm sản phẩm vào danh sách yêu thích."
+        ),
       };
     } catch (error) {
       return {
         success: false,
-        message: getErrorMessage(error, "Cannot add product to favorites."),
+        message: getApiErrorMessage(error, "Không thể thêm sản phẩm vào danh sách yêu thích."),
       };
     }
   };
 
   const removeFavorite = async (productId) => {
     if (!user) {
-      return { success: false, message: "Please sign in before updating favorites." };
+      return { success: false, message: "Vui lòng đăng nhập trước khi cập nhật danh sách yêu thích." };
     }
 
     try {
@@ -87,12 +85,15 @@ export const FavoriteProvider = ({ children }) => {
       return {
         success: true,
         isFavorite: false,
-        message: response.data?.message || response.data?.Message || "Product removed from favorites.",
+        message: localizeApiMessage(
+          response.data?.message || response.data?.Message,
+          "Đã xóa sản phẩm khỏi danh sách yêu thích."
+        ),
       };
     } catch (error) {
       return {
         success: false,
-        message: getErrorMessage(error, "Cannot remove product from favorites."),
+        message: getApiErrorMessage(error, "Không thể xóa sản phẩm khỏi danh sách yêu thích."),
       };
     }
   };

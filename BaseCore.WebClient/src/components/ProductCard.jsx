@@ -53,13 +53,13 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-      toast.info("Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ.");
+      toast.info("Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ hàng.");
       navigate(`/login?returnUrl=${returnUrl}`);
       return;
     }
 
     const result = await addToCart(product);
-    const message = result.message || (result.success ? "Đã thêm sản phẩm vào giỏ." : "Không thể thêm sản phẩm này.");
+    const message = result.message || (result.success ? "Đã thêm sản phẩm vào giỏ hàng." : "Không thể thêm sản phẩm này.");
     if (result.success) {
       toast.success(message);
     } else {
@@ -86,7 +86,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
           <button
             type="button"
             className={`btn btn-square favorite-button ${favorite ? "is-favorite" : ""}`}
-            title={favorite ? "Xoá khỏi yêu thích" : "Thêm vào yêu thích"}
+            title={favorite ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
             aria-pressed={favorite}
             onClick={handleToggleFavorite}
           >
@@ -95,7 +95,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
           <button
             type="button"
             className="btn btn-outline-dark btn-square"
-            title={stock === 0 ? "Hết hàng" : "Thêm vào giỏ"}
+            title={stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
             disabled={stock === 0}
             onClick={handleAddToCart}
           >
@@ -136,7 +136,7 @@ const ProductCard = ({ product, onFavoriteChange = null }) => {
             onClick={handleAddToCart}
           >
             <i className="fa fa-cart-plus me-2"></i>
-            {hasMultipleVariants ? "Tuỳ chọn" : "Thêm vào giỏ"}
+            {hasMultipleVariants ? "Tuỳ chọn" : "Thêm vào giỏ hàng"}
           </button>
           <Link className="btn btn-outline-dark product-card-view" to={`/product/${product.id}`} aria-label={`Xem chi tiết ${product.name}`}>
             <i className="fa fa-arrow-right"></i>

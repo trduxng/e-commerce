@@ -16,7 +16,7 @@ const BackToTop = () => {
     <button
       className="back-to-top"
       type="button"
-      aria-label="Back to top"
+      aria-label="Lên đầu trang"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
     >
       <i className="fa fa-arrow-up"></i>

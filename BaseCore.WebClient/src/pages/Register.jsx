@@ -28,7 +28,7 @@ const Register = () => {
         setError('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Password confirmation does not match.');
+            setError('Mật khẩu xác nhận không khớp.');
             return;
         }
 
@@ -65,13 +65,13 @@ const Register = () => {
                 </div>
                 <div className="card">
                     <div className="card-body login-card-body">
-                        <p className="login-box-msg">Create an account to shop</p>
+                        <p className="login-box-msg">Tạo tài khoản để mua sắm</p>
 
                         {error && <div className="alert alert-danger">{error}</div>}
 
                         <form onSubmit={handleSubmit}>
                             <div className="input-group mb-3">
-                                <input className="form-control" name="name" placeholder="Full name" value={formData.name} onChange={handleChange} required />
+                                <input className="form-control" name="name" placeholder="Họ và tên" value={formData.name} onChange={handleChange} required />
                                 <div className="input-group-text"><span className="fas fa-user"></span></div>
                             </div>
                             <div className="input-group mb-3">
@@ -79,24 +79,24 @@ const Register = () => {
                                 <div className="input-group-text"><span className="fas fa-envelope"></span></div>
                             </div>
                             <div className="input-group mb-3">
-                                <input className="form-control" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} />
+                                <input className="form-control" name="phone" placeholder="Số điện thoại" value={formData.phone} onChange={handleChange} />
                                 <div className="input-group-text"><span className="fas fa-phone"></span></div>
                             </div>
                             <div className="input-group mb-3">
-                                <input className="form-control" type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required minLength={6} />
+                                <input className="form-control" type="password" name="password" placeholder="Mật khẩu" value={formData.password} onChange={handleChange} required minLength={6} />
                                 <div className="input-group-text"><span className="fas fa-lock"></span></div>
                             </div>
                             <div className="input-group mb-3">
-                                <input className="form-control" type="password" name="confirmPassword" placeholder="Confirm password" value={formData.confirmPassword} onChange={handleChange} required minLength={6} />
+                                <input className="form-control" type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" value={formData.confirmPassword} onChange={handleChange} required minLength={6} />
                                 <div className="input-group-text"><span className="fas fa-lock"></span></div>
                             </div>
                             <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-                                {loading ? <span className="spinner-border spinner-border-sm"></span> : 'Register'}
+                                {loading ? <span className="spinner-border spinner-border-sm"></span> : 'Đăng ký'}
                             </button>
                         </form>
 
                         <p className="mb-0 mt-3">
-                            <Link to={`/login${safeReturnUrl ? `?returnUrl=${encodeURIComponent(safeReturnUrl)}` : ''}`}>Already have an account?</Link>
+                            <Link to={`/login${safeReturnUrl ? `?returnUrl=${encodeURIComponent(safeReturnUrl)}` : ''}`}>Đã có tài khoản? Đăng nhập</Link>
                         </p>
                     </div>
                 </div>

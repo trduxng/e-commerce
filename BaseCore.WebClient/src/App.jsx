@@ -52,7 +52,7 @@ const PublicRoute = ({ children }) => {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
                 <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
+                    <span className="visually-hidden">Đang tải...</span>
                 </div>
             </div>
         );
@@ -128,7 +128,7 @@ function App() {
                                 <CartProvider>
                                     <FavoriteProvider>
                                         <ErrorBoundary>
-                                            <Suspense fallback={<div className="route-loading skeleton-block" aria-label="Loading page"></div>}>
+                                            <Suspense fallback={<div className="route-loading skeleton-block" aria-label="Đang tải trang"></div>}>
                                                 <AppRoutes />
                                             </Suspense>
                                         </ErrorBoundary>

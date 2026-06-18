@@ -11,11 +11,11 @@ export const useToast = () => {
 };
 
 const toastTitles = {
-  success: "Success",
-  error: "Something went wrong",
-  warning: "Notice",
-  info: "Information",
-  loading: "Working",
+  success: "Thành công",
+  error: "Đã xảy ra lỗi",
+  warning: "Lưu ý",
+  info: "Thông tin",
+  loading: "Đang xử lý",
 };
 
 export const ToastProvider = ({ children }) => {
@@ -92,7 +92,7 @@ export const ToastProvider = ({ children }) => {
               <strong>{toast.title}</strong>
               {toast.message && <span>{toast.message}</span>}
             </div>
-            <button type="button" className="app-toast-close" aria-label="Close notification" onClick={() => dismissToast(toast.id)}>
+            <button type="button" className="app-toast-close" aria-label="Đóng thông báo" onClick={() => dismissToast(toast.id)}>
               <i className="fa fa-times" aria-hidden="true"></i>
             </button>
           </div>

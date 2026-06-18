@@ -52,20 +52,34 @@ const ProductDetail = () => {
         setError("");
 
         const relatedResponse = await productApi.search({
+          publishedId: 1,
           categoryId: loadedProduct.categoryId || loadedProduct.category?.id || undefined,
           page: 1,
           pageSize: 5,
         });
-        setRelatedProducts(normalizeProductList(relatedResponse.data).filter((item) => Number(item.id) !== Number(id)).slice(0, 4));
-      } catch {
+        setRelatedProducts(
+          normalizeProductList(relatedResponse.data)
+            .filter((item) => item.isActive !== false && Number(item.id) !== Number(id))
+            .slice(0, 4)
+        );
+      } catch (requestError) {
+        if (requestError.response?.status === 404) {
+          setProduct(null);
+          setRelatedProducts([]);
+          setSelectedVariantId(null);
+          setActiveImage("");
+          setError("Sản phẩm không tồn tại hoặc hiện đã ngừng bán.");
+          return;
+        }
+
         const demoProduct = sampleProducts.find((item) => Number(item.id) === Number(id)) || sampleProducts[0];
         setProduct(demoProduct);
         setRelatedProducts(sampleProducts.filter((item) => Number(item.id) !== Number(demoProduct.id)).slice(0, 4));
         setSelectedVariantId(null);
         setActiveImage(getProductImage(demoProduct));
         setQuantity("1");
-        setError("API không khả dụng, sản phẩm này được hiển thị từ dữ liệu mẫu.");
-        toast.warning("API không khả dụng, sản phẩm này được hiển thị từ dữ liệu mẫu.", {
+        setError("Không thể kết nối API, sản phẩm này đang được hiển thị từ dữ liệu mẫu.");
+        toast.warning("Không thể kết nối API, sản phẩm này đang được hiển thị từ dữ liệu mẫu.", {
           dedupeKey: `product-api-fallback-${id}`,
         });
       } finally {
@@ -127,7 +141,7 @@ const ProductDetail = () => {
     const safeQty = getSafeQuantity(quantity);
     if (stock !== null && safeQty > stock) {
       setQuantity(String(Math.max(1, stock)));
-      toast.warning(`Không thể thêm quá ${stock} sản phẩm (số lượng tồn kho hiện tại).`);
+      toast.warning(`Không thể thêm quá ${stock} sản phẩm hiện có trong kho.`);
       return;
     }
 
@@ -150,7 +164,7 @@ const ProductDetail = () => {
     const safeQty = getSafeQuantity(quantity);
     if (stock !== null && safeQty > stock) {
       setQuantity(String(Math.max(1, stock)));
-      toast.warning(`Không thể mua quá ${stock} sản phẩm (số lượng tồn kho hiện tại).`);
+      toast.warning(`Không thể mua quá ${stock} sản phẩm hiện có trong kho.`);
       return;
     }
 
@@ -240,7 +254,7 @@ const ProductDetail = () => {
   }
 
   if (!product) {
-    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">Không tìm thấy sản phẩm.</div></div>;
+    return <div className="container-fluid py-5"><div className="alert alert-warning mx-xl-5">{error || "Không tìm thấy sản phẩm."}</div></div>;
   }
 
   return (
@@ -271,7 +285,7 @@ const ProductDetail = () => {
                     type="button"
                     className={`product-detail-thumb ${normalizeImageUrl(activeImage) === normalizeImageUrl(image) ? "is-active" : ""}`}
                     onClick={() => selectGalleryImage(image)}
-                    aria-label={`View ${product.name}`}
+                    aria-label={`Xem ${product.name}`}
                   >
                     <img src={image} alt={product.name} />
                   </button>
@@ -296,16 +310,16 @@ const ProductDetail = () => {
                 <h3>{formatCurrency(selectedPrice)}</h3>
                 {oldPrice && <del>{formatCurrency(oldPrice)}</del>}
               </div>
-              <p className="mb-4">{product.description || "Một sản phẩm chất lượng, phù hợp sử dụng hàng ngày."}</p>
-              <p className="mb-2"><strong>Thể loại:</strong> {getProductCategoryName(product, [])}</p>
-              <p className="mb-2"><strong>Tồn kho:</strong> {stock ?? "Có sẵn"}</p>
+              <p className="mb-4">{product.description || "Sản phẩm chất lượng, phù hợp cho nhu cầu sử dụng hằng ngày."}</p>
+              <p className="mb-2"><strong>Danh mục:</strong> {getProductCategoryName(product, [])}</p>
+              <p className="mb-2"><strong>Tồn kho:</strong> {stock ?? "Còn hàng"}</p>
               {selectedVariant?.sku && (
                 <p className="mb-4"><strong>SKU:</strong> {selectedVariant.sku}</p>
               )}
 
               {variants.length > 1 && variants.some(v => v.size || v.color) && (
                 <div className="mb-4">
-                  <strong className="d-block mb-2">Phân loại</strong>
+                  <strong className="d-block mb-2">Phân loại sản phẩm</strong>
                   <div className="d-flex flex-wrap" style={{ gap: 10 }}>
                     {variants.map((variant, index) => {
                       const variantStock = getVariantStock(variant);
@@ -338,7 +352,7 @@ const ProductDetail = () => {
                   <input type="text" className="form-control bg-white text-center text-dark" value={quantity} onChange={handleQuantityInput} onBlur={handleQuantityBlur} />
                   <button type="button" className="btn btn-primary btn-plus" disabled={!canIncreaseQuantity} onClick={() => setQuantitySafely(safeQuantity + 1)}><i className="fa fa-plus"></i></button>
                 </div>
-                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}><i className="fa fa-shopping-cart me-1"></i> Thêm vào giỏ</button>
+                <button type="button" className="btn btn-primary px-3" disabled={!canAddToCart} onClick={handleAddToCart}><i className="fa fa-shopping-cart me-1"></i> Thêm vào giỏ hàng</button>
                 <button type="button" className="btn btn-outline-primary px-3 ms-2 mb-2" disabled={!canAddToCart} onClick={handleBuyNow}><i className="fa fa-bolt me-1"></i> Mua ngay</button>
               </div>
             </div>
@@ -351,7 +365,7 @@ const ProductDetail = () => {
           <div className="col-12">
             <div className="product-tabs">
               <div className="product-tab-list" role="tablist">
-                {[{id: "description", label: "Mô tả"}, {id: "specifications", label: "Thông số"}, {id: "reviews", label: "Đánh giá"}].map((tab) => (
+                {[{id: "description", label: "Mô tả"}, {id: "specifications", label: "Thông số kỹ thuật"}, {id: "reviews", label: "Đánh giá"}].map((tab) => (
                   <button key={tab.id} className={activeTab === tab.id ? "is-active" : ""} type="button" role="tab" onClick={() => setActiveTab(tab.id)}>{tab.label}</button>
                 ))}
               </div>
@@ -359,7 +373,7 @@ const ProductDetail = () => {
                 {activeTab === "description" && (
                   <div>
                     <h4>Mô tả sản phẩm</h4>
-                    <p>{product.shortDescription || product.description || "Một sản phẩm chất lượng, phù hợp sử dụng hàng ngày."}</p>
+                    <p>{product.shortDescription || product.description || "Sản phẩm chất lượng, phù hợp cho nhu cầu sử dụng hằng ngày."}</p>
                   </div>
                 )}
                 {activeTab === "specifications" && (
@@ -367,8 +381,8 @@ const ProductDetail = () => {
                     <h4>Thông số kỹ thuật</h4>
                     <table className="table product-spec-table"><tbody>
                       {[
-                        ["Thương hiệu", product.manufacturer?.name || "BaseShop"],
-                        ["Mã sản phẩm", selectedVariant?.sku || product.slug || `Product-${product.id}`],
+                        ["Thương hiệu", product.manufacturer?.name || product.brand || "BaseShop"],
+                        ["Mã sản phẩm", selectedVariant?.sku || product.slug || `Sản phẩm-${product.id}`],
                       ].map(([label, value]) => <tr key={label}><th>{label}</th><td>{value}</td></tr>)}
                     </tbody></table>
                   </div>
@@ -409,7 +423,19 @@ const getVariantPrice = (variant, product) => !variant ? (product?.price ?? prod
 const getSafeQuantity = (v) => { const q = Number(v); return Number.isFinite(q) && q > 0 ? Math.floor(q) : 1; };
 const normalizeImageUrl = (value) => String(value || "").trim().toLowerCase();
 const createEmptyReviewData = () => ({ averageRating: 0, totalCount: 0, breakdown: [5, 4, 3, 2, 1].map(stars => ({ stars, count: 0, percentage: 0 })), items: [] });
-const normalizeReviewData = (data) => ({ averageRating: Number(data?.averageRating) || 0, totalCount: Number(data?.totalCount) || 0, breakdown: Array.isArray(data?.breakdown) ? data.breakdown : [], items: Array.isArray(data?.items) ? data.items : [] });
+const normalizeReviewData = (data) => ({
+  averageRating: Number(data?.averageRating) || 0,
+  totalCount: Number(data?.totalCount) || 0,
+  breakdown: Array.isArray(data?.breakdown) ? data.breakdown : [],
+  items: Array.isArray(data?.items)
+    ? data.items.map((item) => ({
+        ...item,
+        reviewerName: String(item.reviewerName || "").trim().toLowerCase() === "customer"
+          ? "Khách hàng"
+          : item.reviewerName,
+      }))
+    : [],
+});
 const formatReviewDate = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN"); };
 
 export default ProductDetail;

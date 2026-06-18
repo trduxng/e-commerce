@@ -15,36 +15,36 @@ import {
 const heroSlides = [
   {
     image: "/img/carousel-1.jpg",
-    badge: "New Collection",
-    title: "Fresh arrivals for everyday shopping",
-    description: "Discover quality products, simple checkout, and reliable service in one modern storefront.",
+    badge: "Bộ sưu tập mới",
+    title: "Sản phẩm mới mỗi ngày",
+    description: "Khám phá sản phẩm chất lượng, thanh toán đơn giản và dịch vụ đáng tin cậy trên một nền tảng mua sắm hiện đại.",
   },
   {
     image: "/img/carousel-2.jpg",
-    badge: "Easy Shopping",
-    title: "Curated products, simple checkout",
-    description: "Browse trending products and enjoy a smoother shopping experience from start to finish.",
+    badge: "Mua sắm dễ dàng",
+    title: "Sản phẩm tuyển chọn, thanh toán thuận tiện",
+    description: "Khám phá sản phẩm thịnh hành và tận hưởng trải nghiệm mua sắm liền mạch từ đầu đến cuối.",
   },
   {
     image: "/img/carousel-3.jpg",
-    badge: "Best Deals",
-    title: "Reliable deals from BaseCore Shop",
-    description: "Find everyday essentials and seasonal offers carefully selected for you.",
+    badge: "Ưu đãi hấp dẫn",
+    title: "Ưu đãi đáng tin cậy từ BaseCore Shop",
+    description: "Tìm kiếm sản phẩm thiết yếu và ưu đãi theo mùa được tuyển chọn dành riêng cho bạn.",
   },
 ];
 
 const features = [
-  ["fa-check", "Quality Product", "Carefully selected products"],
-  ["fa-shipping-fast", "Fast Shipping", "Quick and reliable delivery"],
-  ["fa-exchange-alt", "14-Day Return", "Easy return policy"],
-  ["fa-phone-volume", "24/7 Support", "Always ready to help"],
+  ["fa-check", "Sản phẩm chất lượng", "Sản phẩm được tuyển chọn kỹ lưỡng"],
+  ["fa-shipping-fast", "Giao hàng nhanh", "Giao hàng nhanh chóng và đáng tin cậy"],
+  ["fa-exchange-alt", "Đổi trả trong 14 ngày", "Chính sách đổi trả dễ dàng"],
+  ["fa-phone-volume", "Hỗ trợ 24/7", "Luôn sẵn sàng hỗ trợ"],
 ];
 
 const categoryImages = [
-  "/img/cat-1.jpg",
-  "/img/product-6.jpg",
-  "/img/cat-2.jpg",
-  "/img/product-3.jpg",
+  "/img/sg-11134301-82253-mhfmag7x8sncbb.webp",
+  "/img/product-4.jpg",
+  "/img/vn-11134207-81ztc-mm5wbr3xuqro8b.webp",
+  "/img/vn-11134207-81ztc-mp3p9dzmknwte0.webp",
   "/img/cat-4.jpg",
   "/img/product-8.jpg",
 ];
@@ -53,6 +53,7 @@ const Home = () => {
   const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -60,25 +61,37 @@ const Home = () => {
     const loadHomeData = async () => {
       setLoading(true);
       try {
-        const [categoriesResponse, productsResponse] = await Promise.all([
+        const [categoriesResponse, productsResponse, featuredProductsResponse] = await Promise.all([
           categoryApi.getAll(),
-          productApi.getAll({ page: 1, pageSize: 12 }),
+          productApi.getAll({ publishedId: 1, page: 1, pageSize: 12 }),
+          productApi.getAll({
+            publishedId: 1,
+            isFeatured: true,
+            sortField: "id",
+            sortDir: "desc",
+            page: 1,
+            pageSize: 8,
+          }),
         ]);
 
         const apiCategories = normalizeCategoryList(categoriesResponse.data);
-
         const apiProducts = normalizeProductList(productsResponse.data);
+        const apiFeaturedProducts = normalizeProductList(featuredProductsResponse.data)
+          .filter((product) => product.isFeatured && product.isActive !== false)
+          .slice(0, 8);
 
         setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
         setProducts(apiProducts.length > 0 ? apiProducts : sampleProducts);
+        setFeaturedProducts(apiFeaturedProducts);
         setError("");
       } catch {
         setCategories(sampleCategories);
         setProducts(sampleProducts);
+        setFeaturedProducts(sampleProducts.slice(0, 8));
         setError(
-          "API is not available, so the storefront is showing demo products."
+          "Không thể kết nối API, cửa hàng đang hiển thị sản phẩm mẫu."
         );
-        toast.warning("API is not available, so the storefront is showing demo products.", {
+        toast.warning("Không thể kết nối API, cửa hàng đang hiển thị sản phẩm mẫu.", {
           dedupeKey: "home-api-fallback",
         });
       } finally {
@@ -89,10 +102,6 @@ const Home = () => {
     loadHomeData();
   }, [toast]);
 
-  const featuredProducts = useMemo(() => {
-    const featured = products.filter((product) => product.isFeatured);
-    return (featured.length > 0 ? featured : products).slice(0, 8);
-  }, [products]);
   const newProducts = useMemo(
     () =>
       [...products]
@@ -135,7 +144,7 @@ const Home = () => {
                     data-bs-slide-to={index}
                     className={index === 0 ? "active" : ""}
                     aria-current={index === 0 ? "true" : undefined}
-                    aria-label={`Slide ${index + 1}`}
+                    aria-label={`Trang trình chiếu ${index + 1}`}
                   />
                 ))}
               </ol>
@@ -157,25 +166,25 @@ const Home = () => {
                         <div className="home-actions">
                           <Link className="btn btn-primary btn-lg" to="/shop">
                             <i className="fas fa-bag-shopping me-2"></i>
-                            Shop Now
+                            Mua ngay
                           </Link>
                           <Link className="btn btn-outline-light btn-lg" to="/shop">
-                            Explore Products
+                            Khám phá sản phẩm
                           </Link>
                         </div>
 
-                        <div className="hero-metrics" aria-label="Store highlights">
+                        <div className="hero-metrics" aria-label="Điểm nổi bật của cửa hàng">
                           <div>
-                            <strong>1K+</strong>
-                            <span>Products</span>
+                            <strong>1000+</strong>
+                            <span>Sản phẩm</span>
                           </div>
                           <div>
-                            <strong>24h</strong>
-                            <span>Support</span>
+                            <strong>24/7</strong>
+                            <span>Hỗ trợ</span>
                           </div>
                           <div>
                             <strong>4.8</strong>
-                            <span>Rating</span>
+                            <span>Đánh giá</span>
                           </div>
                         </div>
                       </div>
@@ -188,23 +197,23 @@ const Home = () => {
 
           <div className="col-lg-4 mt-4 mt-lg-0">
             <div className="offer-card offer-card-large mb-4">
-              <img src="/img/offer-1.jpg" alt="Special offer" />
+              <img src="/img/offer-1.jpg" alt="Ưu đãi đặc biệt" />
               <div className="offer-content">
-                <span>Save 20%</span>
-                <h3>Special Offer</h3>
+                <span>Giảm giá 20%</span>
+                <h3>Ưu đãi đặc biệt</h3>
                 <Link to="/shop" className="btn btn-light">
-                  Shop Now
+                  Mua ngay
                 </Link>
               </div>
             </div>
 
             <div className="offer-card">
-              <img src="/img/offer-2.jpg" alt="Latest products" />
+              <img src="/img/offer-2.jpg" alt="Sản phẩm mới nhất" />
               <div className="offer-content">
-                <span>New Season</span>
-                <h3>Latest Products</h3>
+                <span>Bộ sưu tập mới</span>
+                <h3>Sản phẩm mới nhất</h3>
                 <Link to="/shop" className="btn btn-light">
-                  Shop Now
+                  Mua ngay
                 </Link>
               </div>
             </div>
@@ -233,10 +242,10 @@ const Home = () => {
 
       <section className="container-fluid section-block">
         <div className="section-heading">
-          <span className="section-kicker">Shop by category</span>
-          <h2 className="section-title-modern">Popular Categories</h2>
+          <span className="section-kicker">Mua sắm theo danh mục</span>
+          <h2 className="section-title-modern">Danh mục phổ biến</h2>
           <p className="section-subtitle">
-            Explore product collections made for everyday shopping
+            Khám phá các bộ sưu tập phù hợp với nhu cầu mua sắm hằng ngày
           </p>
         </div>
 
@@ -247,7 +256,7 @@ const Home = () => {
             </div>
           )}
 
-          {topCategories.length === 0 && <div className="col-12"><div className="empty-state">No categories available.</div></div>}
+          {topCategories.length === 0 && <div className="col-12"><div className="empty-state">Chưa có danh mục nào.</div></div>}
           {topCategories.map((category, index) => (
             <div key={category.id} className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
               <Link className="category-card text-decoration-none" to={`/shop?categoryId=${category.id}`}>
@@ -257,7 +266,7 @@ const Home = () => {
 
                 <div className="category-meta">
                   <h5>{category.name}</h5>
-                  <span>View products</span>
+                  <span>Xem sản phẩm</span>
                 </div>
               </Link>
             </div>
@@ -267,10 +276,10 @@ const Home = () => {
 
       <section className="container-fluid section-block">
         <div className="section-heading">
-          <span className="section-kicker">Hand picked</span>
-          <h2 className="section-title-modern">Featured Products</h2>
+          <span className="section-kicker">Tuyển chọn dành cho bạn</span>
+          <h2 className="section-title-modern">Sản phẩm nổi bật</h2>
           <p className="section-subtitle">
-            Discover products selected for quality, style, and value
+            Khám phá sản phẩm được lựa chọn dựa trên chất lượng, phong cách và giá trị
           </p>
         </div>
 
@@ -279,7 +288,7 @@ const Home = () => {
             <ProductSkeletonGrid count={8} />
           ) : featuredProducts.length === 0 ? (
             <div className="col-12">
-              <div className="empty-state">No products found in database.</div>
+              <div className="empty-state">Không tìm thấy sản phẩm trong hệ thống.</div>
             </div>
           ) : (
             featuredProducts.map((product) => (
@@ -292,10 +301,10 @@ const Home = () => {
       </section>
       <section className="container-fluid section-block">
         <div className="section-heading">
-          <span className="section-kicker">Just arrived</span>
-          <h2 className="section-title-modern">New Products</h2>
+          <span className="section-kicker">Hàng mới về</span>
+          <h2 className="section-title-modern">Sản phẩm mới</h2>
           <p className="section-subtitle">
-            Fresh picks ready for quick browsing and checkout
+            Những lựa chọn mới sẵn sàng để bạn khám phá và thanh toán nhanh chóng
           </p>
         </div>
 
@@ -310,10 +319,10 @@ const Home = () => {
 
       <section className="container-fluid section-block">
         <div className="section-heading">
-          <span className="section-kicker">Customer favorites</span>
-          <h2 className="section-title-modern">Best Selling</h2>
+          <span className="section-kicker">Được khách hàng yêu thích</span>
+          <h2 className="section-title-modern">Sản phẩm bán chạy</h2>
           <p className="section-subtitle">
-            Popular products with strong value and everyday appeal
+            Những sản phẩm phổ biến, thiết thực và có giá trị vượt trội
           </p>
         </div>
 
@@ -328,8 +337,8 @@ const Home = () => {
 
       <section className="container-fluid section-block">
         <div className="section-heading">
-          <span className="section-kicker">Trusted brands</span>
-          <h2 className="section-title-modern">Our Vendors</h2>
+          <span className="section-kicker">Thương hiệu uy tín</span>
+          <h2 className="section-title-modern">Đối tác của chúng tôi</h2>
         </div>
 
         <div className="row px-xl-5">
@@ -338,7 +347,7 @@ const Home = () => {
               <div className="vendor-card">
                 <img
                   src={`/img/vendor-${number}.jpg`}
-                  alt={`Vendor ${number}`}
+                  alt={`Đối tác ${number}`}
                   className="img-fluid"
                 />
               </div>
