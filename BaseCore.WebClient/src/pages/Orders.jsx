@@ -4,7 +4,7 @@ import { formatCurrency } from '../data/shopData';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const removeVietnameseTones = (str) => {
     if (!str) return '';
@@ -289,7 +289,7 @@ const Orders = () => {
             tableRows.push(rowData);
         });
 
-        doc.autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 50,

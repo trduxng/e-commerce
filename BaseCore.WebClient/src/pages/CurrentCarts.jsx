@@ -1,6 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { orderApi } from '../services/api';
 import { formatCurrency, getApiErrorMessage } from '../data/shopData';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const removeVietnameseTones = (str) => {
+    if (!str) return "";
+    str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+    str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+    str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+    str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+    str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+    str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+    str = str.replace(/đ/g, "d");
+    str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+    str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+    str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+    str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+    str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+    str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+    str = str.replace(/Đ/g, "D");
+    str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, "");
+    str = str.replace(/\u02C6|\u0306|\u031B/g, "");
+    return str;
+};
 
 const returnStatuses = {
     return_requested: { label: 'Chờ xử lý', className: 'badge-info' },
@@ -18,6 +42,13 @@ const CurrentCarts = () => {
     const [status, setStatus] = useState('return_requested');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [billingEmail, setBillingEmail] = useState('');
+    const [billingPhone, setBillingPhone] = useState('');
+    const [goDirectlyToCustomOrderNumber, setGoDirectlyToCustomOrderNumber] = useState('');
 
     useEffect(() => {
         loadReturnRequests();
@@ -32,6 +63,12 @@ const CurrentCarts = () => {
                 status,
                 page,
                 pageSize,
+                search: searchTerm,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+                billingEmail: billingEmail || undefined,
+                billingPhone: billingPhone || undefined,
+                orderCode: goDirectlyToCustomOrderNumber || undefined,
                 sortField: 'updated',
                 sortDir: 'desc',
             });
@@ -81,6 +118,84 @@ const CurrentCarts = () => {
     const getOrderDetails = (order) => order.orderDetails || order.details || [];
     const totalPages = Math.ceil(totalCount / pageSize);
 
+    const getStatusLabel = (s) => returnStatuses[s]?.label || s;
+
+    const exportToExcel = () => {
+        if (orders.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        const data = orders.map(o => ({
+            'ID': o.id,
+            'Mã đơn': o.orderCode || o.id,
+            'Người nhận': o.receiverName,
+            'SĐT': o.receiverPhone,
+            'Tổng tiền': o.totalAmount,
+            'Trạng thái': getStatusLabel(o.orderStatus),
+            'Ngày tạo': o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : ''
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Returns');
+        XLSX.writeFile(workbook, 'Danh_sach_quan_ly_tra_hang.xlsx');
+    };
+
+    const exportToXml = () => {
+        if (orders.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        let xml = '<?xml version="1.0" encoding="UTF-8"?><Returns>\n';
+        orders.forEach(o => {
+            xml += `  <Return>\n`;
+            xml += `    <Id>${o.id}</Id>\n`;
+            xml += `    <OrderCode>${o.orderCode || o.id}</OrderCode>\n`;
+            xml += `    <ReceiverName>${o.receiverName}</ReceiverName>\n`;
+            xml += `    <TotalAmount>${o.totalAmount}</TotalAmount>\n`;
+            xml += `    <OrderStatus>${getStatusLabel(o.orderStatus)}</OrderStatus>\n`;
+            xml += `  </Return>\n`;
+        });
+        xml += '</Returns>';
+        const blob = new Blob([xml], { type: 'text/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Danh_sach_quan_ly_tra_hang.xml';
+        a.click();
+    };
+
+    const exportToPdf = () => {
+        if (orders.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        const doc = new jsPDF('p', 'pt', 'a4');
+        doc.text(removeVietnameseTones('Danh sach quan ly tra hang'), 40, 40);
+        
+        const tableColumn = ["Ma don", removeVietnameseTones("Khach hang"), "SDT", removeVietnameseTones("Tong tien"), removeVietnameseTones("Trang thai")];
+        const tableRows = [];
+
+        orders.forEach(o => {
+            const rowData = [
+                o.orderCode || o.id,
+                removeVietnameseTones(o.receiverName),
+                o.receiverPhone,
+                formatCurrency(o.totalAmount),
+                removeVietnameseTones(getStatusLabel(o.orderStatus))
+            ];
+            tableRows.push(rowData);
+        });
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+            styles: { font: 'helvetica' }
+        });
+        
+        doc.save('Danh_sach_quan_ly_tra_hang.pdf');
+    };
+
     return (
         <div className="content-wrapper">
             <div className="content-header">
@@ -91,9 +206,36 @@ const CurrentCarts = () => {
                             Duyệt hoàn tiền và khôi phục tồn kho cho đơn khách yêu cầu trả.
                         </div>
                     </div>
-                    <button className="btn btn-outline-primary" type="button" onClick={loadReturnRequests}>
-                        <i className="fas fa-sync-alt mr-2"></i>Làm mới
-                    </button>
+                    <div>
+                        <div className="btn-group mr-2">
+                            <button type="button" className="btn btn-success" onClick={exportToExcel}>
+                                <i className="fas fa-download"></i> Xuất file
+                            </button>
+                            <button type="button" className="btn btn-success dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
+                                <span className="sr-only">&nbsp;</span>
+                            </button>
+                            <ul className="dropdown-menu" role="menu">
+                                <li className="dropdown-item">
+                                    <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={exportToXml}>
+                                        <i className="far fa-file-code"></i> Xuất XML
+                                    </button>
+                                </li>
+                                <li className="dropdown-item">
+                                    <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={exportToExcel}>
+                                        <i className="far fa-file-excel"></i> Xuất Excel
+                                    </button>
+                                </li>
+                                <li className="dropdown-item">
+                                    <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={exportToPdf}>
+                                        <i className="far fa-file-pdf"></i> Xuất PDF
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        <button className="btn btn-outline-primary" type="button" onClick={loadReturnRequests}>
+                            <i className="fas fa-sync-alt mr-2"></i>Làm mới
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -101,6 +243,82 @@ const CurrentCarts = () => {
                 <div className="container-fluid">
                     {error && <div className="alert alert-danger">{error}</div>}
                     {success && <div className="alert alert-success">{success}</div>}
+
+                    <div className="form-horizontal">
+                        <div className="cards-group">
+                            <div className="card card-default card-search">
+                                <div className="card-body">
+                                    <div className={`row search-row ${isSearchOpen ? 'opened' : ''}`} onClick={() => setIsSearchOpen(!isSearchOpen)} style={{ cursor: 'pointer' }}>
+                                        <div className="search-text">Tìm kiếm</div>
+                                        <div className="icon-search"><i className="fas fa-search" aria-hidden="true"></i></div>
+                                        <div className="icon-collapse"><i className={`fas fa-angle-${isSearchOpen ? 'up' : 'down'}`} aria-hidden="true"></i></div>
+                                    </div>
+
+                                    <div className={`search-body ${isSearchOpen ? '' : 'closed'}`} style={{ display: isSearchOpen ? 'block' : 'none' }}>
+                                        <div className="row">
+                                            <div className="col-md-5">
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">Từ ngày</label></div>
+                                                    </div>
+                                                    <div className="col-md-8">
+                                                        <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                                                    </div>
+                                                </div>
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">Đến ngày</label></div>
+                                                    </div>
+                                                    <div className="col-md-8">
+                                                        <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-7">
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">Email thanh toán</label></div>
+                                                    </div>
+                                                    <div className="col-md-8">
+                                                        <input type="text" className="form-control" value={billingEmail} onChange={e => setBillingEmail(e.target.value)} />
+                                                    </div>
+                                                </div>
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">SĐT người nhận</label></div>
+                                                    </div>
+                                                    <div className="col-md-8">
+                                                        <input type="text" className="form-control" value={billingPhone} onChange={e => setBillingPhone(e.target.value)} />
+                                                    </div>
+                                                </div>
+                                                <div className="form-group row">
+                                                    <div className="col-md-4">
+                                                        <div className="label-wrapper"><label className="col-form-label">Đi tới đơn hàng #</label></div>
+                                                    </div>
+                                                    <div className="col-md-8">
+                                                        <div className="input-group input-group-short">
+                                                            <input type="text" className="form-control" value={goDirectlyToCustomOrderNumber} onChange={e => setGoDirectlyToCustomOrderNumber(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); loadReturnRequests(); } }} />
+                                                            <span className="input-group-append">
+                                                                <button type="button" className="btn btn-info btn-flat" disabled={loading} onClick={() => { setPage(1); loadReturnRequests(); }}>Đi</button>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row">
+                                            <div className="text-center col-12">
+                                                <button type="button" className="btn btn-primary btn-search" disabled={loading} onClick={() => { setPage(1); loadReturnRequests(); }}>
+                                                    {loading ? <i className="fas fa-spinner fa-spin mr-1"></i> : <i className="fas fa-search mr-1"></i>}
+                                                    Tìm kiếm
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="card">
                         <div className="card-header d-flex flex-wrap align-items-center">
@@ -121,6 +339,18 @@ const CurrentCarts = () => {
                                 ))}
                             </div>
                             <div className="ml-auto d-flex align-items-center">
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm mr-3"
+                                    placeholder="Tìm nhanh..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); loadReturnRequests(); } }}
+                                    style={{ width: '200px' }}
+                                />
+                                <button className="btn btn-sm btn-outline-secondary mr-3" onClick={() => { setPage(1); loadReturnRequests(); }}>
+                                    <i className="fas fa-search"></i>
+                                </button>
                                 <span className="text-muted mr-2">Hiển thị</span>
                                 <select
                                     className="form-control form-control-sm"

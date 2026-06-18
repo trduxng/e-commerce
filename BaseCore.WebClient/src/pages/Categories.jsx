@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { categoryApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-
+import { utils, writeFile } from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { removeVietnameseTones } from './Products';
 const Categories = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -120,6 +123,44 @@ const Categories = () => {
         }
     };
 
+    const exportToPdf = () => {
+        const doc = new jsPDF('p', 'pt', 'a4');
+        doc.text(removeVietnameseTones('Danh sach danh muc'), 40, 40);
+        
+        const tableColumn = ["ID", removeVietnameseTones("Ten danh muc"), removeVietnameseTones("Mo ta")];
+        const tableRows = [];
+
+        categories.forEach(c => {
+            const rowData = [
+                c.id,
+                removeVietnameseTones(c.name),
+                removeVietnameseTones(c.description || '')
+            ];
+            tableRows.push(rowData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+        });
+
+        doc.save('categories_export.pdf');
+    };
+
+    const exportToExcel = () => {
+        const exportData = categories.map(c => ({
+            'ID': c.id,
+            'Tên danh mục': c.name,
+            'Mô tả': c.description || ''
+        }));
+        
+        const worksheet = utils.json_to_sheet(exportData);
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, "Categories");
+        writeFile(workbook, "categories_export.xlsx");
+    };
+
     const renderPagination = () => {
         const pages = [];
         for (let i = 1; i <= totalPages; i++) {
@@ -187,8 +228,14 @@ const Categories = () => {
                                     </form>
                                 </div>
                                 <div className="col-md-5 text-right">
+                                    <button className="btn bg-info mr-1" onClick={exportToPdf}>
+                                        <i className="fas fa-download"></i> Tải PDF
+                                    </button>
+                                    <button className="btn btn-success mr-1" onClick={exportToExcel}>
+                                        <i className="far fa-file-excel"></i> Xuất Excel
+                                    </button>
                                     {isStaff() && (
-                                        <button className="btn btn-success" onClick={() => openModal()}>
+                                        <button className="btn btn-primary" onClick={() => openModal()}>
                                             <i className="fas fa-plus"></i> Thêm Danh mục
                                         </button>
                                     )}

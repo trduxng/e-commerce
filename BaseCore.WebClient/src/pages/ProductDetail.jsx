@@ -324,18 +324,57 @@ const ProductDetail = () => {
                 <p className="mb-4"><strong>SKU:</strong> {selectedVariant.sku}</p>
               )}
 
-              {variants.length > 1 && (
+              {(sizeOptions.length > 0 || colorOptions.length > 0) ? (
+                <div className="mb-4">
+                  {sizeOptions.length > 0 && (
+                    <div className="mb-3">
+                      <strong className="d-block mb-2">Kích thước</strong>
+                      <div className="d-flex flex-wrap" style={{ gap: 8 }}>
+                        {sizeOptions.map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            className={`btn ${normalizeVariantValue(selectedSize) === normalizeVariantValue(size) ? "btn-primary" : "btn-outline-secondary"}`}
+                            disabled={!optionHasStock("size", size)}
+                            onClick={() => selectVariant("size", size)}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {colorOptions.length > 0 && (
+                    <div className="mb-3">
+                      <strong className="d-block mb-2">Màu sắc</strong>
+                      <div className="d-flex flex-wrap" style={{ gap: 8 }}>
+                        {colorOptions.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            className={`btn ${normalizeVariantValue(selectedColor) === normalizeVariantValue(color) ? "btn-primary" : "btn-outline-secondary"}`}
+                            disabled={!optionHasStock("color", color)}
+                            onClick={() => selectVariant("color", color)}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : variants.length > 1 ? (
                 <div className="mb-4">
                   <strong className="d-block mb-2">Phân loại sản phẩm</strong>
                   <div className="d-flex flex-wrap" style={{ gap: 10 }}>
                     {variants.map((variant, index) => {
                       const variantStock = getVariantStock(variant);
-                      const variantLabel = [variant.size, variant.color].filter(Boolean).join(" / ") || `Mẫu ${index + 1}`;
+                      const variantLabel = `Mẫu ${index + 1}`;
                       const isSelected = selectedVariant?.id === variant.id;
 
                       return (
                         <button
-                          key={variant.id ?? `${variant.sku}-${index}`}
+                          key={variant.id ?? index}
                           type="button"
                           className={`btn d-flex align-items-center text-left ${isSelected ? "btn-primary" : "btn-outline-secondary"}`}
                           disabled={variantStock === 0}
@@ -351,7 +390,7 @@ const ProductDetail = () => {
                     })}
                   </div>
                 </div>
-              )}
+              ) : null}
                
               <div className="d-flex align-items-center flex-wrap mb-4 pt-2">
                 <div className="input-group quantity me-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>

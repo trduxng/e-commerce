@@ -2,6 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { orderApi } from '../services/api';
 import { formatCurrency } from '../data/shopData';
 import { Link } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+const removeVietnameseTones = (str) => {
+    if (!str) return "";
+    str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+    str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+    str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+    str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+    str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+    str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+    str = str.replace(/đ/g, "d");
+    str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+    str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+    str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+    str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+    str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+    str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+    str = str.replace(/Đ/g, "D");
+    // Remove combined accents
+    str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, "");
+    str = str.replace(/\u02C6|\u0306|\u031B/g, "");
+    return str;
+};
 
 const orderStatuses = [
     { value: 'pending', label: 'Chờ duyệt', badge: 'badge-warning' },
@@ -183,6 +208,136 @@ const Returns = () => {
         }
     };
 
+    const exportToExcel = (selectedOnly = false) => {
+        const dataToExport = selectedOnly ? orders.filter(o => selectedIds.includes(o.id)) : orders;
+        if (dataToExport.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        
+        const data = dataToExport.map(o => ({
+            'ID': o.id,
+            'Mã đơn': o.orderCode || o.id,
+            'Người nhận': o.receiverName,
+            'SĐT': o.receiverPhone,
+            'Email': o.receiverEmail || o.guestEmail || '',
+            'Địa chỉ': o.shippingAddressFull || o.receiverAddress || '',
+            'Tổng tiền': o.totalAmount,
+            'Trạng thái': getStatusMeta(o.orderStatus).label,
+            'Thanh toán': o.paymentMethod || '',
+            'Ngày tạo': o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : ''
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Returns');
+        XLSX.writeFile(workbook, 'Danh_sach_yeu_cau_tra_hang.xlsx');
+    };
+
+    const exportToXml = (selectedOnly = false) => {
+        const dataToExport = selectedOnly ? orders.filter(o => selectedIds.includes(o.id)) : orders;
+        if (dataToExport.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        let xml = '<?xml version="1.0" encoding="UTF-8"?><Returns>\n';
+        dataToExport.forEach(o => {
+            xml += `  <Return>\n`;
+            xml += `    <Id>${o.id}</Id>\n`;
+            xml += `    <OrderCode>${o.orderCode || o.id}</OrderCode>\n`;
+            xml += `    <ReceiverName>${o.receiverName}</ReceiverName>\n`;
+            xml += `    <ReceiverPhone>${o.receiverPhone}</ReceiverPhone>\n`;
+            xml += `    <TotalAmount>${o.totalAmount}</TotalAmount>\n`;
+            xml += `    <OrderStatus>${o.orderStatus}</OrderStatus>\n`;
+            xml += `  </Return>\n`;
+        });
+        xml += '</Returns>';
+        const blob = new Blob([xml], { type: 'text/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Danh_sach_yeu_cau_tra_hang.xml';
+        a.click();
+    };
+
+    const exportToPdf = (selectedOnly = false) => {
+        const dataToExport = selectedOnly ? orders.filter(o => selectedIds.includes(o.id)) : orders;
+        if (dataToExport.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        const doc = new jsPDF('p', 'pt', 'a4');
+        doc.text(removeVietnameseTones('Danh sach yeu cau tra hang'), 40, 40);
+        
+        const tableColumn = ["ID", "Ma don", removeVietnameseTones("Khach hang"), "SDT", removeVietnameseTones("Tong tien"), removeVietnameseTones("Trang thai")];
+        const tableRows = [];
+
+        dataToExport.forEach(o => {
+            const rowData = [
+                o.id,
+                o.orderCode || o.id,
+                removeVietnameseTones(o.receiverName),
+                o.receiverPhone,
+                formatCurrency(o.totalAmount),
+                removeVietnameseTones(getStatusMeta(o.orderStatus).label)
+            ];
+            tableRows.push(rowData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+            styles: { font: 'helvetica' }
+        });
+        
+        doc.save('Danh_sach_yeu_cau_tra_hang.pdf');
+    };
+
+    const handleImportExcel = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws);
+                
+                let successCount = 0;
+                for (const row of data) {
+                    const newOrder = {
+                        receiverName: row['Người nhận'] || row['ReceiverName'] || 'Khách hàng',
+                        receiverPhone: row['SĐT'] || row['Phone'] || '000000000',
+                        receiverAddress: row['Địa chỉ'] || row['Address'] || 'Không rõ',
+                        shippingAddressFull: row['Địa chỉ'] || row['Address'] || 'Không rõ',
+                        guestEmail: row['Email'] || 'guest@example.com',
+                        totalAmount: Number(row['Tổng tiền'] || row['TotalAmount'] || 0),
+                        orderStatus: row['Trạng thái'] || 'return_requested',
+                        paymentMethod: row['Thanh toán'] || 'COD',
+                        details: []
+                    };
+                    
+                    try {
+                        await orderApi.create(newOrder);
+                        successCount++;
+                    } catch (err) {
+                        console.error('Error importing order:', err);
+                    }
+                }
+                alert(`Đã nhập thành công ${successCount}/${data.length} yêu cầu trả hàng.`);
+                loadOrders();
+            } catch (error) {
+                console.error("Error reading file:", error);
+                alert('Lỗi đọc file Excel.');
+            }
+            e.target.value = null;
+        };
+        reader.readAsBinaryString(file);
+    };
+
     const renderPagination = () => {
         const pages = [];
         for (let i = 1; i <= totalPages; i++) {
@@ -203,43 +358,44 @@ const Returns = () => {
                 </h1>
                 <div className="float-right">
                     <div className="btn-group">
-                        <button type="button" className="btn btn-success">
+                        <button type="button" className="btn btn-success" onClick={() => exportToExcel(false)}>
                             <i className="fas fa-download"></i> Xuất file
                         </button>
-                        <button type="button" className="btn btn-success dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
+                        {/* <button type="button" className="btn btn-success dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
                             <span className="sr-only">&nbsp;</span>
-                        </button>
+                        </button> */}
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none">
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => exportToXml(false)}>
                                     <i className="far fa-file-code"></i> Xuất ra XML (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Xuất XML Đã chọn: ' + selectedIds.join(','))}>
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => exportToXml(true)}>
                                     <i className="far fa-file-code"></i> Xuất ra XML (đã chọn)
                                 </button>
                             </li>
                             <li className="dropdown-divider"></li>
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none">
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => exportToExcel(false)}>
                                     <i className="far fa-file-excel"></i> Xuất ra Excel (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Xuất Excel Đã chọn: ' + selectedIds.join(','))}>
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => exportToExcel(true)}>
                                     <i className="far fa-file-excel"></i> Xuất ra Excel (đã chọn)
                                 </button>
                             </li>
                         </ul>
                     </div>
                     {' '}
-                    <button type="button" name="importexcel" className="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
+                    <input type="file" accept=".xlsx, .xls" id="import-returns" style={{ display: 'none' }} onChange={handleImportExcel} />
+                    <label htmlFor="import-returns" className="btn bg-olive mb-0" style={{ cursor: 'pointer', verticalAlign: 'baseline', height: '100%' }}>
                         <i className="fas fa-upload"></i> Nhập file
-                    </button>
+                    </label>
                     {' '}
                     <div className="btn-group">
-                        <button type="button" className="btn btn-info">
+                        <button type="button" className="btn btn-info" onClick={() => exportToPdf(false)}>
                             <i className="far fa-file-pdf"></i> In phiếu giao hàng
                         </button>
                         <button type="button" className="btn btn-info dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
@@ -247,12 +403,12 @@ const Returns = () => {
                         </button>
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none">
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => exportToPdf(false)}>
                                     In phiếu giao hàng (tất cả)
                                 </button>
                             </li>
                             <li className="dropdown-item">
-                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => alert('Print pdf: ' + selectedIds.join(','))}>
+                                <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={() => exportToPdf(true)}>
                                     In phiếu giao hàng (đã chọn)
                                 </button>
                             </li>

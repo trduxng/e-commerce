@@ -5,7 +5,7 @@ import { useSettings } from '../contexts/SettingsContext';
 
 const menuConfigs = {
     catalog: ['/admin/products', '/admin/categories', '/admin/manufacturers', '/admin/reviews'],
-    sales: ['/admin/orders', '/admin/current-carts', '/admin/payments'],
+    sales: ['/admin/orders', '/admin/returns', '/admin/payments'],
     customers: ['/admin/users'],
     promotions: ['/admin/coupons'],
     config: ['/admin/settings', '/admin/specification-attributes', '/admin/checkout-attributes'],
@@ -245,7 +245,7 @@ const MainLayout = ({ children }) => {
                         {/* Sales */}
                         {isStaff() && (
                             <li className={`nav-item has-treeview ${openMenus.sales ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('sales')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/orders', '/admin/returns', '/admin/current-carts', '/admin/payments'].includes(location.pathname) ? 'active' : ''}`}>
+                                <div onClick={() => toggleMenu('sales')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/orders', '/admin/returns', '/admin/payments'].includes(location.pathname) ? 'active' : ''}`}>
                                     <i className="nav-icon fas fa-shopping-cart"></i>
                                     <span className="menu-text">Bán hàng</span>
                                     <i className="right fas fa-angle-left"></i>
@@ -260,12 +260,6 @@ const MainLayout = ({ children }) => {
                                         </li>
                                         <li className="nav-item">
                                             <Link to="/admin/returns" className={`nav-link ${isActive('/admin/returns')}`}>
-                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Yêu cầu trả hàng</span>
-                                            </Link>
-                                        </li>
-                                        <li className="nav-item">
-                                            <Link to="/admin/current-carts" className={`nav-link ${isActive('/admin/current-carts')}`}>
                                                 <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
                                                 <span className="menu-text">Quản lý trả hàng</span>
                                             </Link>
@@ -321,6 +315,28 @@ const MainLayout = ({ children }) => {
                             )}
                         </li>
 
+                            
+
+                        {/* Reports */}
+                        {isStaff() && (
+                            <li className={`nav-item has-treeview ${openMenus.reports ? 'menu-open' : ''}`}>
+                                <div onClick={() => toggleMenu('reports')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/revenue'].includes(location.pathname) ? 'active' : ''}`}>
+                                    <i className="nav-icon fas fa-chart-line"></i>
+                                    <span className="menu-text">Báo cáo</span>
+                                    <i className="right fas fa-angle-left"></i>
+                                </div>
+                                {openMenus.reports && (
+                                    <ul className="nav nav-treeview">
+                                        <li className="nav-item">
+                                            <Link to="/admin/revenue" className={`nav-link ${isActive('/admin/revenue')}`}>
+                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
+                                                <span className="menu-text">Doanh thu</span>
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                )}
+                            </li>
+                        )}
                         {/* Configuration */}
                         <li className={`nav-item has-treeview ${openMenus.config ? 'menu-open' : ''}`}>
                             <div onClick={() => toggleMenu('config')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/settings', '/admin/specification-attributes', '/admin/checkout-attributes'].includes(location.pathname) ? 'active' : ''}`}>
@@ -353,27 +369,6 @@ const MainLayout = ({ children }) => {
                                 </ul>
                             )}
                         </li>
-
-                        {/* Reports */}
-                        {isStaff() && (
-                            <li className={`nav-item has-treeview ${openMenus.reports ? 'menu-open' : ''}`}>
-                                <div onClick={() => toggleMenu('reports')} style={{ cursor: 'pointer' }} className={`nav-link ${['/admin/revenue'].includes(location.pathname) ? 'active' : ''}`}>
-                                    <i className="nav-icon fas fa-chart-line"></i>
-                                    <span className="menu-text">Báo cáo</span>
-                                    <i className="right fas fa-angle-left"></i>
-                                </div>
-                                {openMenus.reports && (
-                                    <ul className="nav nav-treeview">
-                                        <li className="nav-item">
-                                            <Link to="/admin/revenue" className={`nav-link ${isActive('/admin/revenue')}`}>
-                                                <i className="far fa-circle nav-icon" style={{ fontSize: '0.75rem' }}></i>
-                                                <span className="menu-text">Doanh thu</span>
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                )}
-                            </li>
-                        )}
                     </ul>
                 </nav>
             </aside>

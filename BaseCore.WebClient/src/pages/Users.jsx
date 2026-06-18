@@ -213,10 +213,10 @@ const Users = () => {
                             <i className="fas fa-download"></i>
                             {' '}Xuất file
                         </button>
-                        <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        {/* <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                             <span className="caret"></span>
                             <span className="sr-only">&nbsp;</span>
-                        </button>
+                        </button> */}
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link p-0 text-left w-100 text-dark text-decoration-none">

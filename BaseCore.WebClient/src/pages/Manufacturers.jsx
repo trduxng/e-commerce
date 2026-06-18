@@ -76,10 +76,10 @@ const Manufacturers = () => {
                             <i className="fas fa-download"></i>
                             {' '}Xuất file
                         </button>
-                        <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        {/* <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                             <span className="caret"></span>
                             <span className="sr-only">&nbsp;</span>
-                        </button>
+                        </button> */}
                     </div>
                     <button type="button" className="btn bg-olive ml-1">
                         <i className="fas fa-upload"></i>

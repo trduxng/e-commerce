@@ -60,6 +60,80 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
+        /// Seed specific return orders for testing
+        /// </summary>
+        [HttpPost("seed-returns")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SeedReturns()
+        {
+            var variants = await _db.ProductVariants
+                .Include(pv => pv.Product)
+                .Where(pv => pv.IsActive)
+                .Take(10)
+                .ToListAsync();
+
+            if (!variants.Any()) return BadRequest("No active products found.");
+
+            var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Email == "customer@basecore.local");
+            long userId = user?.Id ?? 1;
+
+            var random = new Random();
+            for (int i = 0; i < 5; i++)
+            {
+                var order = new Order
+                {
+                    OrderCode = $"RET-{DateTime.Now:yyyy}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-{random.Next(100, 999)}",
+                    UserId = userId,
+                    GuestEmail = "return_test@basecore.local",
+                    CreatedAt = DateTime.Now.AddDays(-random.Next(1, 10)),
+                    UpdatedAt = DateTime.Now,
+                    ReceiverName = "Khách hàng trả lại " + i,
+                    ReceiverPhone = "090000000" + i,
+                    ShippingAddressFull = "Địa chỉ trả hàng " + i,
+                    Subtotal = 0,
+                    ShippingFee = 30000,
+                    DiscountAmount = 0,
+                    TaxAmount = 0,
+                    TotalAmount = 30000,
+                    PaymentMethod = "cod",
+                    PaymentStatus = "paid",
+                    OrderStatus = "return_requested",
+                };
+
+                await _orderRepository.AddAsync(order);
+
+                decimal subtotal = 0;
+                int itemCount = random.Next(1, 3);
+                for (int j = 0; j < itemCount; j++)
+                {
+                    var variant = variants[random.Next(variants.Count)];
+                    var qty = random.Next(1, 3);
+                    var price = variant.SalePrice ?? variant.Price;
+                    var detail = new OrderDetail
+                    {
+                        OrderId = order.Id,
+                        ProductVariantId = variant.Id,
+                        ProductNameSnapshot = variant.Product?.Name ?? "Sản phẩm",
+                        SizeSnapshot = variant.Size,
+                        ColorSnapshot = variant.Color,
+                        SkuSnapshot = variant.Sku ?? "SKU-TEMP",
+                        Quantity = qty,
+                        UnitPrice = price,
+                        TotalPrice = price * qty
+                    };
+                    subtotal += detail.TotalPrice;
+                    await _orderDetailRepository.AddAsync(detail);
+                }
+
+                order.Subtotal = subtotal;
+                order.TotalAmount = subtotal + order.ShippingFee;
+                await _orderRepository.UpdateAsync(order);
+            }
+
+            return Ok(new { message = "Seeded return orders successfully." });
+        }
+
+        /// <summary>
         /// Get all orders (Admin only)
         /// </summary>
         [HttpGet("all")]
