@@ -107,12 +107,27 @@ namespace BaseCore.Repository
                 CreateProduct("iPhone 15 Pro", "iphone-15-pro", categories["electronics"], 1099, 100, "/img/iphone.jpg", "Apple iPhone 15 Pro 256GB", "IP15P-TITAN", true, now),
             };
 
+            var existingProductSlugs = db.Products
+                .Select(product => product.Slug)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var existingVariantSkus = db.ProductVariants
+                .Select(variant => variant.Sku)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             foreach (var seed in productSeeds)
             {
-                if (!db.Products.Any(product => product.Slug == seed.Slug))
-                {
-                    db.Products.Add(seed);
-                }
+                var seedSkus = seed.ProductVariants
+                    .Select(variant => variant.Sku)
+                    .ToList();
+                var hasDuplicateSku = seedSkus.Any(existingVariantSkus.Contains);
+
+                if (existingProductSlugs.Contains(seed.Slug) || hasDuplicateSku)
+                    continue;
+
+                db.Products.Add(seed);
+                existingProductSlugs.Add(seed.Slug);
+                foreach (var sku in seedSkus)
+                    existingVariantSkus.Add(sku);
             }
 
             db.SaveChanges();
