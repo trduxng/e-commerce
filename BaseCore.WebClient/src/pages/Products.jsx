@@ -72,6 +72,8 @@ const Products = () => {
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
+    // const [minPrice, setMinPrice] = useState('');
+    // const [maxPrice, setMaxPrice] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
@@ -162,6 +164,8 @@ const Products = () => {
             const response = await productApi.search({
                 keyword,
                 categoryId: categoryId && categoryId !== '0' ? categoryId : undefined,
+                // minPrice: minPrice !== '' ? Number(minPrice) : undefined,
+                // maxPrice: maxPrice !== '' ? Number(maxPrice) : undefined,
                 searchIncludeSubCategories,
                 manufacturerId: manufacturerId && manufacturerId !== '0' ? manufacturerId : undefined,
                 publishedId: publishedId && publishedId !== '0' ? publishedId : undefined,
@@ -186,7 +190,21 @@ const Products = () => {
             setLoading(false);
         }
     };
+    // const handleSearch = (event) => {
+    //     event.preventDefault();
 
+    //     if (
+    //         minPrice !== '' &&
+    //         maxPrice !== '' &&
+    //         Number(minPrice) > Number(maxPrice)
+    //     ) {
+    //         alert('Giá từ không được lớn hơn giá đến.');
+    //         return;
+    //     }
+
+    //     setPage(1);
+    //     loadProducts();
+    // };
     const handleSearch = (event) => {
         event.preventDefault();
         setPage(1);
@@ -310,12 +328,12 @@ const Products = () => {
                     stockQuantity: fullProduct.stock ?? '',
                     imageUrl: fullProduct.imageUrl || '',
                 })];
-            
+
             const variant = variants[0] || {};
             const selectedCategoryId = fullProduct.categoryId ?? fullProduct.category?.id ?? '';
             const selectedManufacturerId = fullProduct.manufacturerId ?? fullProduct.manufacturer?.id ?? '';
-            
-            const specs = Array.isArray(fullProduct.productSpecifications) 
+
+            const specs = Array.isArray(fullProduct.productSpecifications)
                 ? fullProduct.productSpecifications.map(s => ({
                     attributeId: s.specificationAttributeId,
                     value: s.value,
@@ -450,7 +468,7 @@ const Products = () => {
             return;
         }
         if (!window.confirm(`Bạn có chắc chắn muốn xoá ${selectedIds.length} sản phẩm đã chọn không?`)) return;
-        
+
         try {
             for (const id of selectedIds) {
                 await productApi.delete(id);
@@ -495,7 +513,7 @@ const Products = () => {
                 const wsname = wb.SheetNames[0];
                 const ws = wb.Sheets[wsname];
                 const data = utils.sheet_to_json(ws);
-                
+
                 let successCount = 0;
                 for (const row of data) {
                     const categoryName = row['Tên danh mục'] || row['Danh mục'] || row['Category'];
@@ -504,7 +522,7 @@ const Products = () => {
                         const matched = categories.find(c => c.name.toLowerCase() === String(categoryName).trim().toLowerCase());
                         if (matched) foundCatId = matched.id;
                     }
-                    
+
                     const newProduct = {
                         name: row['Tên sản phẩm'] || row['Name'] || 'Sản phẩm mới',
                         shortDescription: row['Mô tả ngắn'] || '',
@@ -514,14 +532,14 @@ const Products = () => {
                         isActive: true,
                         isFeatured: false,
                         variants: [{
-                            sku: row['Mã SKU'] || row['SKU'] || `SKU-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+                            sku: row['Mã SKU'] || row['SKU'] || `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                             price: Number(row['Giá gốc'] || row['Price'] || 0),
                             stockQuantity: Number(row['Số lượng'] || row['Stock'] || 0),
                             isActive: true
                         }],
                         specifications: []
                     };
-                    
+
                     try {
                         await productApi.create(newProduct);
                         successCount++;
@@ -591,7 +609,7 @@ const Products = () => {
                             </label>
                         </>
                     )}
-                    
+
                     <button className="btn btn-danger" onClick={handleDeleteSelected}>
                         <i className="far fa-trash-alt"></i> Xoá (đã chọn)
                     </button>
@@ -602,7 +620,7 @@ const Products = () => {
                 <div className="container-fluid">
                     <div className="form-horizontal">
                         <div className="cards-group">
-                            
+
                             {/* Search Card */}
                             <div className="card card-default card-search">
                                 <div className="card-body">
@@ -624,6 +642,33 @@ const Products = () => {
                                                             <input type="text" className="form-control text-box single-line" value={keyword} onChange={e => setKeyword(e.target.value)} />
                                                         </div>
                                                     </div>
+                                                    {/* <div className="form-group row">
+                                                        <div className="col-md-4">
+                                                            <label>Khoảng giá</label>
+                                                        </div>
+
+                                                        <div className="col-md-4">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                className="form-control"
+                                                                placeholder="Giá từ"
+                                                                value={minPrice}
+                                                                onChange={(e) => setMinPrice(e.target.value)}
+                                                            />
+                                                        </div>
+
+                                                        <div className="col-md-4">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                className="form-control"
+                                                                placeholder="Giá đến"
+                                                                value={maxPrice}
+                                                                onChange={(e) => setMaxPrice(e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </div> */}
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
                                                             <label>Danh mục</label>
@@ -832,7 +877,7 @@ const Products = () => {
                                 </ul>
                             </div>
                             <form onSubmit={handleSubmit}>
-                                <div className="modal-body" style={{maxHeight: '70vh', overflowY: 'auto'}}>
+                                <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                                     {modalTab === 'info' && (
                                         <div className="row">
                                             <div className="col-md-6">
@@ -854,26 +899,26 @@ const Products = () => {
                                                 <div className="form-group">
                                                     <label>URL Hình ảnh</label>
                                                     <div className="input-group">
-                                                        <input 
-                                                            type="text" 
-                                                            className="form-control" 
-                                                            value={formData.imageUrl} 
-                                                            onChange={e => setField('imageUrl', e.target.value)} 
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={formData.imageUrl}
+                                                            onChange={e => setField('imageUrl', e.target.value)}
                                                             placeholder="/img/product-1.jpg or custom URL"
                                                         />
                                                         <div className="input-group-append">
                                                             <label className="btn btn-secondary m-0 d-flex align-items-center">
                                                                 Duyệt...
-                                                                <input 
-                                                                    type="file" 
-                                                                    accept="image/*" 
-                                                                    style={{ display: 'none' }} 
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    style={{ display: 'none' }}
                                                                     onChange={e => {
                                                                         const file = e.target.files[0];
                                                                         if (file) {
                                                                             setField('imageUrl', `/img/${file.name}`);
                                                                         }
-                                                                    }} 
+                                                                    }}
                                                                 />
                                                             </label>
                                                         </div>
