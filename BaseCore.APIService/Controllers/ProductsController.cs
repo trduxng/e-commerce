@@ -177,7 +177,7 @@ namespace BaseCore.APIService.Controllers
             if (dto.Variants != null)
             {
                 // Payload variant mới có thể thêm, sửa và vô hiệu hóa variant cũ trong một lần cập nhật.
-                var validationError = ApplyVariantUpdates(product, dto);
+                var validationError = await ApplyVariantUpdatesAsync(product, dto);
                 if (validationError != null)
                     return BadRequest(new { message = validationError });
             }
@@ -209,7 +209,7 @@ namespace BaseCore.APIService.Controllers
                 }
             }
 
-            await _productRepository.UpdateAsync(product);
+            await _context.SaveChangesAsync();
             return Ok(product);
         }
 
@@ -328,7 +328,7 @@ namespace BaseCore.APIService.Controllers
             return variants;
         }
 
-        private static string? ApplyVariantUpdates(Product product, ProductUpdateDto dto)
+        private async Task<string?> ApplyVariantUpdatesAsync(Product product, ProductUpdateDto dto)
         {
             if (dto.Variants == null || dto.Variants.Count == 0)
                 return "Product must contain at least one variant.";
@@ -372,8 +372,39 @@ namespace BaseCore.APIService.Controllers
                 variant.IsActive = variantDto.IsActive ?? true;
             }
 
-            foreach (var variant in product.ProductVariants.Where(variant => variant.Id > 0 && !postedExistingIds.Contains(variant.Id)))
-                variant.IsActive = false;
+            var removedVariants = product.ProductVariants
+                .Where(variant => variant.Id > 0 && !postedExistingIds.Contains(variant.Id))
+                .ToList();
+
+            if (removedVariants.Count > 0)
+            {
+                var removedIds = removedVariants.Select(variant => variant.Id).ToList();
+                var referencedIds = (await _context.OrderDetails
+                        .Where(detail => removedIds.Contains(detail.ProductVariantId))
+                        .Select(detail => detail.ProductVariantId)
+                        .Distinct()
+                        .ToListAsync())
+                    .ToHashSet();
+
+                referencedIds.UnionWith(await _context.CartItems
+                    .Where(item => removedIds.Contains(item.ProductVariantId))
+                    .Select(item => item.ProductVariantId)
+                    .Distinct()
+                    .ToListAsync());
+
+                foreach (var variant in removedVariants)
+                {
+                    if (referencedIds.Contains(variant.Id))
+                    {
+                        variant.IsActive = false;
+                    }
+                    else
+                    {
+                        product.ProductVariants.Remove(variant);
+                        _context.ProductVariants.Remove(variant);
+                    }
+                }
+            }
 
             if (product.IsActive && !product.ProductVariants.Any(variant => variant.IsActive))
                 return "Active products must contain at least one active variant.";

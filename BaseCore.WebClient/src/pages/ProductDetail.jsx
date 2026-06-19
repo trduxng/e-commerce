@@ -52,17 +52,21 @@ const ProductDetail = () => {
         setQuantity("1");
         setError("");
 
-        const relatedResponse = await productApi.search({
-          publishedId: 1,
-          categoryId: loadedProduct.categoryId || loadedProduct.category?.id || undefined,
-          page: 1,
-          pageSize: 5,
-        });
-        setRelatedProducts(
-          normalizeProductList(relatedResponse.data)
-            .filter((item) => item.isActive !== false && Number(item.id) !== Number(id))
-            .slice(0, 4)
-        );
+        try {
+          const relatedResponse = await productApi.search({
+            publishedId: 1,
+            categoryId: loadedProduct.categoryId || loadedProduct.category?.id || undefined,
+            page: 1,
+            pageSize: 5,
+          });
+          setRelatedProducts(
+            normalizeProductList(relatedResponse.data)
+              .filter((item) => item.isActive !== false && Number(item.id) !== Number(id))
+              .slice(0, 4)
+          );
+        } catch {
+          setRelatedProducts([]);
+        }
       } catch (requestError) {
         if (requestError.response?.status === 404) {
           setProduct(null);
@@ -116,9 +120,10 @@ const ProductDetail = () => {
   const variants = useMemo(() => getActiveVariants(product), [product]);
   const selectedVariant = useMemo(() => variants.find((v) => v.id === selectedVariantId) || null, [variants, selectedVariantId]);
   const galleryImages = useMemo(() => getProductGallery(product), [product]);
-  
-  const sizeOptions = useMemo(() => getUniqueVariantValues(variants, "size"), [variants]);
-  const colorOptions = useMemo(() => getUniqueVariantValues(variants, "color"), [variants]);
+  const showVariantSelector = useMemo(
+    () => variants.length > 1 || variants.some(hasCustomerFacingVariantLabel),
+    [variants]
+  );
 
   const selectedSize = selectedVariant?.size || null;
   const selectedColor = selectedVariant?.color || null;
@@ -236,8 +241,8 @@ const ProductDetail = () => {
     };
 
     const match = variants.find((v) => normalizeVariantValue(v.size) === normalizeVariantValue(nextCriteria.size) && normalizeVariantValue(v.color) === normalizeVariantValue(nextCriteria.color)) ||
-                  variants.find((v) => normalizeVariantValue(v[field]) === normalizeVariantValue(value)) ||
-                  variants[0];
+      variants.find((v) => normalizeVariantValue(v[field]) === normalizeVariantValue(value)) ||
+      variants[0];
 
     if (match) {
       setSelectedVariantId(match.id);
@@ -251,9 +256,9 @@ const ProductDetail = () => {
     const otherField = field === "size" ? "color" : "size";
     const otherValue = field === "size" ? selectedColor : selectedSize;
 
-    return variants.some((v) => normalizeVariantValue(v[field]) === normalizeVariantValue(value) && 
-                               (otherValue === null || normalizeVariantValue(v[otherField]) === normalizeVariantValue(otherValue)) && 
-                               getVariantStock(v) > 0);
+    return variants.some((v) => normalizeVariantValue(v[field]) === normalizeVariantValue(value) &&
+      (otherValue === null || normalizeVariantValue(v[otherField]) === normalizeVariantValue(otherValue)) &&
+      getVariantStock(v) > 0);
   };
 
   if (loading) {
@@ -321,13 +326,13 @@ const ProductDetail = () => {
               <p className="mb-2"><strong>Danh mục:</strong> {getProductCategoryName(product, [])}</p>
               <p className="mb-4"><strong>Tồn kho:</strong> {stock ?? "Còn hàng"}</p>
 
-              {variants.length > 0 && (
+              {showVariantSelector && (
                 <div className="mb-4">
                   <strong className="d-block mb-2">Phân loại sản phẩm</strong>
                   <div className="d-flex flex-wrap" style={{ gap: 10 }}>
                     {variants.map((variant, index) => {
                       const variantStock = getVariantStock(variant);
-                      const variantLabel = [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku || `Phân loại ${index + 1}`;
+                      const variantLabel = getVariantDisplayLabel(variant, index, variants.length);
                       const isSelected = selectedVariant?.id === variant.id;
 
                       return (
@@ -349,7 +354,7 @@ const ProductDetail = () => {
                   </div>
                 </div>
               )}
-               
+
               <div className="d-flex align-items-center flex-wrap mb-4 pt-2">
                 <div className="input-group quantity me-3 mb-2" style={{ width: "150px", flex: "0 0 150px" }}>
                   <button type="button" className="btn btn-primary btn-minus" onClick={() => setQuantitySafely(safeQuantity - 1)}><i className="fa fa-minus"></i></button>
@@ -417,13 +422,54 @@ const ProductDetail = () => {
           </div>
         </div>
       </section>
+
+      {relatedProducts.length > 0 && (
+        <section className="container-fluid pb-5" aria-labelledby="related-products-title">
+          <div className="section-heading">
+            <span className="section-kicker">Có thể bạn cũng thích</span>
+            <h2 id="related-products-title" className="section-title-modern">Sản phẩm liên quan</h2>
+            <p className="section-subtitle">
+              Khám phá thêm các sản phẩm trong danh mục {getProductCategoryName(product, [])}
+            </p>
+          </div>
+          <div className="row px-xl-5 related-products-carousel">
+            {relatedProducts.map((relatedProduct) => (
+              <div key={relatedProduct.id} className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+                <ProductCard product={relatedProduct} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 };
 
 const getActiveVariants = (product) => Array.isArray(product?.productVariants || product?.variants) ? (product?.productVariants || product?.variants).filter(v => v?.isActive !== false) : [];
 const normalizeVariantValue = (value) => String(value || "").trim();
-const getUniqueVariantValues = (variants, field) => Array.from(new Set(variants.map(v => normalizeVariantValue(v?.[field])).filter(Boolean)));
+const isGeneratedVariantSku = (value) => {
+  const sku = normalizeVariantValue(value);
+  return /^(?:sku-)?[a-f0-9]{24,}$/i.test(sku)
+    || /^(?:sku-)?[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(sku);
+};
+const hasCustomerFacingVariantLabel = (variant) => (
+  Boolean(normalizeVariantValue(variant?.size))
+  || Boolean(normalizeVariantValue(variant?.color))
+  || (Boolean(normalizeVariantValue(variant?.sku)) && !isGeneratedVariantSku(variant?.sku))
+);
+const getVariantDisplayLabel = (variant, index, totalVariants) => {
+  const optionLabel = [variant?.size, variant?.color]
+    .map(normalizeVariantValue)
+    .filter(Boolean)
+    .join(" / ");
+
+  if (optionLabel) return optionLabel;
+
+  const sku = normalizeVariantValue(variant?.sku);
+  if (sku && !isGeneratedVariantSku(sku)) return sku;
+
+  return totalVariants === 1 ? "Mặc định" : `Lựa chọn ${index + 1}`;
+};
 const getVariantStock = (variant) => { const s = Number(variant?.stockQuantity ?? variant?.stock); return Number.isFinite(s) ? Math.max(0, s) : 0; };
 const getVariantPrice = (variant, product) => !variant ? (product?.price ?? product?.basePrice ?? 0) : (variant.salePrice ?? variant.price ?? product?.price ?? 0);
 const getSafeQuantity = (v) => { const q = Number(v); return Number.isFinite(q) && q > 0 ? Math.floor(q) : 1; };
@@ -435,11 +481,11 @@ const normalizeReviewData = (data) => ({
   breakdown: Array.isArray(data?.breakdown) ? data.breakdown : [],
   items: Array.isArray(data?.items)
     ? data.items.map((item) => ({
-        ...item,
-        reviewerName: String(item.reviewerName || "").trim().toLowerCase() === "customer"
-          ? "Khách hàng"
-          : item.reviewerName,
-      }))
+      ...item,
+      reviewerName: String(item.reviewerName || "").trim().toLowerCase() === "customer"
+        ? "Khách hàng"
+        : item.reviewerName,
+    }))
     : [],
 });
 const formatReviewDate = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN"); };

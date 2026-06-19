@@ -353,8 +353,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         )}
-                        </div>
-                    )}
+                    </div>
 
                     {isAdmin() && (
                         <div className="row">
@@ -571,7 +570,6 @@ const Dashboard = () => {
                                 )}
                             </div>
                         </div>
->>>>>>> 76372a3090e5c6212d2917ee03bebe61d663b860
                     </div>
 
                     {/* Charts & Analytics Section */}
