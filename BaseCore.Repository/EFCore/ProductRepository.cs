@@ -67,9 +67,9 @@ namespace BaseCore.Repository.EFCore
             }
             else
             {
-                if (!string.IsNullOrEmpty(keyword))
+                if (!string.IsNullOrWhiteSpace(keyword))
                 {
-                    keyword = keyword.ToLower();
+                    keyword = keyword.Trim().ToLower();
                     query = query.Where(p =>
                         p.Name.ToLower().Contains(keyword)
                     // || (p.Description != null && p.Description.ToLower().Contains(keyword))
@@ -115,17 +115,26 @@ namespace BaseCore.Repository.EFCore
                 }
             }
 
-            if (minPrice.HasValue)
+            if (minPrice.HasValue && maxPrice.HasValue)
             {
                 query = query.Where(p =>
-                    (p.ProductVariants.Any() && p.ProductVariants.Min(v => v.SalePrice ?? v.Price) >= minPrice.Value) ||
+                    p.ProductVariants.Any(v =>
+                        (v.SalePrice ?? v.Price) >= minPrice.Value &&
+                        (v.SalePrice ?? v.Price) <= maxPrice.Value) ||
+                    (!p.ProductVariants.Any() &&
+                        p.BasePrice >= minPrice.Value &&
+                        p.BasePrice <= maxPrice.Value));
+            }
+            else if (minPrice.HasValue)
+            {
+                query = query.Where(p =>
+                    p.ProductVariants.Any(v => (v.SalePrice ?? v.Price) >= minPrice.Value) ||
                     (!p.ProductVariants.Any() && p.BasePrice >= minPrice.Value));
             }
-
-            if (maxPrice.HasValue)
+            else if (maxPrice.HasValue)
             {
                 query = query.Where(p =>
-                    (p.ProductVariants.Any() && p.ProductVariants.Min(v => v.SalePrice ?? v.Price) <= maxPrice.Value) ||
+                    p.ProductVariants.Any(v => (v.SalePrice ?? v.Price) <= maxPrice.Value) ||
                     (!p.ProductVariants.Any() && p.BasePrice <= maxPrice.Value));
             }
 

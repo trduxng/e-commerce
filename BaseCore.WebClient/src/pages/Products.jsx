@@ -62,6 +62,34 @@ const normalizeList = (data) => {
     return [];
 };
 
+const buildPaginationItems = (currentPage, totalPages) => {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+
+    if (currentPage <= 4) {
+        [2, 3, 4, 5].forEach(pageNumber => pages.add(pageNumber));
+    }
+
+    if (currentPage >= totalPages - 3) {
+        [totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1]
+            .forEach(pageNumber => pages.add(pageNumber));
+    }
+
+    const sortedPages = [...pages]
+        .filter(pageNumber => pageNumber >= 1 && pageNumber <= totalPages)
+        .sort((first, second) => first - second);
+
+    return sortedPages.flatMap((pageNumber, index) => {
+        const previousPage = sortedPages[index - 1];
+        return previousPage && pageNumber - previousPage > 1
+            ? ['ellipsis', pageNumber]
+            : [pageNumber];
+    });
+};
+
 
 
 const Products = () => {
@@ -72,14 +100,13 @@ const Products = () => {
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
+    const [averagePrice, setAveragePrice] = useState(0);
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
-    const [sortField, setSortField] = useState('created');
-    const [sortDir, setSortDir] = useState('desc');
     const [savingProduct, setSavingProduct] = useState(false);
     const [uploadingVariantIndex, setUploadingVariantIndex] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -100,7 +127,7 @@ const Products = () => {
 
     useEffect(() => {
         loadProducts();
-    }, [page, keyword, categoryId, sortField, sortDir]);
+    }, [page, pageSize]);
 
     const firstVariant = (product) => (
         product?.productVariants?.find((variant) => variant?.isActive !== false)
@@ -161,31 +188,42 @@ const Products = () => {
     // Bộ lọc và phân trang được gửi lên backend; frontend chỉ giữ dữ liệu của trang hiện tại.
     const loadProducts = async () => {
         setLoading(true);
+
         try {
             const response = await productApi.search({
                 keyword,
                 categoryId: categoryId && categoryId !== '0' ? categoryId : undefined,
                 minPrice: minPrice !== '' ? Number(minPrice) : undefined,
                 maxPrice: maxPrice !== '' ? Number(maxPrice) : undefined,
-                searchIncludeSubCategories,
-                manufacturerId: manufacturerId && manufacturerId !== '0' ? manufacturerId : undefined,
-                publishedId: publishedId && publishedId !== '0' ? publishedId : undefined,
-                goDirectlyToSku: goDirectlyToSku || undefined,
-                sortField,
-                sortDir,
                 page,
                 pageSize,
             });
             const items = Array.isArray(response.data?.items)
                 ? response.data.items
                 : normalizeList(response.data);
+            const responseTotalCount = Number(response.data?.totalCount);
+            const nextTotalCount = Number.isFinite(responseTotalCount)
+                ? responseTotalCount
+                : items.length;
+            const responseTotalPages = Number(response.data?.totalPages);
+            const nextTotalPages = Number.isFinite(responseTotalPages)
+                ? responseTotalPages
+                : Math.ceil(nextTotalCount / pageSize);
 
             setProducts(items);
-            setTotalPages(Number(response.data?.totalPages) || 0);
-            setTotalCount(Number(response.data?.totalCount) || items.length);
+            setAveragePrice(Number(response.data?.averagePrice) || 0);
+            setTotalCount(nextTotalCount);
+            setTotalPages(nextTotalPages);
+            setSelectedIds([]);
+
+            if (nextTotalPages > 0 && page > nextTotalPages) {
+                setPage(nextTotalPages);
+            }
         } catch (error) {
             console.error('Failed to load products:', error);
             setProducts([]);
+            setTotalCount(0);
+            setTotalPages(0);
             setError(error.response?.data?.message || 'Failed to load products.');
         } finally {
             setLoading(false);
@@ -203,8 +241,11 @@ const Products = () => {
             return;
         }
 
-        setPage(1);
-        loadProducts();
+        if (page === 1) {
+            loadProducts();
+        } else {
+            setPage(1);
+        }
     };
 
     const setField = (name, value) => {
@@ -572,17 +613,58 @@ const Products = () => {
     };
 
     const renderPagination = () => {
+        const availablePages = Math.max(totalPages, 1);
+        const changePage = (nextPage) => {
+            const safePage = Math.min(Math.max(nextPage, 1), availablePages);
+            if (safePage !== page && !loading) {
+                setPage(safePage);
+            }
+        };
+
         return (
-            <li className="page-item disabled">
-                <span className="page-link text-dark">Trang {page} / {totalPages || 1}</span>
-            </li>
+            <>
+                <li className={`page-item ${page <= 1 || loading ? 'disabled' : ''}`}>
+                    <button
+                        type="button"
+                        className="page-link"
+                        onClick={() => changePage(page - 1)}
+                        disabled={page <= 1 || loading}
+                    >
+                        Trước
+                    </button>
+                </li>
+                {buildPaginationItems(page, availablePages).map((pageItem, index) => (
+                    pageItem === 'ellipsis' ? (
+                        <li key={`ellipsis-${index}`} className="page-item disabled">
+                            <span className="page-link">…</span>
+                        </li>
+                    ) : (
+                        <li key={pageItem} className={`page-item ${page === pageItem ? 'active' : ''}`}>
+                            <button
+                                type="button"
+                                className="page-link"
+                                onClick={() => changePage(pageItem)}
+                                disabled={loading || page === pageItem}
+                            >
+                                {pageItem}
+                            </button>
+                        </li>
+                    )
+                ))}
+                <li className={`page-item ${page >= availablePages || totalPages === 0 || loading ? 'disabled' : ''}`}>
+                    <button
+                        type="button"
+                        className="page-link"
+                        onClick={() => changePage(page + 1)}
+                        disabled={page >= availablePages || totalPages === 0 || loading}
+                    >
+                        Sau
+                    </button>
+                </li>
+            </>
         );
     };
 
-    const [searchIncludeSubCategories, setSearchIncludeSubCategories] = useState(false);
-    const [manufacturerId, setManufacturerId] = useState('');
-    const [publishedId, setPublishedId] = useState('0'); // 0: All, 1: Published, 2: Unpublished
-    const [goDirectlyToSku, setGoDirectlyToSku] = useState('');
     const [searchOpen, setSearchOpen] = useState(true);
     const [selectedIds, setSelectedIds] = useState([]);
 
@@ -646,7 +728,7 @@ const Products = () => {
                                     {searchOpen && (
                                         <div className="search-body">
                                             <div className="row">
-                                                <div className="col-md-5">
+                                                <div className="col-md-8 mx-auto">
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
                                                             <label>Tên sản phẩm</label>
@@ -684,78 +766,12 @@ const Products = () => {
                                                     </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
-                                                            <label>Danh mục</label>
+                                                            <label>Thể loại</label>
                                                         </div>
                                                         <div className="col-md-8">
                                                             <select className="form-control" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
                                                                 <option value="0">Tất cả</option>
                                                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-group row">
-                                                        <div className="col-md-4">
-                                                            <label>Tìm trong danh mục con</label>
-                                                        </div>
-                                                        <div className="col-md-8">
-                                                            <input type="checkbox" checked={searchIncludeSubCategories} onChange={e => setSearchIncludeSubCategories(e.target.checked)} />
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-group row">
-                                                        <div className="col-md-4">
-                                                            <label>Thương hiệu</label>
-                                                        </div>
-                                                        <div className="col-md-8">
-                                                            <select className="form-control" value={manufacturerId} onChange={e => setManufacturerId(e.target.value)}>
-                                                                <option value="0">Tất cả</option>
-                                                                {manufacturers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-7">
-                                                    <div className="form-group row">
-                                                        <div className="col-md-4">
-                                                            <label>Xuất bản</label>
-                                                        </div>
-                                                        <div className="col-md-8">
-                                                            <select className="form-control" value={publishedId} onChange={e => setPublishedId(e.target.value)}>
-                                                                <option value="0">Tất cả</option>
-                                                                <option value="1">Đã xuất bản</option>
-                                                                <option value="2">Chưa xuất bản</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-group row">
-                                                        <div className="col-md-4">
-                                                            <label>Chuyển đến SKU sản phẩm</label>
-                                                        </div>
-                                                        <div className="col-md-8">
-                                                            <div className="input-group input-group-short">
-                                                                <input type="text" className="form-control text-box single-line" value={goDirectlyToSku} onChange={e => setGoDirectlyToSku(e.target.value)} />
-                                                                <span className="input-group-append">
-                                                                    <button type="button" className="btn btn-info btn-flat">Đến</button>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-group row">
-                                                        <div className="col-md-4">
-                                                            <label>Sắp xếp theo</label>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <select className="form-control" value={sortField} onChange={e => setSortField(e.target.value)}>
-                                                                <option value="created">Ngày tạo</option>
-                                                                <option value="name">Tên sản phẩm</option>
-                                                                <option value="price">Giá</option>
-                                                                <option value="category">Danh mục</option>
-                                                                <option value="manufacturer">Thương hiệu</option>
-                                                            </select>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <select className="form-control" value={sortDir} onChange={e => setSortDir(e.target.value)}>
-                                                                <option value="desc">Giảm dần</option>
-                                                                <option value="asc">Tăng dần</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -777,6 +793,14 @@ const Products = () => {
                             {/* Data Grid Card */}
                             <div className="card card-default">
                                 <div className="card-body">
+
+                                    <div className="alert alert-info">
+                                        Giá trung bình của tất cả sản phẩm:
+                                        <strong className="ml-2">
+                                            {formatCurrency(averagePrice)}
+                                        </strong>
+                                    </div>
+
                                     <div className="dataTables_wrapper dt-bootstrap4">
                                         <div className="row">
                                             <div className="col-sm-12">
@@ -850,8 +874,36 @@ const Products = () => {
                                         </div>
                                         <div className="row mt-3">
                                             <div className="col-sm-12 col-md-5">
-                                                <div className="dataTables_info">
-                                                    Hiển thị {products.length > 0 ? (page - 1) * pageSize + 1 : 0} đến {Math.min(page * pageSize, totalCount)} của {totalCount} bản ghi
+                                                <div className="d-flex align-items-center flex-wrap">
+                                                    <div className="dataTables_length mr-3 mb-2">
+                                                        <label className="mb-0">
+                                                            Hiển thị{' '}
+                                                            <select
+                                                                className="custom-select custom-select-sm form-control form-control-sm d-inline-block mx-1"
+                                                                style={{ width: 'auto' }}
+                                                                value={pageSize}
+                                                                onChange={event => {
+                                                                    setPageSize(Number(event.target.value));
+                                                                    setPage(1);
+                                                                }}
+                                                                disabled={loading}
+                                                            >
+                                                                {[10, 20, 50, 100].map(size => (
+                                                                    <option key={size} value={size}>{size}</option>
+                                                                ))}
+                                                            </select>
+                                                            bản ghi
+                                                        </label>
+                                                    </div>
+                                                    <div className="dataTables_info mb-2">
+                                                        {products.length > 0 ? (page - 1) * pageSize + 1 : 0}
+                                                        {' - '}
+                                                        {products.length > 0
+                                                            ? Math.min((page - 1) * pageSize + products.length, totalCount)
+                                                            : 0}
+                                                        {' / '}
+                                                        {totalCount}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="col-sm-12 col-md-7">

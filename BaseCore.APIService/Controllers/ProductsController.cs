@@ -111,6 +111,15 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
+            keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+            categoryId = categoryId > 0 ? categoryId : null;
+
+            if (minPrice < 0 || maxPrice < 0)
+                return BadRequest(new { message = "Product price cannot be negative." });
+
+            if (minPrice.HasValue && maxPrice.HasValue && minPrice > maxPrice)
+                return BadRequest(new { message = "Minimum price cannot be greater than maximum price." });
+
             // Khách hàng luôn chỉ thấy sản phẩm active; chỉ Admin và Manager được lọc cả sản phẩm ẩn.
             if (!User.IsInRole("Admin") && !User.IsInRole("Manager") && !User.IsInRole("manager"))
             {
@@ -129,25 +138,36 @@ namespace BaseCore.APIService.Controllers
             }
 
             var (products, totalCount) = await _productRepository.SearchAsync(
-                keyword, 
-                categoryId, 
+                keyword,
+                categoryId,
                 searchIncludeSubCategories,
-                manufacturerId, 
+                manufacturerId,
                 publishedId,
                 isFeatured,
                 goDirectlyToSku,
                 specFilters.Any() ? specFilters : null,
-                minPrice, 
-                maxPrice, 
+                minPrice,
+                maxPrice,
                 sortField,
                 sortDir,
-                page, 
+                page,
                 pageSize);
+            var allProducts = await _context.Products
+          .Include(p => p.ProductVariants)
+          .Where(p => p.DeletedAt == null)
+          .ToListAsync();
+
+            var totalStock = allProducts.Sum(p => p.Stock);
+
+            var averagePrice = totalStock > 0
+                ? allProducts.Sum(p => p.Price * p.Stock) / totalStock
+                : 0;
 
             return Ok(new
             {
                 items = products,
                 totalCount,
+                averagePrice,
                 page,
                 pageSize,
                 totalPages = (int)Math.Ceiling((double)totalCount / pageSize)
@@ -351,7 +371,7 @@ namespace BaseCore.APIService.Controllers
                 .Where(r => r.ProductId == id && r.Status == "approved");
 
             var totalCount = await query.CountAsync();
-            
+
             var allRatings = await query.Select(r => (double)r.Rating).ToListAsync();
             var breakdown = new List<object>();
             for (int i = 5; i >= 1; i--)

@@ -7,8 +7,10 @@ using BaseCore.Entities;
 using BaseCore.Repository;
 using BaseCore.Repository.EFCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using NUnit.Framework;
 
 namespace BaseCore.UnitTest
@@ -30,7 +32,8 @@ namespace BaseCore.UnitTest
             _controller = new ProductsController(
                 new ProductRepositoryEF(_db),
                 new CategoryRepositoryEF(_db),
-                _db);
+                _db,
+                new Mock<IWebHostEnvironment>().Object);
 
             _controller.ControllerContext = new ControllerContext
             {
