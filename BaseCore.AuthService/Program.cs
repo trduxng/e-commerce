@@ -115,7 +115,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine("BaseCore Auth Service running on port 5002");
+Console.WriteLine("BaseCore Auth Service running on port 5003");
 Console.WriteLine("Endpoints: /api/auth, /api/users, /api/roles");
 app.Run();
 

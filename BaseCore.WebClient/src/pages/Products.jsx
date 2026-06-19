@@ -99,7 +99,11 @@ const Products = () => {
         loadProducts();
     }, [page, keyword, categoryId, sortField, sortDir]);
 
-    const firstVariant = (product) => product?.productVariants?.[0] || {};
+    const firstVariant = (product) => (
+        product?.productVariants?.find((variant) => variant?.isActive !== false)
+        || product?.productVariants?.[0]
+        || {}
+    );
 
     const getVariantPreviewImage = (variant, fallback = '') =>
         variant?.imageUrl || fallback || '/img/product-1.jpg';
@@ -282,8 +286,15 @@ const Products = () => {
                 fullProduct = product;
             }
 
-            const variants = Array.isArray(fullProduct.productVariants) && fullProduct.productVariants.length > 0
-                ? fullProduct.productVariants.map((variant) => ({
+            const allVariants = Array.isArray(fullProduct.productVariants)
+                ? fullProduct.productVariants
+                : [];
+            const activeVariants = allVariants.filter((variant) => variant?.isActive !== false);
+            const editableVariants = activeVariants.length > 0
+                ? activeVariants
+                : allVariants.slice(0, 1);
+            const variants = editableVariants.length > 0
+                ? editableVariants.map((variant) => ({
                     id: variant.id ?? null,
                     sku: variant.sku || '',
                     price: variant.price ?? fullProduct.price ?? '',
@@ -901,7 +912,7 @@ const Products = () => {
                                                         const variantImage = v.imageUrl || formData.imageUrl || '/img/product-1.jpg';
 
                                                         return (
-                                                            <tr key={i}>
+                                                            <tr key={v.id ?? v.sku ?? i}>
                                                                 <td>
                                                                     <img
                                                                         src={variantImage}
