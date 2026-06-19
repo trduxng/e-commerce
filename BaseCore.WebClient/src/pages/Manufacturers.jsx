@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { manufacturerApi } from '../services/api';
+import { utils, writeFile, read } from 'xlsx';
 
 
 
@@ -24,6 +25,61 @@ const Manufacturers = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const exportToExcel = () => {
+        if (manufacturers.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
+        const exportData = manufacturers.map(m => ({
+            'ID': m.id,
+            'Tên nhà sản xuất': m.name,
+            'Mô tả': m.description || '',
+            'Thứ tự': m.sortOrder || 0,
+            'Trạng thái': m.isActive ? 'Kích hoạt' : 'Ẩn'
+        }));
+        
+        const worksheet = utils.json_to_sheet(exportData);
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, "Manufacturers");
+        writeFile(workbook, "nha_san_xuat.xlsx");
+    };
+
+    const handleImportExcel = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target.result;
+                const wb = read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = utils.sheet_to_json(ws);
+                
+                let successCount = 0;
+                for (const row of data) {
+                    const newItem = {
+                        name: row['Tên nhà sản xuất'] || row['name'] || '',
+                        description: row['Mô tả'] || row['description'] || '',
+                        sortOrder: Number(row['Thứ tự']) || 0,
+                        isActive: true
+                    };
+                    if (newItem.name) {
+                        await manufacturerApi.create(newItem);
+                        successCount++;
+                    }
+                }
+                alert(`Nhập thành công ${successCount} nhà sản xuất!`);
+                loadManufacturers();
+            } catch (error) {
+                console.error("Import error:", error);
+                alert("Đã xảy ra lỗi khi nhập file Excel.");
+            }
+        };
+        reader.readAsBinaryString(file);
     };
 
     // Một modal dùng chung cho tạo mới và chỉnh sửa nhà sản xuất.
@@ -72,19 +128,15 @@ const Manufacturers = () => {
                         {' '}Thêm mới
                     </button>
                     <div className="btn-group ml-1">
-                        <button type="button" className="btn btn-success">
+                        <button type="button" className="btn btn-success" onClick={exportToExcel}>
                             <i className="fas fa-download"></i>
                             {' '}Xuất file
                         </button>
-                        {/* <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                            <span className="caret"></span>
-                            <span className="sr-only">&nbsp;</span>
-                        </button> */}
                     </div>
-                    <button type="button" className="btn bg-olive ml-1">
-                        <i className="fas fa-upload"></i>
-                        {' '}Nhập file
-                    </button>
+                    <input type="file" accept=".xlsx, .xls" id="import-manufacturers" style={{ display: 'none' }} onChange={handleImportExcel} />
+                    <label htmlFor="import-manufacturers" className="btn bg-olive ml-1 mb-0" style={{ cursor: 'pointer', verticalAlign: 'baseline', height: '100%' }}>
+                        <i className="fas fa-upload"></i> Nhập file
+                    </label>
                 </div>
             </div>
 

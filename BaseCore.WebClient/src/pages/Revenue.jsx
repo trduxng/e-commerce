@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { orderApi } from '../services/api';
 import { formatCurrency } from '../data/shopData';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { utils, writeFile } from 'xlsx';
 
 const removeVietnameseTones = (str) => {
     if (!str) return "";
@@ -118,10 +116,10 @@ const Revenue = () => {
             'Thanh toán': o.paymentMethod || '',
             'Ngày tạo': o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : ''
         }));
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'DoanhThu');
-        XLSX.writeFile(workbook, 'Bao_cao_doanh_thu.xlsx');
+        const worksheet = utils.json_to_sheet(data);
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, 'DoanhThu');
+        writeFile(workbook, 'Bao_cao_doanh_thu.xlsx');
     };
 
     const exportToXml = () => {
@@ -148,48 +146,14 @@ const Revenue = () => {
         a.click();
     };
 
-    const exportToPdf = () => {
-        if (orders.length === 0) {
-            alert('Không có dữ liệu để xuất.');
-            return;
-        }
-        const doc = new jsPDF('p', 'pt', 'a4');
-        doc.text(removeVietnameseTones('Bao cao doanh thu'), 40, 40);
-        
-        const tableColumn = ["Ma don", removeVietnameseTones("Khach hang"), "SDT", removeVietnameseTones("Tong tien"), removeVietnameseTones("Trang thai")];
-        const tableRows = [];
 
-        orders.forEach(o => {
-            const rowData = [
-                o.orderCode || o.id,
-                removeVietnameseTones(o.receiverName),
-                o.receiverPhone,
-                formatCurrency(o.totalAmount),
-                removeVietnameseTones(getStatusLabel(o.orderStatus))
-            ];
-            tableRows.push(rowData);
-        });
-
-        doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 50,
-            styles: { font: 'helvetica' }
-        });
-        
-        doc.save('Bao_cao_doanh_thu.pdf');
-    };
 
     const renderPagination = () => {
-        const pages = [];
-        for (let i = 1; i <= totalPages; i++) {
-            pages.push(
-                <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
-                    <button className="page-link" type="button" onClick={() => setPage(i)}>{i}</button>
-                </li>
-            );
-        }
-        return pages;
+        return (
+            <li className="page-item disabled">
+                <span className="page-link text-dark">Trang {page} / {totalPages || 1}</span>
+            </li>
+        );
     };
 
     return (
@@ -205,9 +169,9 @@ const Revenue = () => {
                                 <button type="button" className="btn btn-success" onClick={exportToExcel}>
                                     <i className="fas fa-download"></i> Xuất file
                                 </button>
-                                {/* <button type="button" className="btn btn-success dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
+                                <button type="button" className="btn btn-success dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
                                     <span className="sr-only">&nbsp;</span>
-                                </button> */}
+                                </button>
                                 <ul className="dropdown-menu" role="menu">
                                     <li className="dropdown-item">
                                         <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={exportToXml}>
@@ -219,11 +183,7 @@ const Revenue = () => {
                                             <i className="far fa-file-excel"></i> Xuất Excel
                                         </button>
                                     </li>
-                                    <li className="dropdown-item">
-                                        <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={exportToPdf}>
-                                            <i className="far fa-file-pdf"></i> Xuất PDF
-                                        </button>
-                                    </li>
+
                                 </ul>
                             </div>
                         </div>

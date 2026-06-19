@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { productApi, categoryApi, manufacturerApi, specificationAttributeApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, getProductImage } from '../data/shopData';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { utils, writeFile, read } from 'xlsx';
+
 
 export const removeVietnameseTones = (str) => {
     if (!str) return '';
@@ -478,40 +477,10 @@ const Products = () => {
                 'Ngày tạo': p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN') : ''
             };
         });
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
-        XLSX.writeFile(workbook, 'Danh_sach_san_pham.xlsx');
-    };
-
-    const exportToPdf = () => {
-        const doc = new jsPDF('p', 'pt', 'a4');
-        doc.text(removeVietnameseTones('Danh sách sản phẩm'), 40, 40);
-        
-        const tableColumn = ["ID", removeVietnameseTones("Ten san pham"), "SKU", removeVietnameseTones("Danh muc"), removeVietnameseTones("Gia"), removeVietnameseTones("Trang thai")];
-        const tableRows = [];
-
-        products.forEach(p => {
-            const variant = normalizeList(p.variants)[0] || {};
-            const rowData = [
-                p.id,
-                removeVietnameseTones(p.name),
-                variant.sku || '',
-                removeVietnameseTones(p.category?.name || ''),
-                formatCurrency(p.basePrice || 0),
-                p.isActive ? "Active" : "Hidden"
-            ];
-            tableRows.push(rowData);
-        });
-
-        doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 50,
-            styles: { font: 'helvetica' }
-        });
-        
-        doc.save('Danh_sach_san_pham.pdf');
+        const worksheet = utils.json_to_sheet(data);
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, 'Products');
+        writeFile(workbook, 'Danh_sach_san_pham.xlsx');
     };
 
     const handleImportExcel = (e) => {
@@ -522,10 +491,10 @@ const Products = () => {
         reader.onload = async (evt) => {
             try {
                 const bstr = evt.target.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wb = read(bstr, { type: 'binary' });
                 const wsname = wb.SheetNames[0];
                 const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws);
+                const data = utils.sheet_to_json(ws);
                 
                 let successCount = 0;
                 for (const row of data) {
@@ -572,15 +541,11 @@ const Products = () => {
     };
 
     const renderPagination = () => {
-        const pages = [];
-        for (let i = 1; i <= totalPages; i++) {
-            pages.push(
-                <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
-                    <button className="page-link" type="button" onClick={() => setPage(i)}>{i}</button>
-                </li>
-            );
-        }
-        return pages;
+        return (
+            <li className="page-item disabled">
+                <span className="page-link text-dark">Trang {page} / {totalPages || 1}</span>
+            </li>
+        );
     };
 
     const [searchIncludeSubCategories, setSearchIncludeSubCategories] = useState(false);
@@ -614,9 +579,7 @@ const Products = () => {
                             <i className="fas fa-plus-square"></i> Thêm mới
                         </button>
                     )}
-                    <button className="btn bg-info mr-1" onClick={exportToPdf}>
-                        <i className="fas fa-download"></i> Tải danh mục PDF
-                    </button>
+
                     <button className="btn btn-success mr-1" onClick={exportToExcel}>
                         <i className="far fa-file-excel"></i> Xuất Excel
                     </button>

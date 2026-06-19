@@ -208,15 +208,15 @@ const Users = () => {
                         <i className="fas fa-plus-square"></i>
                         {' '}Thêm mới
                     </button>
-                    <div className="btn-group ml-1">
+                    {/* <div className="btn-group ml-1">
                         <button type="button" className="btn btn-success">
                             <i className="fas fa-download"></i>
                             {' '}Xuất file
                         </button>
-                        {/* <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        <button type="button" className="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                             <span className="caret"></span>
                             <span className="sr-only">&nbsp;</span>
-                        </button> */}
+                        </button> 
                         <ul className="dropdown-menu" role="menu">
                             <li className="dropdown-item">
                                 <button type="button" className="btn btn-link p-0 text-left w-100 text-dark text-decoration-none">
@@ -244,7 +244,7 @@ const Users = () => {
                     <button type="button" className="btn bg-olive ml-1">
                         <i className="fas fa-upload"></i>
                         {' '}Nhập file
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
@@ -474,11 +474,9 @@ const Users = () => {
                                                             <li className={`paginate_button page-item previous ${page === 1 ? 'disabled' : ''}`}>
                                                                 <button type="button" className="page-link" onClick={() => setPage((current) => Math.max(1, current - 1))}>Trước</button>
                                                             </li>
-                                                            {[...Array(totalPages)].map((_, index) => (
-                                                                <li key={index + 1} className={`paginate_button page-item ${page === index + 1 ? 'active' : ''}`}>
-                                                                    <button type="button" className="page-link" onClick={() => setPage(index + 1)}>{index + 1}</button>
-                                                                </li>
-                                                            ))}
+                                                            <li className="paginate_button page-item disabled">
+                                                                <span className="page-link text-dark">Trang {page} / {totalPages}</span>
+                                                            </li>
                                                             <li className={`paginate_button page-item next ${page === totalPages ? 'disabled' : ''}`}>
                                                                 <button type="button" className="page-link" onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Sau</button>
                                                             </li>

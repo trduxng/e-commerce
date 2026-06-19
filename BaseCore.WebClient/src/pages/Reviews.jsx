@@ -126,18 +126,15 @@ const Reviews = () => {
                             )}
                         </div>
                         {totalPages > 1 && (
-                            <div className="card-footer d-flex justify-content-between align-items-center">
-                                <span className="text-muted">Trang {page} / {totalPages}</span>
+                            <div className="card-footer d-flex justify-content-end align-items-center">
                                 <nav>
                                     <ul className="pagination pagination-sm m-0 float-right">
                                         <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
                                             <button className="page-link" type="button" onClick={() => setPage(Math.max(1, page - 1))}>Trước</button>
                                         </li>
-                                        {[...Array(totalPages)].map((_, i) => (
-                                            <li key={i + 1} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
-                                                <button className="page-link" type="button" onClick={() => setPage(i + 1)}>{i + 1}</button>
-                                            </li>
-                                        ))}
+                                        <li className="page-item disabled">
+                                            <span className="page-link text-dark">Trang {page} / {totalPages}</span>
+                                        </li>
                                         <li className={`page-item ${page === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
                                             <button className="page-link" type="button" onClick={() => setPage(page + 1)}>Sau</button>
                                         </li>
