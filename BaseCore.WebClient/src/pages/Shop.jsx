@@ -18,9 +18,9 @@ import {
 const pageSize = 9;
 
 const normalizeManufacturerList = (data) => {
-    if (!data) return [];
-    const items = data.items || data;
-    return Array.isArray(items) ? items : [];
+  if (!data) return [];
+  const items = data.items || data;
+  return Array.isArray(items) ? items : [];
 };
 
 const normalizeSpecList = (data) => Array.isArray(data) ? data : [];
@@ -98,7 +98,7 @@ const Shop = () => {
       try {
         const specFilters = {};
         searchParams.forEach((value, key) => {
-            if (key.startsWith('s_')) specFilters[key] = value;
+          if (key.startsWith('s_')) specFilters[key] = value;
         });
 
         // Tải metadata bộ lọc và danh sách sản phẩm song song để giảm thời gian chờ.
@@ -123,12 +123,12 @@ const Shop = () => {
         const apiManufacturers = normalizeManufacturerList(manufacturersResponse.data);
         const apiSpecAttrs = normalizeSpecList(specAttrResponse.data);
         const apiProducts = normalizeProductList(productsResponse.data);
-        
+
         setCategories(apiCategories.length > 0 ? apiCategories : sampleCategories);
         setManufacturers(apiManufacturers);
         setSpecAttributes(apiSpecAttrs);
         setProducts(apiProducts.filter((product) => product.isActive !== false));
-        
+
         const apiTotalCount = Number(productsResponse.data?.totalCount);
         const apiTotalPages = Number(productsResponse.data?.totalPages);
         setTotalCount(Number.isFinite(apiTotalCount) ? apiTotalCount : apiProducts.length);
@@ -138,9 +138,9 @@ const Shop = () => {
         // Dùng dữ liệu mẫu để trang vẫn sử dụng được khi API tạm thời không kết nối.
         const filteredProducts = sampleProducts.filter((product) => {
           const productName = String(product.name || "").toLowerCase();
-          const productDescription = String(product.description || "").toLowerCase();
+          // const productDescription = String(product.description || "").toLowerCase();
           const productPrice = getProductPrice(product);
-          const matchesKeyword = !keyword || productName.includes(keyword.toLowerCase()) || productDescription.includes(keyword.toLowerCase());
+          const matchesKeyword = !keyword || productName.includes(keyword.toLowerCase());
           const matchesCategory = !categoryId || Number(product.categoryId) === Number(categoryId);
           const matchesMin = !minPrice || productPrice >= Number(minPrice);
           const matchesMax = !maxPrice || productPrice <= Number(maxPrice);
@@ -208,17 +208,17 @@ const Shop = () => {
     const params = new URLSearchParams(searchParams);
     const key = `s_${attrId}`;
     const currentValues = params.get(key)?.split(',') || [];
-    
+
     let nextValues;
     if (currentValues.includes(value)) {
-        nextValues = currentValues.filter(v => v !== value);
+      nextValues = currentValues.filter(v => v !== value);
     } else {
-        nextValues = [...currentValues, value];
+      nextValues = [...currentValues, value];
     }
 
     if (nextValues.length > 0) params.set(key, nextValues.join(','));
     else params.delete(key);
-    
+
     params.set("page", "1");
     setSearchParams(params);
   };
@@ -341,7 +341,7 @@ const Shop = () => {
               ))}
             </div>
 
-            <h5 className="section-title position-relative text-uppercase mb-3">
+            {/* <h5 className="section-title position-relative text-uppercase mb-3">
               <span className="bg-secondary pe-3">Thương hiệu</span>
             </h5>
             <div className="shop-filter-panel bg-light p-4 mb-30">
@@ -369,7 +369,7 @@ const Shop = () => {
                   <span className="badge border fw-normal">{Number(manufacturerId) === Number(brand.id) ? totalCount : ""}</span>
                 </div>
               ))}
-            </div>
+            </div> */}
 
             <h5 className="section-title position-relative text-uppercase mb-3">
               <span className="bg-secondary pe-3">Lọc theo giá</span>
@@ -424,37 +424,37 @@ const Shop = () => {
             </form>
 
             {specAttributes.map(attr => {
-                const uniqueValues = Array.from(new Set(
-                    products.flatMap(p => 
-                        (p.productSpecifications || [])
-                        .filter(ps => ps.specificationAttributeId === attr.id)
-                        .map(ps => ps.value)
-                    )
-                )).filter(Boolean).sort();
+              const uniqueValues = Array.from(new Set(
+                products.flatMap(p =>
+                  (p.productSpecifications || [])
+                    .filter(ps => ps.specificationAttributeId === attr.id)
+                    .map(ps => ps.value)
+                )
+              )).filter(Boolean).sort();
 
-                if (uniqueValues.length === 0) return null;
+              if (uniqueValues.length === 0) return null;
 
-                return (
-                    <React.Fragment key={attr.id}>
-                        <h5 className="section-title position-relative text-uppercase mb-3">
-                            <span className="bg-secondary pe-3">{attr.name}</span>
-                        </h5>
-                        <div className="shop-filter-panel bg-light p-4 mb-30">
-                            {uniqueValues.map(val => (
-                                <div key={val} className="shop-filter-option">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        id={`spec-${attr.id}-${val}`}
-                                        checked={isSpecSelected(attr.id, val)}
-                                        onChange={() => updateSpecification(attr.id, val)}
-                                    />
-                                    <label className="shop-filter-option-label" htmlFor={`spec-${attr.id}-${val}`}>{val}</label>
-                                </div>
-                            ))}
-                        </div>
-                    </React.Fragment>
-                );
+              return (
+                <React.Fragment key={attr.id}>
+                  <h5 className="section-title position-relative text-uppercase mb-3">
+                    <span className="bg-secondary pe-3">{attr.name}</span>
+                  </h5>
+                  <div className="shop-filter-panel bg-light p-4 mb-30">
+                    {uniqueValues.map(val => (
+                      <div key={val} className="shop-filter-option">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id={`spec-${attr.id}-${val}`}
+                          checked={isSpecSelected(attr.id, val)}
+                          onChange={() => updateSpecification(attr.id, val)}
+                        />
+                        <label className="shop-filter-option-label" htmlFor={`spec-${attr.id}-${val}`}>{val}</label>
+                      </div>
+                    ))}
+                  </div>
+                </React.Fragment>
+              );
             })}
           </div>
 

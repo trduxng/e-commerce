@@ -71,8 +71,9 @@ namespace BaseCore.Repository.EFCore
                 {
                     keyword = keyword.ToLower();
                     query = query.Where(p =>
-                        p.Name.ToLower().Contains(keyword) ||
-                        (p.Description != null && p.Description.ToLower().Contains(keyword)));
+                        p.Name.ToLower().Contains(keyword)
+                    // || (p.Description != null && p.Description.ToLower().Contains(keyword))
+                    );
                 }
 
                 if (categoryId.HasValue && categoryId > 0)
@@ -107,8 +108,8 @@ namespace BaseCore.Repository.EFCore
 
                     if (values != null && values.Any())
                     {
-                        query = query.Where(p => p.ProductSpecifications.Any(ps => 
-                            ps.SpecificationAttributeId == attrId && 
+                        query = query.Where(p => p.ProductSpecifications.Any(ps =>
+                            ps.SpecificationAttributeId == attrId &&
                             values.Contains(ps.Value)));
                     }
                 }
