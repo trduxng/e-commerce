@@ -71,6 +71,13 @@ export const productApi = {
     getById: (id, params) => api.get(`/products/${id}`, { params }),
     getReviews: (id) => api.get(`/products/${id}/reviews`),
     saveReview: (id, data) => api.post(`/products/${id}/reviews`, data),
+    uploadImage: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post('/products/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
     delete: (id) => api.delete(`/products/${id}`),

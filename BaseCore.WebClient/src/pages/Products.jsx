@@ -72,8 +72,8 @@ const Products = () => {
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
-    // const [minPrice, setMinPrice] = useState('');
-    // const [maxPrice, setMaxPrice] = useState('');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
@@ -81,6 +81,7 @@ const Products = () => {
     const [sortField, setSortField] = useState('created');
     const [sortDir, setSortDir] = useState('desc');
     const [savingProduct, setSavingProduct] = useState(false);
+    const [uploadingVariantIndex, setUploadingVariantIndex] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalTab, setModalTab] = useState('info'); // 'info', 'variants', 'specs'
     const [editingProduct, setEditingProduct] = useState(null);
@@ -164,8 +165,8 @@ const Products = () => {
             const response = await productApi.search({
                 keyword,
                 categoryId: categoryId && categoryId !== '0' ? categoryId : undefined,
-                // minPrice: minPrice !== '' ? Number(minPrice) : undefined,
-                // maxPrice: maxPrice !== '' ? Number(maxPrice) : undefined,
+                minPrice: minPrice !== '' ? Number(minPrice) : undefined,
+                maxPrice: maxPrice !== '' ? Number(maxPrice) : undefined,
                 searchIncludeSubCategories,
                 manufacturerId: manufacturerId && manufacturerId !== '0' ? manufacturerId : undefined,
                 publishedId: publishedId && publishedId !== '0' ? publishedId : undefined,
@@ -190,23 +191,18 @@ const Products = () => {
             setLoading(false);
         }
     };
-    // const handleSearch = (event) => {
-    //     event.preventDefault();
-
-    //     if (
-    //         minPrice !== '' &&
-    //         maxPrice !== '' &&
-    //         Number(minPrice) > Number(maxPrice)
-    //     ) {
-    //         alert('Giá từ không được lớn hơn giá đến.');
-    //         return;
-    //     }
-
-    //     setPage(1);
-    //     loadProducts();
-    // };
     const handleSearch = (event) => {
         event.preventDefault();
+
+        if (
+            minPrice !== '' &&
+            maxPrice !== '' &&
+            Number(minPrice) > Number(maxPrice)
+        ) {
+            alert('Giá từ không được lớn hơn giá đến.');
+            return;
+        }
+
         setPage(1);
         loadProducts();
     };
@@ -248,6 +244,23 @@ const Products = () => {
                 variantIndex === index ? { ...variant, [name]: value } : variant
             ),
         }));
+    };
+
+    const handleVariantImageUpload = async (index, event) => {
+        const input = event.target;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        setUploadingVariantIndex(index);
+        try {
+            const response = await productApi.uploadImage(file);
+            setVariantField(index, 'imageUrl', response.data.url);
+        } catch (error) {
+            alert(error.response?.data?.message || 'Không thể tải ảnh biến thể lên.');
+        } finally {
+            setUploadingVariantIndex(null);
+            input.value = '';
+        }
     };
 
     const addVariant = () => {
@@ -642,7 +655,7 @@ const Products = () => {
                                                             <input type="text" className="form-control text-box single-line" value={keyword} onChange={e => setKeyword(e.target.value)} />
                                                         </div>
                                                     </div>
-                                                    {/* <div className="form-group row">
+                                                    <div className="form-group row">
                                                         <div className="col-md-4">
                                                             <label>Khoảng giá</label>
                                                         </div>
@@ -668,7 +681,7 @@ const Products = () => {
                                                                 onChange={(e) => setMaxPrice(e.target.value)}
                                                             />
                                                         </div>
-                                                    </div> */}
+                                                    </div>
                                                     <div className="form-group row">
                                                         <div className="col-md-4">
                                                             <label>Danh mục</label>
@@ -974,6 +987,16 @@ const Products = () => {
                                                                         onChange={e => setVariantField(i, 'imageUrl', e.target.value)}
                                                                     />
                                                                     <div className="btn-group btn-group-xs">
+                                                                        <label className={`btn btn-outline-primary mb-0 ${uploadingVariantIndex === i ? 'disabled' : ''}`}>
+                                                                            {uploadingVariantIndex === i ? 'Đang tải...' : 'Duyệt...'}
+                                                                            <input
+                                                                                type="file"
+                                                                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                                                                style={{ display: 'none' }}
+                                                                                disabled={uploadingVariantIndex === i}
+                                                                                onChange={event => handleVariantImageUpload(i, event)}
+                                                                            />
+                                                                        </label>
                                                                         <button
                                                                             type="button"
                                                                             className="btn btn-outline-secondary"

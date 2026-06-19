@@ -17,12 +17,79 @@ namespace BaseCore.APIService.Controllers
         private readonly IProductRepositoryEF _productRepository;
         private readonly ICategoryRepositoryEF _categoryRepository;
         private readonly BaseCore.Repository.SQLServerDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public ProductsController(IProductRepositoryEF productRepository, ICategoryRepositoryEF categoryRepository, BaseCore.Repository.SQLServerDbContext context)
+        public ProductsController(
+            IProductRepositoryEF productRepository,
+            ICategoryRepositoryEF categoryRepository,
+            BaseCore.Repository.SQLServerDbContext context,
+            IWebHostEnvironment environment)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _context = context;
+            _environment = environment;
+        }
+
+        [HttpPost("upload-image")]
+        [Authorize(Roles = "Admin,Manager,manager")]
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "Please select an image." });
+
+            const long maxFileSize = 5 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+                return BadRequest(new { message = "Image size must not exceed 5 MB." });
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg", ".jpeg", ".png", ".webp"
+            };
+
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest(new { message = "Only JPG, JPEG, PNG and WEBP images are supported." });
+
+            var uploadFolder = Path.Combine(
+                _environment.ContentRootPath,
+                "wwwroot",
+                "uploads",
+                "products");
+            Directory.CreateDirectory(uploadFolder);
+
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var filePath = Path.Combine(uploadFolder, fileName);
+
+            await using var stream = System.IO.File.Create(filePath);
+            await file.CopyToAsync(stream);
+
+            return Ok(new { url = $"/api/products/images/{fileName}" });
+        }
+
+        [HttpGet("images/{fileName}")]
+        [AllowAnonymous]
+        public IActionResult GetImage(string fileName)
+        {
+            var safeFileName = Path.GetFileName(fileName);
+            var filePath = Path.Combine(
+                _environment.ContentRootPath,
+                "wwwroot",
+                "uploads",
+                "products",
+                safeFileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var contentType = Path.GetExtension(safeFileName).ToLowerInvariant() switch
+            {
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg"
+            };
+
+            return PhysicalFile(filePath, contentType);
         }
 
         /// <summary>
