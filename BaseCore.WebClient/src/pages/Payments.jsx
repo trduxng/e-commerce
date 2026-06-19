@@ -595,16 +595,16 @@ const Payments = () => {
                         </div>
                         <form onSubmit={handleSaveGateway}>
                             <div className="modal-body-custom py-4">
-                                <div className="form-check form-switch p-3 bg-light rounded-3 mb-4 d-flex justify-content-between align-items-center">
-                                    <label className="form-check-label font-weight-bold text-dark" htmlFor="activeSwitch">Kích hoạt cổng thanh toán</label>
+                                <div className="form-check form-switch p-3 bg-light rounded-3 mb-4 d-flex justify-content-between align-items-center flex-start">
                                     <input
-                                        className="form-check-input"
+                                        className="form-check-input "
                                         type="checkbox"
                                         id="activeSwitch"
                                         checked={gatewayForm.active}
                                         onChange={(e) => setGatewayForm({ ...gatewayForm, active: e.target.checked })}
                                         style={{ width: '40px', height: '20px', cursor: 'pointer' }}
                                     />
+                                    <label className="form-check-label font-weight-bold text-dark fl" htmlFor="activeSwitch">Kích hoạt cổng thanh toán</label>
                                 </div>
 
                                 <div className="row g-3 mb-3">

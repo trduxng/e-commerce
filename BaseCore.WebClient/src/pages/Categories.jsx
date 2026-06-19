@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { categoryApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { utils, writeFile } from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { utils, writeFile, read } from 'xlsx';
 import { removeVietnameseTones } from './Products';
 const Categories = () => {
     const [categories, setCategories] = useState([]);
@@ -123,54 +121,68 @@ const Categories = () => {
         }
     };
 
-    const exportToPdf = () => {
-        const doc = new jsPDF('p', 'pt', 'a4');
-        doc.text(removeVietnameseTones('Danh sach danh muc'), 40, 40);
-        
-        const tableColumn = ["ID", removeVietnameseTones("Ten danh muc"), removeVietnameseTones("Mo ta")];
-        const tableRows = [];
 
-        categories.forEach(c => {
-            const rowData = [
-                c.id,
-                removeVietnameseTones(c.name),
-                removeVietnameseTones(c.description || '')
-            ];
-            tableRows.push(rowData);
-        });
-
-        doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 50,
-        });
-
-        doc.save('categories_export.pdf');
-    };
 
     const exportToExcel = () => {
+        if (categories.length === 0) {
+            alert('Không có dữ liệu để xuất.');
+            return;
+        }
         const exportData = categories.map(c => ({
             'ID': c.id,
             'Tên danh mục': c.name,
-            'Mô tả': c.description || ''
+            'Mô tả': c.description || '',
+            'Thứ tự': c.displayOrder || 0
         }));
         
         const worksheet = utils.json_to_sheet(exportData);
         const workbook = utils.book_new();
         utils.book_append_sheet(workbook, worksheet, "Categories");
-        writeFile(workbook, "categories_export.xlsx");
+        writeFile(workbook, "danh_muc.xlsx");
+    };
+
+    const handleImportExcel = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target.result;
+                const wb = read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = utils.sheet_to_json(ws);
+                
+                let successCount = 0;
+                for (const row of data) {
+                    const newItem = {
+                        name: row['Tên danh mục'] || row['name'] || '',
+                        description: row['Mô tả'] || row['description'] || '',
+                        displayOrder: Number(row['Thứ tự']) || 0,
+                        isActive: true
+                    };
+                    if (newItem.name) {
+                        await categoryApi.create(newItem);
+                        successCount++;
+                    }
+                }
+                alert(`Nhập thành công ${successCount} danh mục!`);
+                loadCategories();
+            } catch (error) {
+                console.error("Import error:", error);
+                alert("Đã xảy ra lỗi khi nhập file Excel.");
+            }
+        };
+        reader.readAsBinaryString(file);
     };
 
     const renderPagination = () => {
-        const pages = [];
-        for (let i = 1; i <= totalPages; i++) {
-            pages.push(
-                <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
-                    <button className="page-link" type="button" onClick={() => setPage(i)}>{i}</button>
-                </li>
-            );
-        }
-        return pages;
+        return (
+            <li className="page-item disabled">
+                <span className="page-link text-dark">Trang {page} / {totalPages || 1}</span>
+            </li>
+        );
     };
 
     return (
@@ -228,12 +240,16 @@ const Categories = () => {
                                     </form>
                                 </div>
                                 <div className="col-md-5 text-right">
-                                    <button className="btn bg-info mr-1" onClick={exportToPdf}>
-                                        <i className="fas fa-download"></i> Tải PDF
-                                    </button>
-                                    <button className="btn btn-success mr-1" onClick={exportToExcel}>
-                                        <i className="far fa-file-excel"></i> Xuất Excel
-                                    </button>
+
+                                    <div className="btn-group mr-1">
+                                        <button className="btn btn-success" onClick={exportToExcel}>
+                                            <i className="far fa-file-excel"></i> Xuất Excel
+                                        </button>
+                                    </div>
+                                    <input type="file" accept=".xlsx, .xls" id="import-categories" style={{ display: 'none' }} onChange={handleImportExcel} />
+                                    <label htmlFor="import-categories" className="btn bg-olive mr-1 mb-0" style={{ cursor: 'pointer', verticalAlign: 'baseline', height: '100%' }}>
+                                        <i className="fas fa-upload"></i> Nhập Excel
+                                    </label>
                                     {isStaff() && (
                                         <button className="btn btn-primary" onClick={() => openModal()}>
                                             <i className="fas fa-plus"></i> Thêm Danh mục

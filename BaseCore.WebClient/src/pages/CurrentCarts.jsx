@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { orderApi } from '../services/api';
 import { formatCurrency, getApiErrorMessage } from '../data/shopData';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { utils, writeFile } from 'xlsx';
+
 
 const removeVietnameseTones = (str) => {
     if (!str) return "";
@@ -31,6 +30,19 @@ const returnStatuses = {
     refunded: { label: 'Đã hoàn tiền', className: 'badge-danger' },
     return_rejected: { label: 'Đã từ chối', className: 'badge-secondary' },
 };
+
+const exportToExcel = () => {
+        const exportData = categories.map(c => ({
+            'ID': c.id,
+            'Tên danh mục': c.name,
+            'Mô tả': c.description || ''
+        }));
+        
+        const worksheet = utils.json_to_sheet(exportData);
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, "Categories");
+        writeFile(workbook, "categories_export.xlsx");
+    };
 
 const CurrentCarts = () => {
     const [orders, setOrders] = useState([]);
@@ -134,10 +146,10 @@ const CurrentCarts = () => {
             'Trạng thái': getStatusLabel(o.orderStatus),
             'Ngày tạo': o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : ''
         }));
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Returns');
-        XLSX.writeFile(workbook, 'Danh_sach_quan_ly_tra_hang.xlsx');
+        const worksheet = utils.json_to_sheet(data);
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, 'Returns');
+        writeFile(workbook, 'Danh_sach_quan_ly_tra_hang.xlsx');
     };
 
     const exportToXml = () => {
@@ -162,38 +174,6 @@ const CurrentCarts = () => {
         a.href = url;
         a.download = 'Danh_sach_quan_ly_tra_hang.xml';
         a.click();
-    };
-
-    const exportToPdf = () => {
-        if (orders.length === 0) {
-            alert('Không có dữ liệu để xuất.');
-            return;
-        }
-        const doc = new jsPDF('p', 'pt', 'a4');
-        doc.text(removeVietnameseTones('Danh sach quan ly tra hang'), 40, 40);
-        
-        const tableColumn = ["Ma don", removeVietnameseTones("Khach hang"), "SDT", removeVietnameseTones("Tong tien"), removeVietnameseTones("Trang thai")];
-        const tableRows = [];
-
-        orders.forEach(o => {
-            const rowData = [
-                o.orderCode || o.id,
-                removeVietnameseTones(o.receiverName),
-                o.receiverPhone,
-                formatCurrency(o.totalAmount),
-                removeVietnameseTones(getStatusLabel(o.orderStatus))
-            ];
-            tableRows.push(rowData);
-        });
-
-        autoTable(doc, {
-            head: [tableColumn],
-            body: tableRows,
-            startY: 50,
-            styles: { font: 'helvetica' }
-        });
-        
-        doc.save('Danh_sach_quan_ly_tra_hang.pdf');
     };
 
     return (
@@ -225,11 +205,7 @@ const CurrentCarts = () => {
                                         <i className="far fa-file-excel"></i> Xuất Excel
                                     </button>
                                 </li>
-                                <li className="dropdown-item">
-                                    <button type="button" className="btn btn-link text-left w-100 p-0 text-dark text-decoration-none" onClick={exportToPdf}>
-                                        <i className="far fa-file-pdf"></i> Xuất PDF
-                                    </button>
-                                </li>
+
                             </ul>
                         </div>
                         <button className="btn btn-outline-primary" type="button" onClick={loadReturnRequests}>
